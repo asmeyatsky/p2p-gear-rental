@@ -1,42 +1,27 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 
-const dummyGear = {
-  '1': {
-    id: '1',
-    title: 'Canon EOS R5',
-    description: 'A high-performance mirrorless camera with a 45MP full-frame sensor and 8K video recording.',
-    dailyRate: 50,
-    weeklyRate: 300,
-    monthlyRate: 1000,
-    images: ['/canon-r5.jpg', '/canon-r5-2.jpg', '/canon-r5-3.jpg'],
-    city: 'New York',
-    state: 'NY',
-    brand: 'Canon',
-    model: 'EOS R5',
-    condition: 'Like New',
-    owner: {
-      name: 'John Doe',
-      avatar: '/avatar.jpg',
-    },
-    features: [
-      '45MP Full-Frame CMOS Sensor',
-      '8K30 Raw and 4K120 10-Bit Internal Video',
-      'Sensor-Shift 5-Axis Image Stabilization',
-      'Dual Pixel CMOS AF II with 1053 Points',
-    ],
-  },
-  // Add other gear items as needed
-};
-
 export default function GearDetailsPage() {
   const { id } = useParams();
-  const gear = dummyGear[id as keyof typeof dummyGear];
+  const [gear, setGear] = useState<any>(null);
+
+  useEffect(() => {
+    if (id) {
+      const fetchGear = async () => {
+        const res = await fetch(`/api/gear/${id}`);
+        const data = await res.json();
+        setGear(data);
+      };
+
+      fetchGear();
+    }
+  }, [id]);
 
   if (!gear) {
-    return <div>Gear not found</div>;
+    return <div>Loading...</div>;
   }
 
   return (
@@ -52,7 +37,7 @@ export default function GearDetailsPage() {
             />
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {gear.images.slice(1).map((image, index) => (
+            {gear.images.slice(1).map((image: string, index: number) => (
               <div key={index} className="relative h-24 w-full">
                 <Image
                   src={image}
@@ -80,7 +65,7 @@ export default function GearDetailsPage() {
           <div className="mb-4">
             <h3 className="text-xl font-semibold mb-2">Features</h3>
             <ul className="list-disc list-inside text-gray-700">
-              {gear.features.map((feature, index) => (
+              {gear.features.map((feature: string, index: number) => (
                 <li key={index}>{feature}</li>
               ))}
             </ul>

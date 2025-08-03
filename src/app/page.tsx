@@ -1,83 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import GearGrid from "@/components/gear/GearGrid";
 import SearchFilters from "@/components/gear/SearchFilters";
 
-const dummyGear = [
-  {
-    id: '1',
-    title: 'Canon EOS R5',
-    dailyRate: 50,
-    images: ['/canon-r5.jpg'],
-    city: 'New York',
-    state: 'NY',
-    category: 'cameras',
-  },
-  {
-    id: '2',
-    title: 'Sony A7S III',
-    dailyRate: 60,
-    images: ['/sony-a7siii.jpg'],
-    city: 'Los Angeles',
-    state: 'CA',
-    category: 'cameras',
-  },
-  {
-    id: '3',
-    title: 'DJI Ronin-S',
-    dailyRate: 25,
-    images: ['/dji-ronin-s.jpg'],
-    city: 'Chicago',
-    state: 'IL',
-    category: 'lighting',
-  },
-  {
-    id: '4',
-    title: 'Aputure 120D II',
-    dailyRate: 30,
-    images: ['/aputure-120d.jpg'],
-    city: 'Austin',
-    state: 'TX',
-    category: 'lighting',
-  },
-  {
-    id: '5',
-    title: 'Shure SM7B',
-    dailyRate: 20,
-    images: ['/shure-sm7b.jpg'],
-    city: 'Miami',
-    state: 'FL',
-    category: 'audio',
-  },
-  {
-    id: '6',
-    title: 'Zoom H6',
-    dailyRate: 15,
-    images: ['/zoom-h6.jpg'],
-    city: 'Seattle',
-    state: 'WA',
-    category: 'audio',
-  },
-];
-
 export default function Home() {
-  const [filteredGear, setFilteredGear] = useState(dummyGear);
+  const [gear, setGear] = useState([]);
+  const [filteredGear, setFilteredGear] = useState([]);
+
+  useEffect(() => {
+    const fetchGear = async () => {
+      const res = await fetch('/api/gear');
+      const data = await res.json();
+      setGear(data);
+      setFilteredGear(data);
+    };
+
+    fetchGear();
+  }, []);
 
   const handleSearch = ({ searchTerm, category }: { searchTerm: string; category: string }) => {
-    let gear = dummyGear;
+    let filtered = gear;
 
     if (searchTerm) {
-      gear = gear.filter((item) =>
+      filtered = filtered.filter((item) =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     if (category) {
-      gear = gear.filter((item) => item.category === category);
+      filtered = filtered.filter((item) => item.category === category);
     }
 
-    setFilteredGear(gear);
+    setFilteredGear(filtered);
   };
 
   return (
