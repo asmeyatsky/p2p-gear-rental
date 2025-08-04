@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import { GearItem } from '@/types';
 
 export default function GearDetailsPage() {
   const { id } = useParams();
-  const [gear, setGear] = useState<any>(null);
+  const [gear, setGear] = useState<GearItem | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -62,14 +63,16 @@ export default function GearDetailsPage() {
             <h3 className="text-xl font-semibold mb-2">Description</h3>
             <p className="text-gray-700">{gear.description}</p>
           </div>
-          <div className="mb-4">
-            <h3 className="text-xl font-semibold mb-2">Features</h3>
-            <ul className="list-disc list-inside text-gray-700">
-              {gear.features.map((feature: string, index: number) => (
-                <li key={index}>{feature}</li>
-              ))}
-            </ul>
-          </div>
+          {gear.features && gear.features.length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold mb-2">Features</h3>
+              <ul className="list-disc list-inside text-gray-700">
+                {gear.features.map((feature: string, index: number) => (
+                  <li key={index}>{feature}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="flex items-center">
             <div className="relative h-12 w-12 mr-4">
               <Image

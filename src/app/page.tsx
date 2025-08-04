@@ -3,21 +3,38 @@
 import { useState, useEffect } from 'react';
 import GearGrid from "@/components/gear/GearGrid";
 import SearchFilters from "@/components/gear/SearchFilters";
+import { GearItem } from '@/types';
 
 export default function Home() {
-  const [gear, setGear] = useState([]);
-  const [filteredGear, setFilteredGear] = useState([]);
+  const [gear, setGear] = useState<GearItem[]>([]);
+  const [filteredGear, setFilteredGear] = useState<GearItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchGear = async () => {
-      const res = await fetch('/api/gear');
-      const data = await res.json();
-      setGear(data);
-      setFilteredGear(data);
+      try {
+        const res = await fetch('/api/gear');
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const data = await res.json();
+        setGear(Array.isArray(data) ? data : []);
+        setFilteredGear(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch gear:", error);
+        setGear([]);
+        setFilteredGear([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchGear();
   }, []);
+
+  if (loading) {
+    return <div className="text-center py-8">Loading gear...</div>;
+  }
 
   const handleSearch = ({ searchTerm, category }: { searchTerm: string; category: string }) => {
     let filtered = gear;

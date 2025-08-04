@@ -2,16 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { GearItem } from '@/types';
 
 interface GearCardProps {
-  gear: {
-    id: string;
-    title: string;
-    dailyRate: number;
-    images: string[];
-    city: string;
-    state: string;
-  };
+  gear: GearItem;
 }
 
 export default function GearCard({ gear }: GearCardProps) {

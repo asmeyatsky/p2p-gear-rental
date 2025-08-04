@@ -6,7 +6,7 @@ export async function GET() {
     const gear = await prisma.gear.findMany();
     return NextResponse.json(gear);
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching gear from database:', error);
     return NextResponse.json({ error: 'Unable to fetch gear' }, { status: 500 });
   }
 }
