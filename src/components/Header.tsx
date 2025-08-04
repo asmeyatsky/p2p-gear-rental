@@ -1,8 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useAuth } from './auth/AuthProvider';
 
 export default function Header() {
+  const { user, signOut } = useAuth();
+
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -22,17 +25,33 @@ export default function Header() {
           <Link href="/contact" className="text-gray-600 hover:text-gray-900">
             Contact
           </Link>
+          {user && (
+            <Link href="/add-gear" className="text-gray-600 hover:text-gray-900">
+              Add Gear
+            </Link>
+          )}
         </nav>
         <div className="flex items-center space-x-4">
-          <Link href="/auth/login" className="text-gray-600 hover:text-gray-900">
-            Log In
-          </Link>
-          <Link
-            href="/auth/signup"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-          >
-            Sign Up
-          </Link>
+          {user ? (
+            <button
+              onClick={signOut}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Log Out
+            </button>
+          ) : (
+            <>
+              <Link href="/auth/login" className="text-gray-600 hover:text-gray-900">
+                Log In
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

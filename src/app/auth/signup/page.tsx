@@ -2,16 +2,26 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { useRouter } from 'next/navigation';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const { signUp } = useAuth();
+  const router = useRouter();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle signup logic here
-    console.log({ name, email, password });
+    setError(null);
+    const { error } = await signUp(email, password);
+    if (error) {
+      setError(error.message);
+    } else {
+      router.push('/');
+    }
   };
 
   return (
@@ -21,6 +31,7 @@ export default function SignupPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create a new account</h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSignup}>
+          {error && <p className="text-red-500 text-center">{error}</p>}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <input

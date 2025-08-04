@@ -36,27 +36,42 @@ export default function Home() {
     return <div className="text-center py-8">Loading gear...</div>;
   }
 
-  const handleSearch = ({ searchTerm, category }: { searchTerm: string; category: string }) => {
-    let filtered = gear;
-
-    if (searchTerm) {
-      filtered = filtered.filter((item) =>
-        item.title.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  const handleSearch = async ({ searchTerm, category, minPrice, maxPrice, city, state }: { searchTerm: string; category: string; minPrice: number; maxPrice: number; city: string; state: string }) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        ...(searchTerm && { search: searchTerm }),
+        ...(category && { category }),
+        minPrice: minPrice.toString(),
+        maxPrice: maxPrice.toString(),
+        ...(city && { city }),
+        ...(state && { state }),
+      });
+      const res = await fetch(`/api/gear?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      setGear(Array.isArray(data) ? data : []);
+      setFilteredGear(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Failed to fetch gear with filters:", error);
+      setGear([]);
+      setFilteredGear([]);
+    } finally {
+      setLoading(false);
     }
-
-    if (category) {
-      filtered = filtered.filter((item) => item.category === category);
-    }
-
-    setFilteredGear(filtered);
   };
 
   return (
     <div>
       <SearchFilters onSearch={handleSearch} />
       <h1 className="text-3xl font-bold mb-8">Featured Gear</h1>
-      <GearGrid gear={filteredGear} />
+      {loading ? (
+        <div className="text-center py-8">Loading gear...</div>
+      ) : (
+        <GearGrid gear={filteredGear} />
+      )}
     </div>
   );
 }
