@@ -65,6 +65,20 @@ export default function Home() {
 
   return (
     <div>
+      <div className="bg-blue-600 text-white py-20 text-center mb-8">
+        <div className="container mx-auto px-4">
+          <h1 className="text-5xl font-bold mb-4">Rent & Share Gear with Ease</h1>
+          <p className="text-xl mb-8">Find the perfect gear for your next adventure or list your own to earn extra cash.</p>
+          <div className="space-x-4">
+            <Link href="/browse" className="bg-white text-blue-600 px-8 py-3 rounded-md text-lg font-semibold hover:bg-gray-100 transition-colors">
+              Browse Gear
+            </Link>
+            <Link href="/add-gear" className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-md text-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+              List Your Gear
+            </Link>
+          </div>
+        </div>
+      </div>
       <SearchFilters onSearch={handleSearch} />
       <h1 className="text-3xl font-bold mb-8">Featured Gear</h1>
       {loading ? (

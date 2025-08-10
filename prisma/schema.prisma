@@ -10,8 +10,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id          String    @id @unique
+  email       String    @unique
+  full_name   String?
+  gears       Gear[]
+  rentedItems Rental[]  @relation("RenterRentals")
+  ownedRentals Rental[] @relation("OwnerRentals")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 model Gear {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String
   dailyRate   Float
@@ -20,9 +31,29 @@ model Gear {
   images      String[]
   city        String
   state       String
+  category    String? // New field
   brand       String?
   model       String?
   condition   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  rentals     Rental[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Rental {
+  id          String    @id @default(cuid())
+  gearId      String
+  gear        Gear      @relation(fields: [gearId], references: [id])
+  renterId    String
+  renter      User      @relation("RenterRentals", fields: [renterId], references: [id])
+  ownerId     String
+  owner       User      @relation("OwnerRentals", fields: [ownerId], references: [id])
+  startDate   DateTime
+  endDate     DateTime
+  status      String    @default("pending") // pending, approved, rejected, completed
+  message     String? // New field for basic messaging
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

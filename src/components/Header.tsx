@@ -26,9 +26,17 @@ export default function Header() {
             Contact
           </Link>
           {user && (
-            <Link href="/add-gear" className="text-gray-600 hover:text-gray-900">
-              Add Gear
-            </Link>
+            <>
+              <Link href="/add-gear" className="text-gray-600 hover:text-gray-900">
+                Add Gear
+              </Link>
+              <Link href="/profile" className="text-gray-600 hover:text-gray-900">
+                Profile
+              </Link>
+              <Link href="/my-rentals" className="text-gray-600 hover:text-gray-900">
+                My Rentals
+              </Link>
+            </>
           )}
         </nav>
         <div className="flex items-center space-x-4">

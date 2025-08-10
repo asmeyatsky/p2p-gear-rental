@@ -1,24 +1,29 @@
-'use client';
-
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast'; // Import toast
+import { event } from '@/lib/gtag'; // Import event for analytics
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const { signIn } = useAuth();
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     const { error } = await signIn(email, password);
     if (error) {
-      setError(error.message);
+      toast.error(error.message);
     } else {
+      toast.success('Logged in successfully!');
+      event({
+        action: 'login',
+        category: 'authentication',
+        label: 'user_login',
+        value: 1,
+      });
       router.push('/');
     }
   };
@@ -30,7 +35,6 @@ export default function LoginPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          {error && <p className="text-red-500 text-center">{error}</p>}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <input

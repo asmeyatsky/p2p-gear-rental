@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
+import toast from 'react-hot-toast'; // Import toast
+import { event } from '@/lib/gtag'; // Import event for analytics
 
 export default function AddGearPage() {
   const { user } = useAuth();
@@ -14,7 +16,10 @@ export default function AddGearPage() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [images, setImages] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [category, setCategory] = useState(''); // New state
+  const [brand, setBrand] = useState(''); // New state
+  const [model, setModel] = useState(''); // New state
+  const [condition, setCondition] = useState(''); // New state
   const [loading, setLoading] = useState(false);
 
   if (!user) {
@@ -25,7 +30,6 @@ export default function AddGearPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       const res = await fetch('/api/gear', {
@@ -40,6 +44,10 @@ export default function AddGearPage() {
           city,
           state,
           images,
+          category, // New field
+          brand,    // New field
+          model,    // New field
+          condition, // New field
         }),
       });
 
@@ -48,9 +56,16 @@ export default function AddGearPage() {
         throw new Error(errorData.error || 'Failed to add gear');
       }
 
+      toast.success('Gear added successfully!'); // Toast notification
+      event({
+        action: 'add_gear',
+        category: 'gear_management',
+        label: 'new_gear_listing',
+        value: 1,
+      });
       router.push('/'); // Redirect to home page after successful addition
     } catch (err: any) {
-      setError(err.message);
+      toast.error(`Error adding gear: ${err.message}`); // Toast notification
     } finally {
       setLoading(false);
     }
@@ -60,7 +75,6 @@ export default function AddGearPage() {
     <div className="max-w-2xl mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Add New Gear</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
-        {error && <p className="text-red-500 text-center">{error}</p>}
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
           <input
@@ -114,6 +128,53 @@ export default function AddGearPage() {
             value={state}
             onChange={(e) => setState(e.target.value)}
             required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label>
+          <select
+            id="category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="">Select a category</option>
+            <option value="cameras">Cameras</option>
+            <option value="lenses">Lenses</option>
+            <option value="lighting">Lighting</option>
+            <option value="audio">Audio</option>
+            <option value="drones">Drones</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="brand" className="block text-sm font-medium text-gray-700">Brand (Optional)</label>
+          <input
+            type="text"
+            id="brand"
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="model" className="block text-sm font-medium text-gray-700">Model (Optional)</label>
+          <input
+            type="text"
+            id="model"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="condition" className="block text-sm font-medium text-gray-700">Condition (Optional)</label>
+          <input
+            type="text"
+            id="condition"
+            value={condition}
+            onChange={(e) => setCondition(e.target.value)}
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           />
         </div>

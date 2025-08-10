@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase'; // Import supabase
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,13 +51,34 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Secure the POST endpoint
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session || !session.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
-    const { title, description, dailyRate, city, state, images } = body;
+    const { title, description, dailyRate, city, state, images, category } = body;
 
     if (!title || !description || !dailyRate || !city || !state || !images) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    // Ensure the user exists in our database or create them
+    const user = await prisma.user.upsert({
+      where: { id: session.user.id },
+      update: {
+        email: session.user.email || '',
+        full_name: session.user.user_metadata?.full_name || null,
+      },
+      create: {
+        id: session.user.id,
+        email: session.user.email || '',
+        full_name: session.user.user_metadata?.full_name || null,
+      },
+    });
 
     const newGear = await prisma.gear.create({
       data: {
@@ -66,6 +88,8 @@ export async function POST(request: NextRequest) {
         city,
         state,
         images,
+        category, // Save the category
+        userId: user.id, // Associate the gear with the user
       },
     });
 
