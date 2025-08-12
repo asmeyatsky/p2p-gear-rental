@@ -6,10 +6,13 @@ describe('GearCard', () => {
   const mockGear = {
     id: '1',
     title: 'Test Gear',
+    description: 'Test description',
     dailyRate: 10.00,
     images: ['/test-image.jpg'],
     city: 'Test City',
     state: 'TS',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
   };
 
   it('renders gear title and daily rate', () => {

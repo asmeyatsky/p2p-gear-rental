@@ -12,13 +12,13 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const signIn = async (email: string, password: string) => {
     // Mock sign-in logic
     if (email === 'test@example.com' && password === 'password') {
-      setUser({ id: '123', email });
+      setUser({ id: '123', email } as any);
       return { data: { user: { id: '123', email } }, error: null };
     }
     return { data: null, error: { message: 'Invalid credentials' } };

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const city = searchParams.get('city');
     const state = searchParams.get('state');
 
-    const where: any = {
+    const where: Record<string, any> = {
       dailyRate: {
         gte: minPrice,
         lte: maxPrice,

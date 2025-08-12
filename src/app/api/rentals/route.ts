@@ -1,6 +1,11 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
+import Stripe from 'stripe'; // Import Stripe
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: '2024-11-20.acacia' as any, // Use supported API version
+});
 
 export async function GET(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -83,22 +88,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cannot rent your own gear' }, { status: 400 });
     }
 
+    // Calculate rental duration and amount
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const amount = Math.round(gear.dailyRate * diffDays * 100); // Amount in cents
+
+    // Create Stripe Payment Intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        gearId: gear.id,
+        renterId: session.user.id,
+        ownerId: gear.userId || '',
+        startDate,
+        endDate,
+      },
+    });
+
     // Create the rental request
     const rental = await prisma.rental.create({
       data: {
         gearId,
         renterId: session.user.id,
-        ownerId: gear.userId || '', // Ensure ownerId is not null if userId is nullable
+        ownerId: gear.userId || '',
         startDate,
         endDate,
         status: 'pending',
-        message, // Save the message
+        message,
+        paymentIntentId: paymentIntent.id,
+        clientSecret: paymentIntent.client_secret,
+        paymentStatus: paymentIntent.status, // Initial Stripe status
       },
     });
 
-    return NextResponse.json(rental, { status: 201 });
+    return NextResponse.json({ rental, clientSecret: paymentIntent.client_secret }, { status: 201 });
   } catch (error) {
-    console.error('Error creating rental request:', error);
-    return NextResponse.json({ error: 'Failed to create rental request' }, { status: 500 });
+    console.error('Error creating rental request or payment intent:', error);
+    return NextResponse.json({ error: 'Failed to create rental request or payment intent' }, { status: 500 });
   }
 }

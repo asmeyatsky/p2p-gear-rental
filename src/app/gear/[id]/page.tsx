@@ -1,9 +1,12 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { GearItem } from '@/types'; // Assuming GearItem type is updated to include userId
 import toast from 'react-hot-toast'; // Import toast
+import { event } from '@/lib/gtag'; // Import event for analytics
 
 export default function GearDetailsPage() {
   const { id } = useParams();
@@ -55,8 +58,9 @@ export default function GearDetailsPage() {
 
       toast.success('Gear deleted successfully!');
       router.push('/'); // Redirect to home page after deletion
-    } catch (error: any) {
-      toast.error(`Error deleting gear: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Error deleting gear: ${errorMessage}`);
       console.error('Error deleting gear:', error);
     }
   };
@@ -109,8 +113,9 @@ export default function GearDetailsPage() {
       // Optionally, clear dates or redirect
       setStartDate('');
       setEndDate('');
-    } catch (error: any) {
-      toast.error(`Error sending rental request: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Error sending rental request: ${errorMessage}`);
       console.error('Error sending rental request:', error);
     }
   };

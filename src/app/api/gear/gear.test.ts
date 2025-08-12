@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { POST, GET, PUT, DELETE } from './route';
+import { POST, GET } from './route';
+import { PUT, DELETE, GET as GET_BY_ID } from './[id]/route';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
 
@@ -99,8 +100,8 @@ describe('Gear API', () => {
       (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
       (prisma.user.upsert as jest.Mock).mockResolvedValue(mockSession.user);
       (prisma.gear.create as jest.Mock).mockResolvedValue({
-        id: 'new-gear-id',
         ...mockGearData,
+        id: 'new-gear-id',
         userId: mockSession.user.id,
       });
 
@@ -158,7 +159,7 @@ describe('Gear API', () => {
         body: JSON.stringify({}),
       });
 
-      const response = await PUT(request, { params: { id: mockGearData.id } });
+      const response = await PUT(request, { params: Promise.resolve({ id: mockGearData.id }) });
       expect(response.status).toBe(401);
       await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' });
     });
@@ -173,7 +174,7 @@ describe('Gear API', () => {
         body: JSON.stringify({ title: 'Updated Title' }),
       });
 
-      const response = await PUT(request, { params: { id: 'non-existent-id' } });
+      const response = await PUT(request, { params: Promise.resolve({ id: 'non-existent-id' }) });
       expect(response.status).toBe(404);
       await expect(response.json()).resolves.toEqual({ error: 'Gear not found' });
     });
@@ -188,7 +189,7 @@ describe('Gear API', () => {
         body: JSON.stringify({ title: 'Updated Title' }),
       });
 
-      const response = await PUT(request, { params: { id: mockOtherUserGearData.id } });
+      const response = await PUT(request, { params: Promise.resolve({ id: mockOtherUserGearData.id }) });
       expect(response.status).toBe(403);
       await expect(response.json()).resolves.toEqual({ error: 'Forbidden: You do not own this gear' });
     });
@@ -209,7 +210,7 @@ describe('Gear API', () => {
         body: JSON.stringify(updatedData),
       });
 
-      const response = await PUT(request, { params: { id: mockGearData.id } });
+      const response = await PUT(request, { params: Promise.resolve({ id: mockGearData.id }) });
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({
         ...mockGearData,
@@ -234,7 +235,7 @@ describe('Gear API', () => {
         method: 'DELETE',
       });
 
-      const response = await DELETE(request, { params: { id: mockGearData.id } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: mockGearData.id }) });
       expect(response.status).toBe(401);
       await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' });
     });
@@ -247,7 +248,7 @@ describe('Gear API', () => {
         method: 'DELETE',
       });
 
-      const response = await DELETE(request, { params: { id: 'non-existent-id' } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: 'non-existent-id' }) });
       expect(response.status).toBe(404);
       await expect(response.json()).resolves.toEqual({ error: 'Gear not found' });
     });
@@ -260,7 +261,7 @@ describe('Gear API', () => {
         method: 'DELETE',
       });
 
-      const response = await DELETE(request, { params: { id: mockOtherUserGearData.id } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: mockOtherUserGearData.id }) });
       expect(response.status).toBe(403);
       await expect(response.json()).resolves.toEqual({ error: 'Forbidden: You do not own this gear' });
     });
@@ -274,7 +275,7 @@ describe('Gear API', () => {
         method: 'DELETE',
       });
 
-      const response = await DELETE(request, { params: { id: mockGearData.id } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: mockGearData.id }) });
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({ message: 'Gear deleted successfully' });
       expect(prisma.gear.delete).toHaveBeenCalledWith({
@@ -365,7 +366,7 @@ describe('Gear API', () => {
       (prisma.gear.findUnique as jest.Mock).mockResolvedValue(mockGearData);
 
       const request = new NextRequest(`http://localhost/api/gear/${mockGearData.id}`);
-      const response = await GET(request, { params: { id: mockGearData.id } });
+      const response = await GET_BY_ID(request, { params: Promise.resolve({ id: mockGearData.id }) });
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual(mockGearData);
       expect(prisma.gear.findUnique).toHaveBeenCalledWith({ where: { id: mockGearData.id } });
@@ -375,7 +376,7 @@ describe('Gear API', () => {
       (prisma.gear.findUnique as jest.Mock).mockResolvedValue(null);
 
       const request = new NextRequest(`http://localhost/api/gear/non-existent-id`);
-      const response = await GET(request, { params: { id: 'non-existent-id' } });
+      const response = await GET_BY_ID(request, { params: Promise.resolve({ id: 'non-existent-id' }) });
       expect(response.status).toBe(404);
       await expect(response.json()).resolves.toEqual({ error: 'Gear not found' });
     });

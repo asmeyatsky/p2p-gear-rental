@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import GearGrid from "@/components/gear/GearGrid";
 import SearchFilters from "@/components/gear/SearchFilters";
 import { GearItem } from '@/types';
 
 export default function Home() {
-  const [gear, setGear] = useState<GearItem[]>([]);
   const [filteredGear, setFilteredGear] = useState<GearItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,11 +18,9 @@ export default function Home() {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         const data = await res.json();
-        setGear(Array.isArray(data) ? data : []);
         setFilteredGear(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch gear:", error);
-        setGear([]);
         setFilteredGear([]);
       } finally {
         setLoading(false);
@@ -52,11 +50,9 @@ export default function Home() {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
       const data = await res.json();
-      setGear(Array.isArray(data) ? data : []);
       setFilteredGear(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch gear with filters:", error);
-      setGear([]);
       setFilteredGear([]);
     } finally {
       setLoading(false);

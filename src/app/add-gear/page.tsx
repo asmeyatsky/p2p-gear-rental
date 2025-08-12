@@ -64,8 +64,9 @@ export default function AddGearPage() {
         value: 1,
       });
       router.push('/'); // Redirect to home page after successful addition
-    } catch (err: any) {
-      toast.error(`Error adding gear: ${err.message}`); // Toast notification
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(`Error adding gear: ${errorMessage}`); // Toast notification
     } finally {
       setLoading(false);
     }

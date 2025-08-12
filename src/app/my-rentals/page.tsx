@@ -31,6 +31,10 @@ interface RentalItem {
   startDate: string;
   endDate: string;
   status: string;
+  message?: string;
+  paymentIntentId?: string;
+  clientSecret?: string;
+  paymentStatus?: string;
   createdAt: string;
 }
 
@@ -50,8 +54,9 @@ export default function MyRentalsPage() {
       }
       const data = await res.json();
       setRentals(data);
-    } catch (error: any) {
-      toast.error(`Error fetching rentals: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Error fetching rentals: ${errorMessage}`);
       console.error('Error fetching rentals:', error);
     } finally {
       setLoadingRentals(false);
@@ -96,8 +101,9 @@ export default function MyRentalsPage() {
       });
       setOwnerMessage(''); // Clear message
       fetchRentals(); // Refresh rentals
-    } catch (error: any) {
-      toast.error(`Error approving rental: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Error approving rental: ${errorMessage}`);
       console.error('Error approving rental:', error);
     }
   };
@@ -129,8 +135,9 @@ export default function MyRentalsPage() {
       });
       setOwnerMessage(''); // Clear message
       fetchRentals(); // Refresh rentals
-    } catch (error: any) {
-      toast.error(`Error rejecting rental: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Error rejecting rental: ${errorMessage}`);
       console.error('Error rejecting rental:', error);
     }
   };
@@ -166,7 +173,18 @@ export default function MyRentalsPage() {
                   <p className="text-gray-600 text-sm">From: {rental.owner.full_name || rental.owner.email}</p>
                   <p className="text-gray-600 text-sm">Dates: {new Date(rental.startDate).toLocaleDateString()} - {new Date(rental.endDate).toLocaleDateString()}</p>
                   <p className="text-gray-600 text-sm">Status: <span className={`font-medium ${rental.status === 'pending' ? 'text-yellow-600' : rental.status === 'approved' ? 'text-green-600' : 'text-red-600'}`}>{rental.status}</span></p>
+                  {rental.paymentStatus && <p className="text-gray-600 text-sm">Payment Status: <span className="font-medium">{rental.paymentStatus}</span></p>}
                   {rental.message && <p className="text-gray-600 text-sm mt-2">Message: {rental.message}</p>}
+                  {rental.renterId === user?.id && rental.status === 'pending' && rental.paymentStatus !== 'succeeded' && rental.clientSecret && (
+                    <div className="mt-4">
+                      <Link
+                        href={`/rentals/${rental.id}/confirm-payment`} // Link to a new payment confirmation page
+                        className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 w-full text-center block"
+                      >
+                        Pay Now
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -190,6 +208,7 @@ export default function MyRentalsPage() {
                   <p className="text-gray-600 text-sm">By: {rental.renter.full_name || rental.renter.email}</p>
                   <p className="text-gray-600 text-sm">Dates: {new Date(rental.startDate).toLocaleDateString()} - {new Date(rental.endDate).toLocaleDateString()}</p>
                   <p className="text-gray-600 text-sm">Status: <span className={`font-medium ${rental.status === 'pending' ? 'text-yellow-600' : rental.status === 'approved' ? 'text-green-600' : 'text-red-600'}`}>{rental.status}</span></p>
+                  {rental.paymentStatus && <p className="text-gray-600 text-sm">Payment Status: <span className="font-medium">{rental.paymentStatus}</span></p>}
                   {rental.message && <p className="text-gray-600 text-sm mt-2">Message: {rental.message}</p>}
                   {rental.status === 'pending' && (
                     <div className="mt-4">

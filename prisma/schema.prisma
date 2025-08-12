@@ -52,8 +52,11 @@ model Rental {
   owner       User      @relation("OwnerRentals", fields: [ownerId], references: [id])
   startDate   DateTime
   endDate     DateTime
-  status      String    @default("pending") // pending, approved, rejected, completed
-  message     String? // New field for basic messaging
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  status          String    @default("pending") // pending, approved, rejected, completed
+  message         String? // New field for basic messaging
+  paymentIntentId String?
+  clientSecret    String?
+  paymentStatus   String? // e.g., 'requires_payment_method', 'requires_confirmation', 'succeeded', 'failed'
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }

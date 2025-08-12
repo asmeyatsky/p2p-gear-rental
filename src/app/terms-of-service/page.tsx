@@ -3,7 +3,7 @@ export default function TermsOfServicePage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
       <div className="prose max-w-none">
-        <p>Welcome to GearShare! These Terms of Service ("Terms") govern your use of the GearShare website and services (collectively, the "Service"). By accessing or using the Service, you agree to be bound by these Terms.</p>
+        <p>Welcome to GearShare! These Terms of Service (&quot;Terms&quot;) govern your use of the GearShare website and services (collectively, the &quot;Service&quot;). By accessing or using the Service, you agree to be bound by these Terms.</p>
 
         <h2>1. Acceptance of Terms</h2>
         <p>By using our Service, you confirm that you accept these Terms and that you agree to comply with them. If you do not agree to these Terms, you must not use our Service.</p>
