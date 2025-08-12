@@ -1,99 +1,187 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { supabase } from '@/lib/supabase'; // Import supabase
+import { supabase } from '@/lib/supabase';
+import { withErrorHandler, AuthenticationError, NotFoundError, ForbiddenError } from '@/lib/api-error-handler';
+import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
+import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
+import { logger } from '@/lib/logger';
+import { CacheManager } from '@/lib/cache';
+import { createGearSchema } from '@/lib/validations/gear';
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  try {
-    const gear = await prisma.gear.findUnique({
-      where: { id },
-    });
+export const GET = withErrorHandler(
+  withMonitoring(
+    withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
+      async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+        const { id } = await params;
+        
+        logger.debug('Fetching gear details', { gearId: id }, 'API');
 
-    if (!gear) {
-      return NextResponse.json({ error: 'Gear not found' }, { status: 404 });
-    }
+        // Check cache first
+        const cacheKey = CacheManager.keys.gear.detail(id);
+        const cached = await CacheManager.get(cacheKey);
+        
+        if (cached) {
+          logger.debug('Cache hit for gear details', { gearId: id, cacheKey }, 'CACHE');
+          return NextResponse.json(cached);
+        }
 
-    return NextResponse.json(gear);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Unable to fetch gear' }, { status: 500 });
-  }
-}
+        logger.debug('Cache miss for gear details', { gearId: id, cacheKey }, 'CACHE');
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const { data: { session } } = await supabase.auth.getSession();
+        // Fetch from database
+        const gear = await trackDatabaseQuery('gear.findUnique', () =>
+          prisma.gear.findUnique({
+            where: { id },
+            include: {
+              user: {
+                select: { id: true, email: true, full_name: true }
+              }
+            }
+          })
+        );
 
-  if (!session || !session.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+        if (!gear) {
+          throw new NotFoundError('Gear not found');
+        }
 
-  try {
-    const body = await request.json();
-    const { title, description, dailyRate, city, state, images, brand, model, condition } = body;
+        // Cache the result
+        await CacheManager.set(cacheKey, gear, CacheManager.TTL.MEDIUM);
 
-    const existingGear = await prisma.gear.findUnique({
-      where: { id },
-    });
+        logger.info('Gear details fetched successfully', { 
+          gearId: id,
+          title: gear.title,
+          ownerId: gear.userId
+        }, 'API');
 
-    if (!existingGear) {
-      return NextResponse.json({ error: 'Gear not found' }, { status: 404 });
-    }
+        return NextResponse.json(gear);
+      }
+    )
+  )
+);
 
-    if (existingGear.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden: You do not own this gear' }, { status: 403 });
-    }
+export const PUT = withErrorHandler(
+  withMonitoring(
+    withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
+      async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+        const { id } = await params;
+        
+        // Check authentication
+        const { data: { session } } = await supabase.auth.getSession();
 
-    const updatedGear = await prisma.gear.update({
-      where: { id },
-      data: {
-        title: title ?? existingGear.title,
-        description: description ?? existingGear.description,
-        dailyRate: dailyRate ?? existingGear.dailyRate,
-        city: city ?? existingGear.city,
-        state: state ?? existingGear.state,
-        images: images ?? existingGear.images,
-        brand: brand ?? existingGear.brand,
-        model: model ?? existingGear.model,
-        condition: condition ?? existingGear.condition,
-      },
-    });
+        if (!session || !session.user) {
+          throw new AuthenticationError();
+        }
 
-    return NextResponse.json(updatedGear);
-  } catch (error) {
-    console.error('Error updating gear:', error);
-    return NextResponse.json({ error: 'Failed to update gear' }, { status: 500 });
-  }
-}
+        // Parse and validate request body
+        const body = await request.json();
+        const validatedData = createGearSchema.parse(body);
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const { data: { session } } = await supabase.auth.getSession();
+        logger.info('Gear update request', { 
+          gearId: id,
+          userId: session.user.id 
+        }, 'API');
 
-  if (!session || !session.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+        // Check if gear exists and get ownership
+        const existingGear = await trackDatabaseQuery('gear.findUnique', () =>
+          prisma.gear.findUnique({
+            where: { id },
+          })
+        );
 
-  try {
-    const existingGear = await prisma.gear.findUnique({
-      where: { id },
-    });
+        if (!existingGear) {
+          throw new NotFoundError('Gear not found');
+        }
 
-    if (!existingGear) {
-      return NextResponse.json({ error: 'Gear not found' }, { status: 404 });
-    }
+        if (existingGear.userId !== session.user.id) {
+          throw new ForbiddenError('You do not own this gear');
+        }
 
-    if (existingGear.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden: You do not own this gear' }, { status: 403 });
-    }
+        // Update gear with validated data
+        const updatedGear = await trackDatabaseQuery('gear.update', () =>
+          prisma.gear.update({
+            where: { id },
+            data: validatedData,
+            include: {
+              user: {
+                select: { id: true, email: true, full_name: true }
+              }
+            }
+          })
+        );
 
-    await prisma.gear.delete({
-      where: { id },
-    });
+        // Invalidate relevant caches
+        await Promise.all([
+          CacheManager.del(CacheManager.keys.gear.detail(id)),
+          CacheManager.del(CacheManager.keys.gear.user(session.user.id)),
+          CacheManager.invalidatePattern('gear:list:*'),
+        ]);
 
-    return NextResponse.json({ message: 'Gear deleted successfully' }, { status: 200 });
-  } catch (error) {
-    console.error('Error deleting gear:', error);
-    return NextResponse.json({ error: 'Failed to delete gear' }, { status: 500 });
-  }
-}
+        logger.info('Gear updated successfully', { 
+          gearId: id,
+          userId: session.user.id,
+          title: validatedData.title
+        }, 'API');
+
+        return NextResponse.json(updatedGear);
+      }
+    )
+  )
+);
+
+export const DELETE = withErrorHandler(
+  withMonitoring(
+    withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
+      async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+        const { id } = await params;
+        
+        // Check authentication
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session || !session.user) {
+          throw new AuthenticationError();
+        }
+
+        logger.info('Gear deletion request', { 
+          gearId: id,
+          userId: session.user.id 
+        }, 'API');
+
+        // Check if gear exists and get ownership
+        const existingGear = await trackDatabaseQuery('gear.findUnique', () =>
+          prisma.gear.findUnique({
+            where: { id },
+          })
+        );
+
+        if (!existingGear) {
+          throw new NotFoundError('Gear not found');
+        }
+
+        if (existingGear.userId !== session.user.id) {
+          throw new ForbiddenError('You do not own this gear');
+        }
+
+        // Delete gear
+        await trackDatabaseQuery('gear.delete', () =>
+          prisma.gear.delete({
+            where: { id },
+          })
+        );
+
+        // Invalidate relevant caches
+        await Promise.all([
+          CacheManager.del(CacheManager.keys.gear.detail(id)),
+          CacheManager.del(CacheManager.keys.gear.user(session.user.id)),
+          CacheManager.invalidatePattern('gear:list:*'),
+        ]);
+
+        logger.info('Gear deleted successfully', { 
+          gearId: id,
+          userId: session.user.id,
+          title: existingGear.title
+        }, 'API');
+
+        return NextResponse.json({ message: 'Gear deleted successfully' }, { status: 200 });
+      }
+    )
+  )
+);

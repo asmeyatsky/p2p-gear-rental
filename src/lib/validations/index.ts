@@ -2,6 +2,7 @@
 export * from './gear';
 export * from './rental';
 export * from './auth';
+export * from './review';
 
 // Common validation utilities
 import { z } from 'zod';

@@ -11,17 +11,22 @@ datasource db {
 }
 
 model User {
-  id          String    @id @unique
-  email       String    @unique
-  full_name   String?
-  gears       Gear[]
-  rentedItems Rental[]  @relation("RenterRentals")
-  ownedRentals Rental[] @relation("OwnerRentals")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id              String    @id @unique
+  email           String    @unique
+  full_name       String?
+  gears           Gear[]
+  rentedItems     Rental[]  @relation("RenterRentals")
+  ownedRentals    Rental[]  @relation("OwnerRentals")
+  reviewsGiven    Review[]  @relation("ReviewsGiven")
+  reviewsReceived Review[]  @relation("ReviewsReceived")
+  averageRating   Float?
+  totalReviews    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([email])
   @@index([createdAt])
+  @@index([averageRating])
 }
 
 model Gear {
@@ -50,7 +55,8 @@ model Gear {
   @@index([userId])
   @@index([createdAt])
   @@index([condition])
-  @@fulltext([title, description])
+  @@index([title])
+  @@index([description])
 }
 
 model Rental {
@@ -68,6 +74,7 @@ model Rental {
   paymentIntentId String?
   clientSecret    String?
   paymentStatus   String? // e.g., 'requires_payment_method', 'requires_confirmation', 'succeeded', 'failed'
+  review          Review?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -77,5 +84,23 @@ model Rental {
   @@index([status])
   @@index([startDate, endDate])
   @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5 stars
+  comment   String?
+  rentalId  String   @unique
+  rental    Rental   @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer  User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  revieweeId String  // The person being reviewed (gear owner)
+  reviewee  User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([revieweeId])
+  @@index([rating])
   @@index([createdAt])
 }
