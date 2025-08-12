@@ -19,12 +19,11 @@ if (process.env.NODE_ENV === 'test') {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Temporarily commented out for testing purposes to allow server to start without Supabase keys
-  // if (!supabaseUrl || !supabaseAnonKey) {
-  //   throw new Error('Missing Supabase URL or Anon Key');
-  // }
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing required Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set');
+  }
 
-  supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
 
 export { supabase };

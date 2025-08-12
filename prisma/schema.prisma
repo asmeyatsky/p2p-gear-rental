@@ -19,6 +19,9 @@ model User {
   ownedRentals Rental[] @relation("OwnerRentals")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([email])
+  @@index([createdAt])
 }
 
 model Gear {
@@ -40,6 +43,14 @@ model Gear {
   rentals     Rental[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([category])
+  @@index([city, state])
+  @@index([dailyRate])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([condition])
+  @@fulltext([title, description])
 }
 
 model Rental {
@@ -59,4 +70,12 @@ model Rental {
   paymentStatus   String? // e.g., 'requires_payment_method', 'requires_confirmation', 'succeeded', 'failed'
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  @@index([renterId])
+  @@index([ownerId])
+  @@index([gearId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@index([paymentStatus])
+  @@index([createdAt])
 }

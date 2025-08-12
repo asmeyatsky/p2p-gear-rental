@@ -1,101 +1,157 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { supabase } from '@/lib/supabase'; // Import supabase
+import { supabase } from '@/lib/supabase';
+import { withErrorHandler, ValidationError, AuthenticationError } from '@/lib/api-error-handler';
+import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
+import { gearQuerySchema, createGearSchema } from '@/lib/validations/gear';
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search');
-    const category = searchParams.get('category');
-    const minPrice = parseFloat(searchParams.get('minPrice') || '0');
-    const maxPrice = parseFloat(searchParams.get('maxPrice') || '10000');
-    const city = searchParams.get('city');
-    const state = searchParams.get('state');
-
-    const where: Record<string, any> = {
-      dailyRate: {
-        gte: minPrice,
-        lte: maxPrice,
-      },
-    };
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { brand: { contains: search, mode: 'insensitive' } },
-        { model: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    if (category) {
-      where.category = category; // Assuming category is a direct string match
-    }
-
-    if (city) {
-      where.city = { contains: city, mode: 'insensitive' };
-    }
-
-    if (state) {
-      where.state = { contains: state, mode: 'insensitive' };
-    }
-
-    const gear = await prisma.gear.findMany({
-      where,
-    });
-    return NextResponse.json(gear);
-  } catch (error) {
-    console.error('Error fetching gear from database:', error);
-    return NextResponse.json({ error: 'Unable to fetch gear' }, { status: 500 });
-  }
-}
-
-export async function POST(request: NextRequest) {
-  // Secure the POST endpoint
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session || !session.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  try {
-    const body = await request.json();
-    const { title, description, dailyRate, city, state, images, category } = body;
-
-    if (!title || !description || !dailyRate || !city || !state || !images) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
-    // Ensure the user exists in our database or create them
-    const user = await prisma.user.upsert({
-      where: { id: session.user.id },
-      update: {
-        email: session.user.email || '',
-        full_name: session.user.user_metadata?.full_name || null,
-      },
-      create: {
-        id: session.user.id,
-        email: session.user.email || '',
-        full_name: session.user.user_metadata?.full_name || null,
-      },
-    });
-
-    const newGear = await prisma.gear.create({
-      data: {
-        title,
-        description,
-        dailyRate,
-        city,
+export const GET = withErrorHandler(
+  withRateLimit(rateLimitConfig.search.limiter, rateLimitConfig.search.limit)(
+    async (request: NextRequest) => {
+      // Validate query parameters
+      const { searchParams } = new URL(request.url);
+      const queryData = Object.fromEntries(searchParams.entries());
+      
+      const validatedQuery = gearQuerySchema.parse(queryData);
+      
+      const { 
+        search, 
+        category, 
+        minPrice = 0, 
+        maxPrice = 10000, 
+        city, 
         state,
-        images,
-        category, // Save the category
-        userId: user.id, // Associate the gear with the user
-      },
-    });
+        page,
+        limit,
+        sortBy 
+      } = validatedQuery;
 
-    return NextResponse.json(newGear, { status: 201 });
-  } catch (error) {
-    console.error('Error adding gear to database:', error);
-    return NextResponse.json({ error: 'Failed to add gear' }, { status: 500 });
-  }
-}
+      // Build where clause
+      const where: any = {
+        dailyRate: {
+          gte: minPrice,
+          lte: maxPrice,
+        },
+      };
+
+      // Add search filters
+      if (search) {
+        where.OR = [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { brand: { contains: search, mode: 'insensitive' } },
+          { model: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      if (category) {
+        where.category = category;
+      }
+
+      if (city) {
+        where.city = { contains: city, mode: 'insensitive' };
+      }
+
+      if (state) {
+        where.state = { contains: state, mode: 'insensitive' };
+      }
+
+      // Calculate pagination
+      const skip = (page - 1) * limit;
+
+      // Build order by clause
+      let orderBy: any = { createdAt: 'desc' }; // default
+      
+      switch (sortBy) {
+        case 'price-low':
+          orderBy = { dailyRate: 'asc' };
+          break;
+        case 'price-high':
+          orderBy = { dailyRate: 'desc' };
+          break;
+        case 'newest':
+          orderBy = { createdAt: 'desc' };
+          break;
+        case 'distance':
+          // TODO: Implement distance sorting with geolocation
+          orderBy = { createdAt: 'desc' };
+          break;
+      }
+
+      // Execute queries in parallel
+      const [gear, total] = await Promise.all([
+        prisma.gear.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy,
+          include: {
+            user: {
+              select: { id: true, email: true, full_name: true }
+            }
+          }
+        }),
+        prisma.gear.count({ where })
+      ]);
+
+      // Return paginated response
+      return NextResponse.json({
+        data: gear,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+          hasNext: page < Math.ceil(total / limit),
+          hasPrev: page > 1
+        }
+      });
+    }
+  )
+);
+
+export const POST = withErrorHandler(
+  withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
+    async (request: NextRequest) => {
+      // Check authentication
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session || !session.user) {
+        throw new AuthenticationError();
+      }
+
+      // Parse and validate request body
+      const body = await request.json();
+      const validatedData = createGearSchema.parse(body);
+
+      // Ensure the user exists in our database or create them
+      const user = await prisma.user.upsert({
+        where: { id: session.user.id },
+        update: {
+          email: session.user.email || '',
+          full_name: session.user.user_metadata?.full_name || null,
+        },
+        create: {
+          id: session.user.id,
+          email: session.user.email || '',
+          full_name: session.user.user_metadata?.full_name || null,
+        },
+      });
+
+      // Create the gear with validated data
+      const newGear = await prisma.gear.create({
+        data: {
+          ...validatedData,
+          userId: user.id, // Associate the gear with the user
+        },
+        include: {
+          user: {
+            select: { id: true, email: true, full_name: true }
+          }
+        }
+      });
+
+      return NextResponse.json(newGear, { status: 201 });
+    }
+  )
+);
