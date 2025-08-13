@@ -173,8 +173,7 @@ class RealTimeChatEngine {
   ): Promise<ChatMessage> {
     // Fraud check
     const fraudCheck = await fraudDetectionEngine.assessRisk(senderId, 'send_message', {
-      message: content,
-      receiverId
+      message: content
     });
 
     if (!fraudCheck.allowTransaction) {

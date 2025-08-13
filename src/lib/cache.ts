@@ -170,6 +170,7 @@ export class CacheManager {
       stats: (id: string) => `user:stats:${id}`,
     },
     health: 'app:health',
+    custom: (key: string) => key,
   } as const;
 
   // TTL configurations (in seconds)

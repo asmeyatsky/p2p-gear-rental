@@ -105,7 +105,7 @@ class NotificationEngine {
 
     // Check user preferences
     const preferences = await this.getUserPreferences(notification.userId);
-    const filteredChannels = this.filterChannelsByPreferences(notification.channels, preferences, notification);
+    const filteredChannels = this.filterChannelsByPreferences(notification.channels, preferences, notificationWithId);
 
     if (filteredChannels.length === 0) {
       logger.info('Notification skipped due to user preferences', {

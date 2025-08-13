@@ -9,7 +9,7 @@ import { CacheManager } from '@/lib/cache';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2024-11-20.acacia' as const, // Use supported API version
+  apiVersion: '2025-07-30.basil', // Use supported API version
 });
 
 export const GET = withErrorHandler(

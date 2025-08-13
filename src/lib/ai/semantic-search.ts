@@ -202,7 +202,7 @@ class SemanticSearchEngine {
     // Category suggestions
     Object.keys(this.categoryAliases).forEach(category => {
       if (category.startsWith(lowerQuery) || 
-          this.categoryAliases[category].some(alias => alias.startsWith(lowerQuery))) {
+          this.categoryAliases[category as keyof typeof this.categoryAliases].some(alias => alias.startsWith(lowerQuery))) {
         suggestions.push(category);
         suggestions.push(`${category} rental`);
         suggestions.push(`professional ${category}`);
@@ -212,7 +212,7 @@ class SemanticSearchEngine {
     // Brand suggestions
     Object.keys(this.brandAliases).forEach(brand => {
       if (brand.startsWith(lowerQuery) || 
-          this.brandAliases[brand].some(alias => alias.startsWith(lowerQuery))) {
+          this.brandAliases[brand as keyof typeof this.brandAliases].some(alias => alias.startsWith(lowerQuery))) {
         suggestions.push(brand);
         suggestions.push(`${brand} camera`);
         suggestions.push(`${brand} lens`);
@@ -222,7 +222,7 @@ class SemanticSearchEngine {
     // Event type suggestions
     Object.keys(this.eventTypeAliases).forEach(eventType => {
       if (eventType.startsWith(lowerQuery) || 
-          this.eventTypeAliases[eventType].some(alias => alias.startsWith(lowerQuery))) {
+          this.eventTypeAliases[eventType as keyof typeof this.eventTypeAliases].some(alias => alias.startsWith(lowerQuery))) {
         suggestions.push(`${eventType} equipment`);
         suggestions.push(`${eventType} photography`);
         suggestions.push(`equipment for ${eventType}`);
@@ -282,7 +282,7 @@ class SemanticSearchEngine {
     // Extract modifiers
     const modifiers: string[] = [];
     Object.keys(this.featureKeywords).forEach(feature => {
-      if (this.featureKeywords[feature].some(keyword => query.includes(keyword))) {
+      if (this.featureKeywords[feature as keyof typeof this.featureKeywords].some(keyword => query.includes(keyword))) {
         modifiers.push(feature);
       }
     });

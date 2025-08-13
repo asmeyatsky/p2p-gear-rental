@@ -235,7 +235,7 @@ class IntelligentRecommendationEngine {
         user: { select: { id: true, full_name: true, averageRating: true, totalReviews: true } },
         rentals: {
           where: { createdAt: { gte: dateFilter } },
-          select: { rating: true, createdAt: true }
+          select: { createdAt: true, review: { select: { rating: true } } }
         }
       },
       take: 50
@@ -271,8 +271,8 @@ class IntelligentRecommendationEngine {
     });
 
     // Analyze preferences from history
-    const categories = [...new Set(rentals.map(r => r.gear.category).filter(Boolean))];
-    const brands = [...new Set(rentals.map(r => r.gear.brand).filter(Boolean))];
+    const categories = [...new Set(rentals.map(r => r.gear.category).filter((cat): cat is string => !!cat))];
+    const brands = [...new Set(rentals.map(r => r.gear.brand).filter((brand): brand is string => !!brand))];
     const priceRange = this.calculatePriceRange(rentals.map(r => r.gear.dailyRate));
     
     const preferences: UserPreferences = {
@@ -507,7 +507,7 @@ class IntelligentRecommendationEngine {
     }, {} as Record<string, number>);
     
     Object.entries(categoryCount)
-      .filter(([, count]) => count >= 2)
+      .filter(([, count]) => (count as number) >= 2)
       .forEach(([category]) => features.push(`prefers_${category}`));
     
     return features;
