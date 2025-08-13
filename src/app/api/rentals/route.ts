@@ -9,13 +9,13 @@ import { CacheManager } from '@/lib/cache';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2024-11-20.acacia' as any, // Use supported API version
+  apiVersion: '2024-11-20.acacia' as const, // Use supported API version
 });
 
 export const GET = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
-      async (request: NextRequest) => {
+      async () => {
         // Check authentication
         const { data: { session } } = await supabase.auth.getSession();
 

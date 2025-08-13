@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-let supabase: SupabaseClient | any;
+let supabase: SupabaseClient;
 
 if (process.env.NODE_ENV === 'test') {
   // Mock Supabase client for testing environment
@@ -14,7 +14,7 @@ if (process.env.NODE_ENV === 'test') {
       signUp: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
       signOut: jest.fn(() => Promise.resolve({ error: null })),
     },
-  };
+  } as unknown as SupabaseClient;
 } else {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

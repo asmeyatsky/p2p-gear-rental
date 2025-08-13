@@ -33,7 +33,7 @@ export const GET = withErrorHandler(
       } = validatedQuery;
 
       // Build where clause
-      const where: any = {
+      const where: Record<string, unknown> = {
         dailyRate: {
           gte: minPrice,
           lte: maxPrice,
@@ -80,7 +80,7 @@ export const GET = withErrorHandler(
       const skip = (page - 1) * limit;
 
       // Build order by clause
-      let orderBy: any = { createdAt: 'desc' }; // default
+      let orderBy: Record<string, 'asc' | 'desc'> = { createdAt: 'desc' }; // default
       
       switch (sortBy) {
         case 'price-low':
