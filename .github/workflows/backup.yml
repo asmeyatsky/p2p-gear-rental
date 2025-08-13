@@ -1,0 +1,116 @@
+name: Repository Backup & Maintenance
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM UTC
+  workflow_dispatch:     # Allow manual trigger
+
+jobs:
+  backup:
+    name: Create Repository Backup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for backup
+      
+      - name: Create backup archive
+        run: |
+          # Create timestamped backup
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          BACKUP_NAME="p2p-gear-rental-backup-$TIMESTAMP"
+          
+          # Create archive excluding sensitive files
+          tar -czf "$BACKUP_NAME.tar.gz" \
+            --exclude='.env*' \
+            --exclude='node_modules' \
+            --exclude='.next' \
+            --exclude='test-results' \
+            --exclude='playwright-report' \
+            --exclude='dist' \
+            --exclude='build' \
+            .
+          
+          echo "Created backup: $BACKUP_NAME.tar.gz"
+          ls -lh "$BACKUP_NAME.tar.gz"
+      
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-backup-${{ github.run_number }}
+          path: "*.tar.gz"
+          retention-days: 90
+
+  maintenance:
+    name: Repository Maintenance
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Check for dependency updates
+        run: |
+          npm ci
+          echo "## Dependency Update Report" >> $GITHUB_STEP_SUMMARY
+          echo "Generated on: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for outdated packages
+          echo "### Outdated Packages" >> $GITHUB_STEP_SUMMARY
+          npm outdated --format json > outdated.json || true
+          
+          if [ -s outdated.json ]; then
+            echo "Found outdated packages:" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat outdated.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All packages are up to date!" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Security audit
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Security Audit" >> $GITHUB_STEP_SUMMARY
+          
+          # Run security audit
+          if npm audit --json > audit.json; then
+            echo "✅ No security vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Security vulnerabilities detected:" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat audit.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Repository statistics
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Repository Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total commits**: $(git rev-list --all --count)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Contributors**: $(git shortlog -sn --all | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branches**: $(git branch -r | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository size**: $(du -sh . | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Last commit**: $(git log -1 --format='%h %s (%an, %ar)')" >> $GITHUB_STEP_SUMMARY
+
+  cleanup:
+    name: Cleanup Old Artifacts
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Delete old workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 30
+          keep_minimum_runs: 10

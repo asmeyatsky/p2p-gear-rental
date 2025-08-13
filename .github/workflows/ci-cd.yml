@@ -1,0 +1,204 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  test:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run type checking
+        run: npx tsc --noEmit
+      
+      - name: Run linting
+        run: npm run lint
+      
+      - name: Run unit tests
+        run: npm run test
+      
+      - name: Build application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY_STAGING }}
+          project_id: ${{ secrets.GCP_PROJECT_ID_STAGING }}
+      
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+      
+      - name: Build and Deploy to Staging
+        run: |
+          # Build image
+          docker build -f Dockerfile -t gcr.io/${{ secrets.GCP_PROJECT_ID_STAGING }}/gear-rental:${{ github.sha }} .
+          
+          # Push to Container Registry
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID_STAGING }}/gear-rental:${{ github.sha }}
+          
+          # Deploy to Cloud Run
+          gcloud run deploy gear-rental-staging \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID_STAGING }}/gear-rental:${{ github.sha }} \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars NODE_ENV=staging \
+            --set-secrets DATABASE_URL=database-url-staging:latest,NEXT_PUBLIC_SUPABASE_URL=supabase-url:latest,NEXT_PUBLIC_SUPABASE_ANON_KEY=supabase-anon-key:latest,STRIPE_SECRET_KEY=stripe-secret-key-test:latest,NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=stripe-publishable-key-test:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret-test:latest \
+            --cpu 1 \
+            --memory 2Gi \
+            --min-instances 0 \
+            --max-instances 10
+      
+      - name: Run smoke tests on staging
+        run: |
+          STAGING_URL=$(gcloud run services describe gear-rental-staging --region=us-central1 --format="value(status.url)")
+          curl -f $STAGING_URL/api/health || exit 1
+
+  deploy-production:
+    name: Deploy to Production
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY_PRODUCTION }}
+          project_id: ${{ secrets.GCP_PROJECT_ID_PRODUCTION }}
+      
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+      
+      - name: Build and Deploy to Production
+        run: |
+          # Build production image
+          docker build -f Dockerfile -t gcr.io/${{ secrets.GCP_PROJECT_ID_PRODUCTION }}/gear-rental:${{ github.sha }} .
+          
+          # Push to Container Registry
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID_PRODUCTION }}/gear-rental:${{ github.sha }}
+          
+          # Deploy to Cloud Run with zero-downtime
+          gcloud run deploy gear-rental-service \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID_PRODUCTION }}/gear-rental:${{ github.sha }} \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars NODE_ENV=production \
+            --set-secrets DATABASE_URL=database-url:latest,NEXT_PUBLIC_SUPABASE_URL=supabase-url:latest,NEXT_PUBLIC_SUPABASE_ANON_KEY=supabase-anon-key:latest,STRIPE_SECRET_KEY=stripe-secret-key:latest,NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=stripe-publishable-key:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest,REDIS_URL=redis-url:latest,JWT_SECRET=jwt-secret:latest \
+            --add-cloudsql-instances ${{ secrets.CLOUD_SQL_CONNECTION_NAME }} \
+            --cpu 2 \
+            --memory 4Gi \
+            --min-instances 1 \
+            --max-instances 100 \
+            --timeout 300
+      
+      - name: Run production health check
+        run: |
+          PROD_URL=$(gcloud run services describe gear-rental-service --region=us-central1 --format="value(status.url)")
+          curl -f $PROD_URL/api/health || exit 1
+      
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "🚀 Production deployment successful!"
+          echo "Service URL: $(gcloud run services describe gear-rental-service --region=us-central1 --format='value(status.url)')"
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run npm audit
+        run: npm audit --audit-level moderate
+      
+      - name: Check for outdated packages
+        run: npm outdated || true

@@ -1,0 +1,74 @@
+name: Auto Sync to Remote
+
+on:
+  push:
+    branches: ['**']  # Trigger on any branch push
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync:
+    name: Sync to Remote Repository
+    runs-on: ubuntu-latest
+    if: github.repository == 'asmeyatsky/p2p-gear-rental'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+      
+      - name: Ensure all commits are synced
+        run: |
+          echo "🔄 Ensuring all local commits are synced to remote..."
+          
+          # Get current branch
+          CURRENT_BRANCH=$(git branch --show-current)
+          echo "Current branch: $CURRENT_BRANCH"
+          
+          # Check if there are any commits to push
+          COMMITS_AHEAD=$(git rev-list --count origin/$CURRENT_BRANCH..$CURRENT_BRANCH 2>/dev/null || echo "0")
+          
+          if [ "$COMMITS_AHEAD" -gt 0 ]; then
+            echo "📤 Found $COMMITS_AHEAD commits to sync"
+            git push origin $CURRENT_BRANCH
+            echo "✅ Successfully synced $COMMITS_AHEAD commits to remote"
+          else
+            echo "✅ Repository is already in sync"
+          fi
+      
+      - name: Verify sync status
+        run: |
+          CURRENT_BRANCH=$(git branch --show-current)
+          LOCAL_COMMIT=$(git rev-parse HEAD)
+          REMOTE_COMMIT=$(git rev-parse origin/$CURRENT_BRANCH)
+          
+          if [ "$LOCAL_COMMIT" = "$REMOTE_COMMIT" ]; then
+            echo "✅ Local and remote are perfectly in sync"
+            echo "Commit: $LOCAL_COMMIT"
+          else
+            echo "⚠️ Sync verification failed"
+            echo "Local:  $LOCAL_COMMIT"
+            echo "Remote: $REMOTE_COMMIT"
+            exit 1
+          fi
+
+  notify:
+    name: Sync Notification
+    needs: sync
+    runs-on: ubuntu-latest
+    if: always() && needs.sync.result == 'success'
+    
+    steps:
+      - name: Success notification
+        run: |
+          echo "🎉 Repository sync completed successfully!"
+          echo "All local commits have been pushed to remote repository."
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
