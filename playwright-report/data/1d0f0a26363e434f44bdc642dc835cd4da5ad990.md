@@ -1,0 +1,74 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - link "GearShare":
+    - /url: /
+  - navigation:
+    - link "About":
+      - /url: /about
+    - link "Browse Gear":
+      - /url: /browse
+    - link "FAQ":
+      - /url: /faq
+    - link "Contact":
+      - /url: /contact
+  - link "Log In":
+    - /url: /auth/login
+  - link "Sign Up":
+    - /url: /auth/signup
+- main:
+  - heading "Rent & Share Gear with Ease" [level=1]
+  - paragraph: Find the perfect gear for your next adventure or list your own to earn extra cash.
+  - link "Browse Gear":
+    - /url: /browse
+  - link "List Your Gear":
+    - /url: /add-gear
+  - textbox "Search for gear..."
+  - combobox:
+    - option "All Categories" [selected]
+    - option "Cameras"
+    - option "Lenses"
+    - option "Lighting"
+    - option "Audio"
+    - option "Drones"
+  - spinbutton: "0"
+  - spinbutton: "10000"
+  - textbox "City"
+  - textbox "State"
+  - button "Search"
+  - heading "Featured Gear" [level=1]
+  - paragraph: No gear found.
+- contentinfo:
+  - heading "GearShare" [level=3]
+  - paragraph: Your go-to marketplace for renting high-quality gear from a community of trusted owners.
+  - heading "Quick Links" [level=3]
+  - list:
+    - listitem:
+      - link "About Us":
+        - /url: /about
+    - listitem:
+      - link "Browse Gear":
+        - /url: /browse
+    - listitem:
+      - link "FAQ":
+        - /url: /faq
+    - listitem:
+      - link "Contact":
+        - /url: /contact
+    - listitem:
+      - link "Terms of Service":
+        - /url: /terms-of-service
+    - listitem:
+      - link "Privacy Policy":
+        - /url: /privacy-policy
+  - heading "Follow Us" [level=3]
+  - link "Facebook":
+    - /url: "#"
+  - link "Twitter":
+    - /url: "#"
+  - link "Instagram":
+    - /url: "#"
+  - text: © 2025 GearShare. All rights reserved.
+- alert
+```

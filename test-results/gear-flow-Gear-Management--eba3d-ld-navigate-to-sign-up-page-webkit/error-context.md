@@ -1,0 +1,62 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - link "GearShare":
+    - /url: /
+  - navigation:
+    - link "About":
+      - /url: /about
+    - link "Browse Gear":
+      - /url: /browse
+    - link "FAQ":
+      - /url: /faq
+    - link "Contact":
+      - /url: /contact
+  - link "Log In":
+    - /url: /auth/login
+  - link "Sign Up":
+    - /url: /auth/signup
+- main:
+  - heading "Create a new account" [level=2]
+  - textbox "Full name"
+  - textbox "Email address"
+  - textbox "Password"
+  - button "Sign up"
+  - paragraph:
+    - text: Already have an account?
+    - link "Sign in":
+      - /url: /auth/login
+- contentinfo:
+  - heading "GearShare" [level=3]
+  - paragraph: Your go-to marketplace for renting high-quality gear from a community of trusted owners.
+  - heading "Quick Links" [level=3]
+  - list:
+    - listitem:
+      - link "About Us":
+        - /url: /about
+    - listitem:
+      - link "Browse Gear":
+        - /url: /browse
+    - listitem:
+      - link "FAQ":
+        - /url: /faq
+    - listitem:
+      - link "Contact":
+        - /url: /contact
+    - listitem:
+      - link "Terms of Service":
+        - /url: /terms-of-service
+    - listitem:
+      - link "Privacy Policy":
+        - /url: /privacy-policy
+  - heading "Follow Us" [level=3]
+  - link "Facebook":
+    - /url: "#"
+  - link "Twitter":
+    - /url: "#"
+  - link "Instagram":
+    - /url: "#"
+  - text: © 2025 GearShare. All rights reserved.
+- alert
+```

@@ -34,6 +34,11 @@ jest.mock('next/image', () => ({
   },
 }));
 
+// Mock Google Analytics
+jest.mock('@/lib/gtag', () => ({
+  event: jest.fn(),
+}));
+
 // Mock fetch API
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
@@ -54,6 +59,11 @@ describe('GearDetailsPage', () => {
     images: ['/image1.jpg'], // Changed to absolute path for next/image
     category: 'cameras',
     userId: 'test-user-id',
+    brand: 'Test Brand',
+    model: 'Test Model',
+    condition: 'good',
+    createdAt: '2023-01-01T00:00:00.000Z',
+    updatedAt: '2023-01-01T00:00:00.000Z',
   };
 
   beforeEach(() => {
@@ -100,6 +110,14 @@ describe('GearDetailsPage', () => {
 
   it('calls delete API and redirects on successful deletion', async () => {
     window.confirm = jest.fn(() => true); // Mock confirm dialog
+    
+    // Mock the initial fetch call
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockGear),
+    });
+    
+    // Mock the delete API call
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ message: 'Gear deleted successfully' }),
@@ -122,6 +140,14 @@ describe('GearDetailsPage', () => {
 
   it('displays error toast on failed deletion', async () => {
     window.confirm = jest.fn(() => true); // Mock confirm dialog
+    
+    // Mock the initial fetch call
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockGear),
+    });
+    
+    // Mock the failed delete API call
     mockFetch.mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({ error: 'Failed to delete' }),
@@ -156,9 +182,11 @@ describe('EditGearPage', () => {
     images: ['/image1.jpg'],
     category: 'cameras',
     userId: 'test-user-id',
-    brand: '',
-    model: '',
-    condition: '',
+    brand: 'Test Brand',
+    model: 'Test Model',
+    condition: 'good',
+    createdAt: '2023-01-01T00:00:00.000Z',
+    updatedAt: '2023-01-01T00:00:00.000Z',
   };
 
   beforeEach(() => {
@@ -248,6 +276,13 @@ describe('EditGearPage', () => {
   });
 
   it('displays error toast on failed update', async () => {
+    // Mock the initial fetch call
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockGear),
+    });
+    
+    // Mock the failed update API call
     mockFetch.mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({ error: 'Failed to update' }),
