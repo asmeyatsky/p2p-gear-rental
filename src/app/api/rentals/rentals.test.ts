@@ -33,17 +33,19 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
+const mockPaymentIntents = {
+  create: jest.fn(),
+};
+
+const mockWebhooks = {
+  constructEvent: jest.fn(),
+};
+
 jest.mock('stripe', () => {
-  const mockStripe = jest.fn(() => ({
-    paymentIntents: {
-      create: jest.fn(),
-    },
-    webhooks: {
-      constructEvent: jest.fn(),
-    },
+  return jest.fn().mockImplementation(() => ({
+    paymentIntents: mockPaymentIntents,
+    webhooks: mockWebhooks,
   }));
-  (mockStripe as any).Webhook = jest.fn();
-  return mockStripe;
 });
 
 const mockSession = {
@@ -200,7 +202,7 @@ describe('Rentals API', () => {
       (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
       (prisma.gear.findUnique as jest.Mock).mockResolvedValue(mockGear);
       (prisma.rental.create as jest.Mock).mockResolvedValue(mockRental);
-      (Stripe.prototype.paymentIntents.create as jest.Mock).mockResolvedValue({
+      mockPaymentIntents.create.mockResolvedValue({
         id: mockRental.paymentIntentId,
         client_secret: mockRental.clientSecret,
         status: mockRental.paymentStatus,
@@ -237,7 +239,7 @@ describe('Rentals API', () => {
           paymentStatus: mockRental.paymentStatus,
         },
       });
-      expect(Stripe.prototype.paymentIntents.create).toHaveBeenCalledWith({
+      expect(mockPaymentIntents.create).toHaveBeenCalledWith({
         amount: Math.round(mockGear.dailyRate * 2 * 100), // 2 days * 10.0 dailyRate * 100 cents
         currency: 'usd',
         automatic_payment_methods: { enabled: true },

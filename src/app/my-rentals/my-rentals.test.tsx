@@ -116,23 +116,37 @@ describe('MyRentalsPage', () => {
 
     expect(await screen.findByText('Rentals for My Gear')).toBeInTheDocument();
     expect(await screen.findByText(mockRentalOwned.gear.title)).toBeInTheDocument();
-    expect(screen.getByText(`By: ${mockRentalOwned.renter.full_name}`)).toBeInTheDocument();
+    
+    // Wait for all content to load
+    await waitFor(() => {
+      expect(screen.getByText(`By: ${mockRentalOwned.renter.full_name}`)).toBeInTheDocument();
+    });
+    
     expect(await screen.findByRole('button', { name: /approve/i })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /reject/i })).toBeInTheDocument();
   });
 
   it('calls approve API and refreshes rentals on success', async () => {
     window.confirm = jest.fn(() => true); // Mock confirm dialog
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ message: 'Approved' }),
-    }); // For approve API call
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve([mockRentalRented, { ...mockRentalOwned, status: 'approved' }]),
-    }); // For refetch rentals
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([mockRentalRented, mockRentalOwned]),
+      }) // Initial fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ message: 'Approved' }),
+      }) // For approve API call
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([mockRentalRented, { ...mockRentalOwned, status: 'approved' }]),
+      }); // For refetch rentals
 
     render(<MyRentalsPage />);
+
+    // Wait for the component to load and render
+    await screen.findByText('Rentals for My Gear');
+    await screen.findByText('Lens B'); // Wait for the gear item to appear
 
     const approveButton = await screen.findByRole('button', { name: /approve/i });
     fireEvent.click(approveButton);
@@ -144,23 +158,32 @@ describe('MyRentalsPage', () => {
         body: JSON.stringify({ message: '' }),
       });
       expect(toast.success).toHaveBeenCalledWith('Rental request approved!');
-      expect(mockFetch).toHaveBeenCalledTimes(2); // Initial fetch + refresh
+      expect(mockFetch).toHaveBeenCalledTimes(3); // Initial fetch + approve call + refresh
     });
   });
 
   it('calls reject API and refreshes rentals on success', async () => {
     window.confirm = jest.fn(() => true); // Mock confirm dialog
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ message: 'Rejected' }),
-    }); // For reject API call
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve([mockRentalRented, { ...mockRentalOwned, status: 'rejected' }]),
-    }); // For refetch rentals
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([mockRentalRented, mockRentalOwned]),
+      }) // Initial fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ message: 'Rejected' }),
+      }) // For reject API call
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([mockRentalRented, { ...mockRentalOwned, status: 'rejected' }]),
+      }); // For refetch rentals
 
     render(<MyRentalsPage />);
 
+    // Wait for the component to load and render
+    await screen.findByText('Rentals for My Gear');
+    await screen.findByText('Lens B'); // Wait for the gear item to appear
+    
     const rejectButton = await screen.findByRole('button', { name: /reject/i });
     fireEvent.click(rejectButton);
 
@@ -171,7 +194,7 @@ describe('MyRentalsPage', () => {
         body: JSON.stringify({ message: '' }),
       });
       expect(toast.success).toHaveBeenCalledWith('Rental request rejected!');
-      expect(mockFetch).toHaveBeenCalledTimes(2); // Initial fetch + refresh
+      expect(mockFetch).toHaveBeenCalledTimes(3); // Initial fetch + approve call + refresh
     });
   });
 });

@@ -33,8 +33,8 @@ export default function Header() {
               <Link href="/profile" className="text-gray-600 hover:text-gray-900">
                 Profile
               </Link>
-              <Link href="/my-rentals" className="text-gray-600 hover:text-gray-900">
-                My Rentals
+              <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
+                Dashboard
               </Link>
             </>
           )}

@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast'; // Import toast
-import { event } from '@/lib/gtag'; // Import event for analytics
+import toast from 'react-hot-toast';
+import { event } from '@/lib/gtag';
 
 export default function SignupPage() {
   const [name, setName] = useState('');

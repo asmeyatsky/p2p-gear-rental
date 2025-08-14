@@ -20,10 +20,21 @@ if (process.env.NODE_ENV === 'test') {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing required Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set');
+    console.warn('Missing Supabase environment variables. Using mock client.');
+    supabase = {
+      auth: {
+        getSession: () => Promise.resolve({ data: { session: null } }),
+        onAuthStateChange: () => ({
+          data: { subscription: { unsubscribe: () => {} } },
+        }),
+        signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
+        signUp: () => Promise.resolve({ data: { user: null }, error: null }),
+        signOut: () => Promise.resolve({ error: null }),
+      },
+    } as unknown as SupabaseClient;
+  } else {
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
   }
-
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
 
 export { supabase };

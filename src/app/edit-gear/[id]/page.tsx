@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { GearItem } from '@/types';
-import toast from 'react-hot-toast'; // Import toast
+import ImageUpload from '@/components/ImageUpload';
+import toast from 'react-hot-toast';
 
 export default function EditGearPage() {
   const { id } = useParams();
@@ -211,7 +212,12 @@ export default function EditGearPage() {
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
         </div>
-        {/* Image upload will be handled separately */}
+        <ImageUpload
+          onImagesChange={setImages}
+          existingImages={images}
+          maxImages={10}
+          maxSizePerImage={5}
+        />
         <button
           type="submit"
           disabled={submitting}

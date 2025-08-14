@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
-import toast from 'react-hot-toast'; // Import toast
-import { event } from '@/lib/gtag'; // Import event for analytics
+import ImageUpload from '@/components/ImageUpload';
+import toast from 'react-hot-toast';
+import { event } from '@/lib/gtag';
 
 export default function AddGearPage() {
   const { user } = useAuth();
@@ -179,16 +180,12 @@ export default function AddGearPage() {
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           />
         </div>
-        <div>
-          <label htmlFor="images" className="block text-sm font-medium text-gray-700">Image URLs (comma-separated)</label>
-          <input
-            type="text"
-            id="images"
-            value={images.join(',')}
-            onChange={(e) => setImages(e.target.value.split(',').map(url => url.trim()))}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          />
-        </div>
+        <ImageUpload
+          onImagesChange={setImages}
+          existingImages={images}
+          maxImages={10}
+          maxSizePerImage={5}
+        />
         <button
           type="submit"
           disabled={loading}

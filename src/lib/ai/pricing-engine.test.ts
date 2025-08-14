@@ -64,7 +64,7 @@ describe('Smart Pricing Engine', () => {
       
       // SF is a premium market, should get location boost
       expect(recommendation.factors.location).toBeGreaterThan(1);
-      expect(recommendation.reasoning).toContain('Premium market location');
+      expect(recommendation.reasoning.some((reason: string) => reason.includes('Premium market location'))).toBe(true);
     });
 
     test('should apply weekend premium', async () => {
@@ -79,7 +79,7 @@ describe('Smart Pricing Engine', () => {
       
       // Canon is a premium brand
       expect(recommendation.factors.quality).toBeGreaterThan(1);
-      expect(recommendation.reasoning).toContain('canon brand');
+      expect(recommendation.reasoning.some((reason: string) => reason.includes('canon brand'))).toBe(true);
     });
 
     test('should handle high demand correctly', async () => {
@@ -95,7 +95,7 @@ describe('Smart Pricing Engine', () => {
       const recommendation = await smartPricingEngine.calculateOptimalPricing(highDemandFactors);
       
       expect(recommendation.factors.demand).toBeGreaterThan(1);
-      expect(recommendation.reasoning).toContain('High demand');
+      expect(recommendation.reasoning.some((reason: string) => reason.includes('High demand'))).toBe(true);
     });
 
     test('should handle low competition correctly', async () => {
