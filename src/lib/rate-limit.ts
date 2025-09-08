@@ -1,6 +1,7 @@
 import { LRUCache } from 'lru-cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { RateLimitError } from './api-error-handler';
+import { logger } from './logger';
 
 type Options = {
   uniqueTokenPerInterval?: number;
@@ -87,41 +88,6 @@ export function getClientIdentifier(req: NextRequest): string {
   return ip.trim();
 }
 
-// Middleware wrapper for API routes
-export function withRateLimit(
-  rateLimiter: RateLimiter,
-  limit: number = 100
-) {
-  return (handler: (req: NextRequest, ...args: any[]) => Promise<NextResponse>) => {
-    return async (req: NextRequest, ...args: any[]) => {
-      const identifier = getClientIdentifier(req);
-      
-      try {
-        const result = await rateLimiter.check(identifier, limit);
-        
-        // Execute the handler
-        const response = await handler(req, ...args);
-        
-        // Add rate limit headers if possible
-        if (response && response.headers) {
-          response.headers.set('X-RateLimit-Limit', limit.toString());
-          response.headers.set('X-RateLimit-Remaining', result.remaining.toString());
-          response.headers.set('X-RateLimit-Reset', result.resetTime.toISOString());
-        }
-        
-        return response;
-      } catch (error) {
-        if (error instanceof RateLimitError) {
-          throw error;
-        }
-        // If rate limiting fails, allow the request to proceed
-        console.error('Rate limiting error:', error);
-        return handler(req, ...args);
-      }
-    };
-  };
-}
-
 // Specific rate limit configurations
 export const rateLimitConfig = {
   // General API endpoints
@@ -138,4 +104,25 @@ export const rateLimitConfig = {
   
   // Payment endpoints (restrictive)
   payment: { limiter: authRateLimit, limit: 10 }, // 10 payment requests per 15 minutes
+  
+  // Health check endpoints (permissive)
+  health: { limiter: generalRateLimit, limit: 50 }, // 50 health checks per minute
 } as const;
+
+export function withRateLimit(limiter: RateLimiter, limit: number) {
+  return (handler: Function) => {
+    return async (req: NextRequest, ...args: any[]) => {
+      const identifier = getClientIdentifier(req);
+      try {
+        await limiter.check(identifier, limit);
+      } catch (error) {
+        if (error instanceof RateLimitError) {
+          throw error;
+        }
+        // Log other errors if necessary
+        throw new Error('An unexpected error occurred during rate limiting.');
+      }
+      return handler(req, ...args);
+    };
+  };
+}

@@ -1,41 +1,40 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { supabase } from '@/lib/supabase';
-import { withErrorHandler, AuthenticationError, NotFoundError, ForbiddenError } from '@/lib/api-error-handler';
+import { withErrorHandler, ValidationError, NotFoundError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
 import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
-import { logger } from '@/lib/logger';
+import { requireAuth, requireOwnership, addSecurityHeaders } from '@/lib/auth/middleware';
+import { updateGearSchema } from '@/lib/validations/gear';
 import { CacheManager } from '@/lib/cache';
-import { createGearSchema } from '@/lib/validations/gear';
+import { logger } from '@/lib/logger';
+import { queryOptimizer } from '@/lib/database/query-optimizer';
+import { executeWithRetry } from '@/lib/database/connection-pool';
 
 export const GET = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
-      async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-        const { id } = await params;
-        
-        logger.debug('Fetching gear details', { gearId: id }, 'API');
+      async (request: NextRequest, { params }: { params: { id: string } }) => {
+        const gearId = params.id;
 
-        // Check cache first
-        const cacheKey = CacheManager.keys.gear.detail(id);
-        const cached = await CacheManager.get(cacheKey);
-        
-        if (cached) {
-          logger.debug('Cache hit for gear details', { gearId: id, cacheKey }, 'CACHE');
-          return NextResponse.json(cached);
+        if (!gearId) {
+          throw new ValidationError('Gear ID is required');
         }
 
-        logger.debug('Cache miss for gear details', { gearId: id, cacheKey }, 'CACHE');
+        logger.debug('Gear details request', { gearId }, 'API');
 
-        // Fetch from database
-        const gear = await trackDatabaseQuery('gear.findUnique', () =>
-          prisma.gear.findUnique({
-            where: { id },
-            include: {
-              user: {
-                select: { id: true, email: true, full_name: true }
-              }
-            }
+        // Try cache first
+        const cacheKey = CacheManager.keys.gear.detail(gearId);
+        const cached = await CacheManager.get(cacheKey);
+        if (cached) {
+          const response = NextResponse.json(cached);
+          return addSecurityHeaders(response);
+        }
+
+        // Get gear with all related data using optimized query
+        const gear = await executeWithRetry(() =>
+          queryOptimizer.getGearDetail(gearId, {
+            useCache: false, // Already handled by route-level cache
+            includeMetrics: process.env.NODE_ENV !== 'production'
           })
         );
 
@@ -43,16 +42,17 @@ export const GET = withErrorHandler(
           throw new NotFoundError('Gear not found');
         }
 
-        // Cache the result
-        await CacheManager.set(cacheKey, gear, CacheManager.TTL.MEDIUM);
+        // Cache for 10 minutes
+        await CacheManager.set(cacheKey, gear, CacheManager.TTL.LONG);
 
-        logger.info('Gear details fetched successfully', { 
-          gearId: id,
+        logger.info('Gear details retrieved', { 
+          gearId, 
           title: gear.title,
           ownerId: gear.userId
         }, 'API');
 
-        return NextResponse.json(gear);
+        const response = NextResponse.json(gear);
+        return addSecurityHeaders(response);
       }
     )
   )
@@ -61,67 +61,67 @@ export const GET = withErrorHandler(
 export const PUT = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
-      async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-        const { id } = await params;
-        
-        // Check authentication
-        const { data: { session } } = await supabase.auth.getSession();
+      async (request: NextRequest, { params }: { params: { id: string } }) => {
+        const gearId = params.id;
 
-        if (!session || !session.user) {
-          throw new AuthenticationError();
+        if (!gearId) {
+          throw new ValidationError('Gear ID is required');
         }
+
+        // Authenticate user and verify ownership
+        const authContext = await requireAuth();
+        await requireOwnership('gear', gearId, authContext);
 
         // Parse and validate request body
         const body = await request.json();
-        const validatedData = createGearSchema.parse(body);
+        const validatedData = updateGearSchema.parse(body);
 
         logger.info('Gear update request', { 
-          gearId: id,
-          userId: session.user.id 
+          gearId, 
+          userId: authContext.userId,
+          fieldsUpdated: Object.keys(validatedData)
         }, 'API');
 
-        // Check if gear exists and get ownership
-        const existingGear = await trackDatabaseQuery('gear.findUnique', () =>
-          prisma.gear.findUnique({
-            where: { id },
-          })
-        );
-
-        if (!existingGear) {
-          throw new NotFoundError('Gear not found');
-        }
-
-        if (existingGear.userId !== session.user.id) {
-          throw new ForbiddenError('You do not own this gear');
-        }
-
-        // Update gear with validated data
-        const updatedGear = await trackDatabaseQuery('gear.update', () =>
-          prisma.gear.update({
-            where: { id },
-            data: validatedData,
-            include: {
-              user: {
-                select: { id: true, email: true, full_name: true }
+        // Update gear with retry logic
+        const updatedGear = await executeWithRetry(() =>
+          trackDatabaseQuery('gear.update', () =>
+            prisma.gear.update({
+              where: { id: gearId },
+              data: {
+                ...validatedData,
+                updatedAt: new Date(),
+              },
+              include: {
+                user: {
+                  select: { 
+                    id: true, 
+                    email: true, 
+                    full_name: true,
+                    averageRating: true,
+                    totalReviews: true
+                  }
+                }
               }
-            }
-          })
+            })
+          )
         );
 
-        // Invalidate relevant caches
+        // Invalidate related caches
         await Promise.all([
-          CacheManager.del(CacheManager.keys.gear.detail(id)),
-          CacheManager.del(CacheManager.keys.gear.user(session.user.id)),
+          CacheManager.del(CacheManager.keys.gear.detail(gearId)),
+          CacheManager.del(CacheManager.keys.gear.user(authContext.userId)),
           CacheManager.invalidatePattern('gear:list:*'),
+          validatedData.category ? CacheManager.del(CacheManager.keys.gear.category(validatedData.category)) : Promise.resolve(),
         ]);
 
         logger.info('Gear updated successfully', { 
-          gearId: id,
-          userId: session.user.id,
-          title: validatedData.title
+          gearId, 
+          userId: authContext.userId,
+          title: updatedGear.title
         }, 'API');
 
-        return NextResponse.json(updatedGear);
+        const response = NextResponse.json(updatedGear);
+        return addSecurityHeaders(response);
       }
     )
   )
@@ -130,57 +130,71 @@ export const PUT = withErrorHandler(
 export const DELETE = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
-      async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-        const { id } = await params;
-        
-        // Check authentication
-        const { data: { session } } = await supabase.auth.getSession();
+      async (request: NextRequest, { params }: { params: { id: string } }) => {
+        const gearId = params.id;
 
-        if (!session || !session.user) {
-          throw new AuthenticationError();
+        if (!gearId) {
+          throw new ValidationError('Gear ID is required');
         }
+
+        // Authenticate user and verify ownership
+        const authContext = await requireAuth();
+        await requireOwnership('gear', gearId, authContext);
 
         logger.info('Gear deletion request', { 
-          gearId: id,
-          userId: session.user.id 
+          gearId, 
+          userId: authContext.userId 
         }, 'API');
 
-        // Check if gear exists and get ownership
-        const existingGear = await trackDatabaseQuery('gear.findUnique', () =>
+        // Check if gear has active rentals with retry logic
+        const activeRentals = await executeWithRetry(() =>
+          trackDatabaseQuery('rental.count', () =>
+            prisma.rental.count({
+              where: {
+                gearId,
+                status: { in: ['pending', 'approved', 'active'] }
+              }
+            })
+          )
+        );
+
+        if (activeRentals > 0) {
+          throw new ValidationError('Cannot delete gear with active rentals');
+        }
+
+        // Get gear info before deletion for cache invalidation
+        const gear = await executeWithRetry(() =>
           prisma.gear.findUnique({
-            where: { id },
+            where: { id: gearId },
+            select: { category: true, title: true }
           })
         );
 
-        if (!existingGear) {
-          throw new NotFoundError('Gear not found');
-        }
-
-        if (existingGear.userId !== session.user.id) {
-          throw new ForbiddenError('You do not own this gear');
-        }
-
-        // Delete gear
-        await trackDatabaseQuery('gear.delete', () =>
-          prisma.gear.delete({
-            where: { id },
-          })
+        // Delete gear (this will cascade to related records due to DB constraints)
+        await executeWithRetry(() =>
+          trackDatabaseQuery('gear.delete', () =>
+            prisma.gear.delete({
+              where: { id: gearId }
+            })
+          )
         );
 
-        // Invalidate relevant caches
+        // Invalidate related caches
         await Promise.all([
-          CacheManager.del(CacheManager.keys.gear.detail(id)),
-          CacheManager.del(CacheManager.keys.gear.user(session.user.id)),
+          CacheManager.del(CacheManager.keys.gear.detail(gearId)),
+          CacheManager.del(CacheManager.keys.gear.user(authContext.userId)),
           CacheManager.invalidatePattern('gear:list:*'),
+          gear?.category ? CacheManager.del(CacheManager.keys.gear.category(gear.category)) : Promise.resolve(),
         ]);
 
         logger.info('Gear deleted successfully', { 
-          gearId: id,
-          userId: session.user.id,
-          title: existingGear.title
+          gearId, 
+          userId: authContext.userId,
+          title: gear?.title
         }, 'API');
 
-        return NextResponse.json({ message: 'Gear deleted successfully' }, { status: 200 });
+        const response = NextResponse.json({ message: 'Gear deleted successfully' });
+        return addSecurityHeaders(response);
       }
     )
   )

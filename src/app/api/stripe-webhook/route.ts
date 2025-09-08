@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2024-11-20.acacia' as any,
+  apiVersion: '2025-07-30.basil',
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;

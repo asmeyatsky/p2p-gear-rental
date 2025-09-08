@@ -60,7 +60,7 @@ export class CacheManager {
 
   static async set(
     key: string, 
-    value: any, 
+    value: unknown, 
     ttlSeconds: number = 300
   ): Promise<boolean> {
     if (!this.isEnabled()) return false;
@@ -168,6 +168,7 @@ export class CacheManager {
     user: {
       profile: (id: string) => `user:profile:${id}`,
       stats: (id: string) => `user:stats:${id}`,
+      dashboard: (id: string) => `user:dashboard:${id}`,
     },
     health: 'app:health',
     custom: (key: string) => key,

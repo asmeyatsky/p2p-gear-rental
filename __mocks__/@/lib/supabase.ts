@@ -1,11 +1,15 @@
-export const supabase = {
+// __mocks__/@/lib/supabase.ts
+// This is a centralized mock for the Supabase client.
+
+const supabase = {
   auth: {
-    getSession: jest.fn(() => Promise.resolve({ data: { session: null } })),
-    onAuthStateChange: jest.fn(() => ({
-      data: { subscription: { unsubscribe: jest.fn() } },
-    })),
-    signInWithPassword: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
-    signUp: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
-    signOut: jest.fn(() => Promise.resolve({ error: null })),
+    getSession: jest.fn(),
+    signInWithPassword: jest.fn(),
+    signUp: jest.fn(),
+    signOut: jest.fn(),
+    onAuthStateChange: jest.fn(),
   },
+  // Add other Supabase client methods as needed
 };
+
+export { supabase };

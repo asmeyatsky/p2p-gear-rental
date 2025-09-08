@@ -1,4 +1,29 @@
+// Set up test environment variables first
+process.env.NODE_ENV = 'test';
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/testdb';
+process.env.REDIS_URL = 'redis://localhost:6379';
+process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_123';
+process.env.NEXTAUTH_SECRET = 'test-secret';
+process.env.NEXTAUTH_URL = 'http://localhost:3000';
+
 require('@testing-library/jest-dom');
+
+// Mock global fetch and Headers for Stripe
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(''),
+    status: 200,
+    headers: new Map(),
+  })
+) as jest.Mock;
+
+global.Headers = class MockHeaders extends Headers {};
 
 // @ts-ignore
 // Mock global Request for Next.js API route tests
@@ -76,3 +101,52 @@ jest.mock('next/server', () => ({
   },
   NextRequest: global.Request,
 }));
+
+// Suppress expected API errors during tests
+const originalConsoleError = console.error;
+console.error = jest.fn((message, ...args) => {
+  // Only suppress expected API errors during tests
+  if (typeof message === 'string' && (
+    message.includes('API Error:') ||
+    message.includes('ZodError:') ||
+    message.includes('ValidationError') ||
+    message.includes('AuthenticationError')
+  )) {
+    return;
+  }
+  originalConsoleError(message, ...args);
+});
+
+// Mock browser APIs only in jsdom environment
+if (typeof window !== 'undefined') {
+  // Mock window.matchMedia
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: jest.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(), // deprecated
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+
+  // Mock IntersectionObserver
+  global.IntersectionObserver = class IntersectionObserver {
+    constructor() {}
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+
+  // Mock ResizeObserver
+  global.ResizeObserver = class ResizeObserver {
+    constructor() {}
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}

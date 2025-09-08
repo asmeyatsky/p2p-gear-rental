@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 interface SearchFiltersProps {
-  onSearch: (filters: { searchTerm: string; category: string; minPrice: number; maxPrice: number; city: string; state: string }) => void;
+  onSearch: (filters: { searchTerm: string; category: string; minPrice: number; maxPrice: number; city: string; state: string; startDate: string; endDate: string }) => void;
 }
 
 export default function SearchFilters({ onSearch }: SearchFiltersProps) {
@@ -13,10 +13,12 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
   const [maxPrice, setMaxPrice] = useState(10000);
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch({ searchTerm, category, minPrice, maxPrice, city, state });
+    onSearch({ searchTerm, category, minPrice, maxPrice, city, state, startDate, endDate });
   };
 
   return (
@@ -69,6 +71,20 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
           onChange={(e) => setState(e.target.value)}
           className="p-2 border rounded-md"
         />
+        <input
+          type="date"
+          placeholder="Start Date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="p-2 border rounded-md"
+        />
+        <input
+          type="date"
+          placeholder="End Date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="p-2 border rounded-md"
+        />
         <button
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 col-span-full"
@@ -77,5 +93,6 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
         </button>
       </div>
     </form>
+
   );
 }

@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { withErrorHandler, AuthenticationError, ValidationError, ConflictError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
 import { createReviewSchema, reviewQuerySchema } from '@/lib/validations/review';
+import { Prisma } from '@prisma/client';
 import { CacheManager } from '@/lib/cache';
 
 // GET /api/reviews - List reviews with filtering
@@ -26,7 +27,7 @@ export const GET = withErrorHandler(
       }
 
       // Build where clause
-      const where: any = {};
+      const where: Prisma.ReviewWhereInput = {};
       if (userId) {
         where.revieweeId = userId; // Reviews received by this user
       }
@@ -35,7 +36,7 @@ export const GET = withErrorHandler(
       }
 
       // Build order by
-      let orderBy: any = { createdAt: 'desc' };
+      let orderBy: Prisma.ReviewOrderByWithRelationInput = { createdAt: 'desc' };
       switch (sortBy) {
         case 'oldest':
           orderBy = { createdAt: 'asc' };

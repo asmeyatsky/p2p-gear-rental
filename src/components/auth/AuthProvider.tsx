@@ -1,16 +1,16 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthResponse, AuthChangeEvent, WeakPassword, AuthError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase-browser';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ data: any; error: any }>;
-  signUp: (email: string, password: string, name?: string) => Promise<{ data: any; error: any }>;
-  signOut: () => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<AuthResponse>;
+  signUp: (email: string, password: string, name?: string) => Promise<AuthResponse>;
+  signOut: () => Promise<{ error: AuthResponse['error'] }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: any, session: any) => {
+      (event: AuthChangeEvent, session: Session | null) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase.auth]);
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     });
     setLoading(false);
-    return { data, error };
+    return { data, error } as any;
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
     setLoading(false);
-    return { data, error };
+    return { data, error } as any;
   };
 
   const signOut = async () => {

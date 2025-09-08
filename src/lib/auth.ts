@@ -50,7 +50,7 @@ export async function getCurrentUser(): Promise<{ user: User; session: Session }
 /**
  * Middleware wrapper for API routes that require authentication
  */
-export function withAuth<T extends any[]>(
+export function withAuth<T extends unknown[]>(
   handler: (request: NextRequest, user: User, session: Session, ...args: T) => Promise<Response>
 ) {
   return async (request: NextRequest, ...args: T): Promise<Response> => {

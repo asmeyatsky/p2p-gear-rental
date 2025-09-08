@@ -3,6 +3,7 @@
  * Provides personalized gear recommendations using machine learning algorithms
  */
 
+import { User, Gear } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
 import { prisma } from '@/lib/prisma';
@@ -28,6 +29,8 @@ export interface RentalHistoryItem {
   duration: number;
   rating: number;
   rentalDate: Date;
+  city: string;
+  state: string;
 }
 
 export interface SearchHistoryItem {
@@ -183,16 +186,16 @@ class IntelligentRecommendationEngine {
     const sourceItem = await prisma.gear.findUnique({
       where: { id: gearId },
       include: {
-        user: { select: { id: true, full_name: true, averageRating: true, totalReviews: true } }
+        user: true
       }
     });
 
-    if (!sourceItem) {
+    if (!sourceItem || !sourceItem.user) {
       return [];
     }
 
     // Find similar items using content-based similarity
-    const similarItems = await this.findContentSimilarItems(sourceItem, maxResults * 2);
+    const similarItems = await this.findContentSimilarItems(sourceItem as Gear & { user: User }, maxResults * 2);
     
     // Apply user preferences if available
     let recommendations = similarItems;
@@ -232,7 +235,7 @@ class IntelligentRecommendationEngine {
         createdAt: { gte: dateFilter }
       },
       include: {
-        user: { select: { id: true, full_name: true, averageRating: true, totalReviews: true } },
+        user: true,
         rentals: {
           where: { createdAt: { gte: dateFilter } },
           select: { createdAt: true, review: { select: { rating: true } } }
@@ -243,7 +246,8 @@ class IntelligentRecommendationEngine {
 
     // Calculate trending scores
     const recommendations = trendingGear
-      .map(gear => this.calculateTrendingScore(gear))
+      .filter(gear => gear.user)
+      .map(gear => this.calculateTrendingScore(gear as Gear & { rentals: { review: { rating: number } | null }[], user: User }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 20);
 
@@ -275,25 +279,29 @@ class IntelligentRecommendationEngine {
     const brands = [...new Set(rentals.map(r => r.gear.brand).filter((brand): brand is string => !!brand))];
     const priceRange = this.calculatePriceRange(rentals.map(r => r.gear.dailyRate));
     
+    const rentalHistory = rentals.map(r => ({
+      gearId: r.gearId,
+      category: r.gear.category || 'other',
+      brand: r.gear.brand || 'unknown',
+      model: r.gear.model || 'unknown',
+      dailyRate: r.gear.dailyRate,
+      duration: Math.ceil((r.endDate.getTime() - r.startDate.getTime()) / (1000 * 60 * 60 * 24)),
+      rating: r.review?.rating || 3,
+      rentalDate: r.createdAt,
+      city: r.gear.city,
+      state: r.gear.state,
+    }));
+
     const preferences: UserPreferences = {
       userId,
       categories,
       priceRange,
       brands,
-      location: this.inferUserLocation(rentals),
-      rentalHistory: rentals.map(r => ({
-        gearId: r.gearId,
-        category: r.gear.category || 'other',
-        brand: r.gear.brand || 'unknown',
-        model: r.gear.model || 'unknown',
-        dailyRate: r.gear.dailyRate,
-        duration: Math.ceil((r.endDate.getTime() - r.startDate.getTime()) / (1000 * 60 * 60 * 24)),
-        rating: r.review?.rating || 3,
-        rentalDate: r.createdAt
-      })),
+      location: this.inferUserLocation(rentalHistory),
+      rentalHistory,
       searchHistory: [], // Would be populated from analytics
-      favoriteFeatures: this.inferFavoriteFeatures(rentals),
-      behaviorScore: this.calculateBehaviorScore(rentals)
+      favoriteFeatures: this.inferFavoriteFeatures(rentalHistory),
+      behaviorScore: this.calculateBehaviorScore(rentalHistory)
     };
 
     await CacheManager.set(cacheKey, preferences, 15 * 60); // 15 minutes
@@ -302,8 +310,13 @@ class IntelligentRecommendationEngine {
 
   private async collaborativeFiltering(
     userPreferences: UserPreferences,
-    options: any
-  ): Promise<{ recommendations: RecommendationItem[]; confidence: number; metadata: any }> {
+    options: {
+      category?: string;
+      maxResults?: number;
+      includeReasons?: boolean;
+      strategy?: 'collaborative' | 'content' | 'hybrid' | 'trending';
+    }
+  ): Promise<{ recommendations: RecommendationItem[]; confidence: number; metadata: RecommendationResult['metadata'] }> {
     // Find users with similar preferences
     const similarUsers = await this.findSimilarUsers(userPreferences);
     
@@ -316,7 +329,7 @@ class IntelligentRecommendationEngine {
       include: {
         gear: {
           include: {
-            user: { select: { id: true, full_name: true, averageRating: true, totalReviews: true } }
+            user: true
           }
         },
         review: true
@@ -327,11 +340,11 @@ class IntelligentRecommendationEngine {
     // Filter out items user has already rented
     const userRentedIds = new Set(userPreferences.rentalHistory.map(r => r.gearId));
     const candidateGear = similarUserRentals
-      .filter(r => !userRentedIds.has(r.gearId))
+      .filter(r => !userRentedIds.has(r.gearId) && r.gear.user)
       .map(r => r.gear);
 
     const recommendations = candidateGear.map(gear => 
-      this.convertToRecommendationItem(gear, userPreferences, 'collaborative')
+      this.convertToRecommendationItem(gear as Gear & { user: User }, userPreferences, 'collaborative')
     );
 
     return {
@@ -348,8 +361,13 @@ class IntelligentRecommendationEngine {
 
   private async contentBasedFiltering(
     userPreferences: UserPreferences,
-    options: any
-  ): Promise<{ recommendations: RecommendationItem[]; confidence: number; metadata: any }> {
+    options: {
+      category?: string;
+      maxResults?: number;
+      includeReasons?: boolean;
+      strategy?: 'collaborative' | 'content' | 'hybrid' | 'trending';
+    }
+  ): Promise<{ recommendations: RecommendationItem[]; confidence: number; metadata: RecommendationResult['metadata'] }> {
     // Find gear similar to user's preferred categories and brands
     const candidateGear = await prisma.gear.findMany({
       where: {
@@ -368,11 +386,11 @@ class IntelligentRecommendationEngine {
     // Filter out user's own gear and previously rented items
     const userRentedIds = new Set(userPreferences.rentalHistory.map(r => r.gearId));
     const filteredGear = candidateGear.filter(gear => 
-      gear.userId !== userPreferences.userId && !userRentedIds.has(gear.id)
+      gear.userId !== userPreferences.userId && !userRentedIds.has(gear.id) && gear.user !== null
     );
 
     const recommendations = filteredGear.map(gear => 
-      this.convertToRecommendationItem(gear, userPreferences, 'content')
+      this.convertToRecommendationItem(gear as any, userPreferences, 'content')
     );
 
     return {
@@ -389,8 +407,13 @@ class IntelligentRecommendationEngine {
 
   private async hybridRecommendations(
     userPreferences: UserPreferences,
-    options: any
-  ): Promise<{ recommendations: RecommendationItem[]; confidence: number; metadata: any }> {
+    options: {
+      category?: string;
+      maxResults?: number;
+      includeReasons?: boolean;
+      strategy?: 'collaborative' | 'content' | 'hybrid' | 'trending';
+    }
+  ): Promise<{ recommendations: RecommendationItem[]; confidence: number; metadata: RecommendationResult['metadata'] }> {
     // Combine collaborative and content-based filtering
     const [collaborative, content] = await Promise.all([
       this.collaborativeFiltering(userPreferences, options),
@@ -421,8 +444,13 @@ class IntelligentRecommendationEngine {
 
   private async trendingRecommendations(
     userPreferences: UserPreferences,
-    options: any
-  ): Promise<{ recommendations: RecommendationItem[]; confidence: number; metadata: any }> {
+    options: {
+      category?: string;
+      maxResults?: number;
+      includeReasons?: boolean;
+      strategy?: 'collaborative' | 'content' | 'hybrid' | 'trending';
+    }
+  ): Promise<{ recommendations: RecommendationItem[]; confidence: number; metadata: RecommendationResult['metadata'] }> {
     const trending = await this.getTrendingRecommendations(
       userPreferences.location,
       options.category
@@ -476,11 +504,11 @@ class IntelligentRecommendationEngine {
     };
   }
 
-  private inferUserLocation(rentals: any[]): { city: string; state: string; radius: number } {
+  private inferUserLocation(rentals: RentalHistoryItem[]): { city: string; state: string; radius: number } {
     if (rentals.length === 0) return { city: '', state: '', radius: 50 };
     
     // Find most common location
-    const locations = rentals.map(r => `${r.gear.city}, ${r.gear.state}`);
+    const locations = rentals.map(r => `${r.city}, ${r.state}`);
     const locationCounts = locations.reduce((acc, loc) => {
       acc[loc] = (acc[loc] || 0) + 1;
       return acc;
@@ -493,12 +521,12 @@ class IntelligentRecommendationEngine {
     return { city, state, radius: 50 };
   }
 
-  private inferFavoriteFeatures(rentals: any[]): string[] {
+  private inferFavoriteFeatures(rentals: RentalHistoryItem[]): string[] {
     // Analyze rental patterns to infer favorite features
     const features: string[] = [];
     
-    const categories = rentals.map(r => r.gear.category);
-    const brands = rentals.map(r => r.gear.brand);
+    const categories = rentals.map(r => r.category);
+    const brands = rentals.map(r => r.brand);
     
     // Add frequent categories as features
     const categoryCount = categories.reduce((acc, cat) => {
@@ -513,7 +541,7 @@ class IntelligentRecommendationEngine {
     return features;
   }
 
-  private calculateBehaviorScore(rentals: any[]): number {
+  private calculateBehaviorScore(rentals: RentalHistoryItem[]): number {
     if (rentals.length === 0) return 0.3;
     
     let score = 0;
@@ -522,13 +550,13 @@ class IntelligentRecommendationEngine {
     score += Math.min(rentals.length / 20, 0.4);
     
     // Review engagement
-    const reviewRate = rentals.filter(r => r.review).length / rentals.length;
+    const reviewRate = rentals.filter(r => r.rating).length / rentals.length;
     score += reviewRate * 0.3;
     
     // Average rating given
     const avgRating = rentals
-      .filter(r => r.review)
-      .reduce((sum, r) => sum + r.review.rating, 0) / rentals.filter(r => r.review).length;
+      .filter(r => r.rating)
+      .reduce((sum, r) => sum + r.rating, 0) / rentals.filter(r => r.rating).length;
     
     if (avgRating) {
       score += (avgRating / 5) * 0.3;
@@ -560,9 +588,9 @@ class IntelligentRecommendationEngine {
       .slice(0, 10);
   }
 
-  private calculateUserSimilarity(user1: UserPreferences, user2: any): number {
+  private calculateUserSimilarity(user1: UserPreferences, user2: User & { rentedItems: { gear: Gear }[] }): number {
     // Simplified similarity calculation
-    const user2Categories = [...new Set(user2.rentedItems.map((r: any) => r.gear.category))];
+    const user2Categories = [...new Set(user2.rentedItems.map((r: { gear: Gear }) => r.gear.category).filter((cat): cat is string => !!cat))];
     const commonCategories = user1.categories.filter(cat => user2Categories.includes(cat));
     
     const categorySimilarity = commonCategories.length / Math.max(user1.categories.length, user2Categories.length);
@@ -570,7 +598,7 @@ class IntelligentRecommendationEngine {
     return categorySimilarity;
   }
 
-  private async findContentSimilarItems(sourceItem: any, limit: number): Promise<RecommendationItem[]> {
+  private async findContentSimilarItems(sourceItem: Gear & { user: User }, limit: number): Promise<RecommendationItem[]> {
     const similarItems = await prisma.gear.findMany({
       where: {
         AND: [
@@ -621,7 +649,7 @@ class IntelligentRecommendationEngine {
     }));
   }
 
-  private calculateContentSimilarity(item1: any, item2: any): number {
+  private calculateContentSimilarity(item1: Gear, item2: Gear): number {
     let score = 0;
     
     if (item1.category === item2.category) score += 0.4;
@@ -653,7 +681,7 @@ class IntelligentRecommendationEngine {
     return multiplier;
   }
 
-  private convertToRecommendationItem(gear: any, preferences: UserPreferences, source: string): RecommendationItem {
+  private convertToRecommendationItem(gear: Gear & { user: User }, preferences: UserPreferences, source: string): RecommendationItem {
     return {
       gearId: gear.id,
       title: gear.title,
@@ -680,14 +708,14 @@ class IntelligentRecommendationEngine {
     };
   }
 
-  private calculateBaseScore(gear: any, preferences: UserPreferences, source: string): number {
+  private calculateBaseScore(gear: Gear & { user: User }, preferences: UserPreferences, source: string): number {
     let score = 0.5; // Base score
     
     // Category preference
-    if (preferences.categories.includes(gear.category)) score += 0.2;
+    if (gear.category && preferences.categories.includes(gear.category)) score += 0.2;
     
     // Brand preference
-    if (preferences.brands.includes(gear.brand)) score += 0.15;
+    if (gear.brand && preferences.brands.includes(gear.brand)) score += 0.15;
     
     // Price preference
     if (gear.dailyRate >= preferences.priceRange.min && gear.dailyRate <= preferences.priceRange.max) {
@@ -705,14 +733,14 @@ class IntelligentRecommendationEngine {
     return Math.min(score, 1);
   }
 
-  private generateReasons(gear: any, preferences: UserPreferences, source: string): string[] {
+  private generateReasons(gear: Gear & { user: User }, preferences: UserPreferences, source: string): string[] {
     const reasons: string[] = [];
     
-    if (preferences.categories.includes(gear.category)) {
+    if (gear.category && preferences.categories.includes(gear.category)) {
       reasons.push(`Matches your interest in ${gear.category}`);
     }
     
-    if (preferences.brands.includes(gear.brand)) {
+    if (gear.brand && preferences.brands.includes(gear.brand)) {
       reasons.push(`You've rented ${gear.brand} equipment before`);
     }
     
@@ -731,9 +759,9 @@ class IntelligentRecommendationEngine {
     return reasons;
   }
 
-  private calculateTrendingScore(gear: any): RecommendationItem {
+  private calculateTrendingScore(gear: Gear & { rentals: { review: { rating: number } | null }[], user: User }): RecommendationItem {
     const recentRentals = gear.rentals.length;
-    const avgRating = gear.rentals.reduce((sum: number, r: any) => sum + (r.rating || 3), 0) / Math.max(gear.rentals.length, 1);
+    const avgRating = gear.rentals.reduce((sum: number, r) => sum + (r.review?.rating || 3), 0) / Math.max(gear.rentals.length, 1);
     
     let trendingScore = 0;
     trendingScore += Math.min(recentRentals / 10, 0.5); // Rental frequency
@@ -758,7 +786,7 @@ class IntelligentRecommendationEngine {
       location: { city: gear.city, state: gear.state },
       condition: gear.condition || 'good',
       score: trendingScore,
-      reasons: [`Trending in ${gear.category}`, 'Popular this week'],
+      reasons: [`Trending in ${gear.category || 'this category'}`, 'Popular this week'],
       availability: {
         nextAvailable: new Date(),
         bookingRate: recentRentals / 30 // Estimate based on recent activity
@@ -834,7 +862,7 @@ export async function intelligentSearch(
   suggestions: string[];
   queryUnderstanding: {
     intent: string;
-    extractedFilters: any;
+    extractedFilters: { category?: string; brand?: string; };
     confidence: number;
   };
 }> {
@@ -880,7 +908,7 @@ export async function intelligentSearch(
 
 function parseSearchQuery(query: string): {
   intent: string;
-  extractedFilters: any;
+  extractedFilters: { category?: string; brand?: string; };
   confidence: number;
 } {
   const lowerQuery = query.toLowerCase();
@@ -909,7 +937,7 @@ function parseSearchQuery(query: string): {
   };
 }
 
-function generateSearchSuggestions(query: string, understanding: any): string[] {
+function generateSearchSuggestions(query: string, understanding: { extractedFilters: { category?: string; brand?: string; }; intent: string; confidence: number; }): string[] {
   const suggestions: string[] = [];
   
   // Add category-based suggestions

@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 interface RentalDetails {
   id: string;
@@ -36,57 +37,55 @@ export default function PaymentConfirmationPage() {
       return;
     }
 
+    const checkPaymentStatus = async () => {
+      try {
+        setLoading(true);
+
+        // Get payment intent status from URL params
+        const redirectStatus = searchParams.get('redirect_status');
+
+        if (redirectStatus === 'succeeded') {
+          setPaymentStatus('success');
+          toast.success('Payment completed successfully!');
+        } else if (redirectStatus === 'processing') {
+          setPaymentStatus('processing');
+          toast.loading('Payment is being processed...');
+        } else if (redirectStatus === 'failed') {
+          setPaymentStatus('failed');
+          toast.error('Payment failed. Please try again.');
+        }
+
+        // Fetch rental details
+        const res = await fetch(`/api/rentals/${id}`);
+        if (!res.ok) {
+          throw new Error('Failed to fetch rental details');
+        }
+
+        const rentalData = await res.json();
+        setRental(rentalData);
+
+        // Double-check payment status from our database
+        if (rentalData.paymentStatus === 'succeeded') {
+          setPaymentStatus('success');
+        } else if (rentalData.paymentStatus === 'processing') {
+          setPaymentStatus('processing');
+        } else if (rentalData.paymentStatus === 'failed') {
+          setPaymentStatus('failed');
+        }
+
+      } catch (error) {
+        console.error('Error checking payment status:', error);
+        setPaymentStatus('failed');
+        toast.error('Failed to confirm payment status');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (user && id) {
       checkPaymentStatus();
     }
-  }, [user, authLoading, id, router]);
-
-  const checkPaymentStatus = async () => {
-    try {
-      setLoading(true);
-
-      // Get payment intent status from URL params
-      const paymentIntent = searchParams.get('payment_intent');
-      const paymentIntentClientSecret = searchParams.get('payment_intent_client_secret');
-      const redirectStatus = searchParams.get('redirect_status');
-
-      if (redirectStatus === 'succeeded') {
-        setPaymentStatus('success');
-        toast.success('Payment completed successfully!');
-      } else if (redirectStatus === 'processing') {
-        setPaymentStatus('processing');
-        toast.loading('Payment is being processed...');
-      } else if (redirectStatus === 'failed') {
-        setPaymentStatus('failed');
-        toast.error('Payment failed. Please try again.');
-      }
-
-      // Fetch rental details
-      const res = await fetch(`/api/rentals/${id}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch rental details');
-      }
-
-      const rentalData = await res.json();
-      setRental(rentalData);
-
-      // Double-check payment status from our database
-      if (rentalData.paymentStatus === 'succeeded') {
-        setPaymentStatus('success');
-      } else if (rentalData.paymentStatus === 'processing') {
-        setPaymentStatus('processing');
-      } else if (rentalData.paymentStatus === 'failed') {
-        setPaymentStatus('failed');
-      }
-
-    } catch (error) {
-      console.error('Error checking payment status:', error);
-      setPaymentStatus('failed');
-      toast.error('Failed to confirm payment status');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, authLoading, id, router, searchParams]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -211,10 +210,12 @@ export default function PaymentConfirmationPage() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Rental Details</h2>
               
               <div className="flex items-start space-x-4 mb-4">
-                <img
+                <Image
                   src={rental.gear.images[0] || '/placeholder-gear.jpg'}
                   alt={rental.gear.title}
-                  className="w-16 h-16 object-cover rounded-lg"
+                  width={64}
+                  height={64}
+                  className="object-cover rounded-lg"
                 />
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">{rental.gear.title}</h3>

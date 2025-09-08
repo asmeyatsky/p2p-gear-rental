@@ -3,7 +3,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { Toaster } from "react-hot-toast";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 
 export const metadata: Metadata = {
   title: "GearShare",
@@ -50,7 +50,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
-          <Toaster /> {/* Add Toaster component */}
+          <ToastProvider />
         </AuthProvider>
       </body>
     </html>

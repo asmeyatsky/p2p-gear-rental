@@ -254,7 +254,7 @@ class RealTimeChatEngine {
     }
 
     const cacheKey = CacheManager.keys.custom(`messages:${conversationId}:${before || 'latest'}:${limit}`);
-    const cached = await CacheManager.get<any>(cacheKey);
+    const cached = await CacheManager.get<{ messages: ChatMessage[]; hasMore: boolean; nextCursor?: string; }>(cacheKey);
     
     if (cached) {
       return cached;
@@ -555,33 +555,33 @@ class RealTimeChatEngine {
   }
 
   // Private helper methods
-  private async handleWebSocketMessage(userId: string, data: any): Promise<void> {
+  private async handleWebSocketMessage(userId: string, data: Record<string, unknown>): Promise<void> {
     switch (data.type) {
       case 'send_message':
         await this.sendMessage(
           userId,
-          data.receiverId,
-          data.content,
-          data.messageType || 'text',
-          data.metadata,
-          data.conversationId
+          data.receiverId as string,
+          data.content as string,
+          (data.messageType as 'text' | 'image' | 'file' | 'system' | 'typing' | 'location' | 'payment_request') || 'text',
+          data.metadata as Record<string, unknown>,
+          data.conversationId as string
         );
         break;
 
       case 'typing_start':
-        await this.startTyping(userId, data.conversationId);
+        await this.startTyping(userId, data.conversationId as string);
         break;
 
       case 'typing_stop':
-        await this.stopTyping(userId, data.conversationId);
+        await this.stopTyping(userId, data.conversationId as string);
         break;
 
       case 'mark_read':
-        await this.markMessagesAsRead(data.messageIds);
+        await this.markMessagesAsRead(data.messageIds as string[]);
         break;
 
       case 'update_presence':
-        await this.updateUserPresenceStatus(userId, data.status, data.deviceInfo);
+        await this.updateUserPresenceStatus(userId, data.status as 'offline' | 'online' | 'away' | 'busy', data.deviceInfo as { type: 'mobile' | 'desktop' | 'tablet'; platform: string; browser?: string });
         break;
 
       case 'ping':
@@ -593,7 +593,7 @@ class RealTimeChatEngine {
     }
   }
 
-  private async sendToUser(userId: string, data: any): Promise<void> {
+  private async sendToUser(userId: string, data: Record<string, unknown>): Promise<void> {
     const connection = this.wsConnections.get(userId);
     
     if (connection && connection.readyState === WebSocket.OPEN) {
@@ -774,7 +774,7 @@ class RealTimeChatEngine {
     return [];
   }
 
-  private async storeOfflineMessage(userId: string, data: any): Promise<void> {
+  private async storeOfflineMessage(userId: string, data: Record<string, unknown>): Promise<void> {
     // Store message for offline user delivery
     logger.debug('Storing offline message', { userId }, 'CHAT_ENGINE');
   }
@@ -807,7 +807,7 @@ class RealTimeChatEngine {
     logger.debug('Broadcasting presence update', { userId, status: presence.status }, 'CHAT_ENGINE');
   }
 
-  private async getPresenceData(userId: string): Promise<any> {
+  private async getPresenceData(userId: string): Promise<{ onlineUsers: { userId: string; status: UserPresence['status']; lastSeen: Date; }[] }> {
     // Get presence data for user
     return {
       onlineUsers: Array.from(this.userPresence.entries())

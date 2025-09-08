@@ -1,9 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
 import { withErrorHandler, AuthenticationError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
-import { withMonitoring } from '@/lib/monitoring';
+import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
+import { CacheManager } from '@/lib/cache';
+import { logger } from '@/lib/logger';
+import { queryOptimizer } from '@/lib/database/query-optimizer';
+import { executeWithRetry } from '@/lib/database/connection-pool';
 
 export const GET = withErrorHandler(
   withMonitoring(
@@ -17,118 +21,35 @@ export const GET = withErrorHandler(
 
         const userId = session.user.id;
 
+        logger.debug('Dashboard stats request', { userId }, 'API');
+
+        // Check cache first
+        const cacheKey = CacheManager.keys.user.dashboard(userId);
+        const cached = await CacheManager.get(cacheKey);
+        if (cached) {
+          logger.debug('Dashboard stats cache hit', { userId }, 'CACHE');
+          return NextResponse.json(cached);
+        }
+
         try {
-          // Calculate date ranges
-          const now = new Date();
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-          const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
-          // Get all rentals where user is owner or renter
-          const allRentals = await prisma.rental.findMany({
-            where: {
-              OR: [
-                { ownerId: userId },
-                { renterId: userId }
-              ]
-            },
-            include: {
-              gear: {
-                select: {
-                  dailyRate: true
-                }
-              }
-            }
-          });
-
-          // Get rentals where user is the owner (earning money)
-          const ownerRentals = allRentals.filter(rental => rental.ownerId === userId);
-
-          // Calculate basic stats
-          const totalRentals = allRentals.length;
-          const activeRentals = allRentals.filter(rental => 
-            rental.status === 'approved' || rental.status === 'active'
-          ).length;
-          const pendingRequests = ownerRentals.filter(rental => 
-            rental.status === 'pending'
-          ).length;
-          const completedRentals = allRentals.filter(rental => 
-            rental.status === 'completed'
-          ).length;
-
-          // Calculate earnings (only from rentals where user is the owner)
-          const completedOwnerRentals = ownerRentals.filter(rental => 
-            rental.status === 'completed'
+          // Use optimized dashboard stats query
+          const stats = await executeWithRetry(() =>
+            queryOptimizer.getUserDashboardStats(userId, {
+              useCache: false, // Already handled at route level
+              includeMetrics: process.env.NODE_ENV !== 'production'
+            })
           );
 
-          let totalEarnings = 0;
-          let thisMonthEarnings = 0;
-          let lastMonthEarnings = 0;
+          // Cache the result for 5 minutes
+          await CacheManager.set(cacheKey, stats, CacheManager.TTL.MEDIUM);
 
-          for (const rental of completedOwnerRentals) {
-            const startDate = new Date(rental.startDate);
-            const endDate = new Date(rental.endDate);
-            const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-            const earnings = days * rental.gear.dailyRate;
-
-            totalEarnings += earnings;
-
-            // Check if rental was completed this month
-            const completedAt = new Date(rental.updatedAt || rental.createdAt);
-            if (completedAt >= startOfMonth) {
-              thisMonthEarnings += earnings;
-            }
-
-            // Check if rental was completed last month
-            if (completedAt >= startOfLastMonth && completedAt <= endOfLastMonth) {
-              lastMonthEarnings += earnings;
-            }
-          }
-
-          // Calculate this month's rental count
-          const thisMonthRentals = allRentals.filter(rental => {
-            const createdAt = new Date(rental.createdAt);
-            return createdAt >= startOfMonth;
-          }).length;
-
-          const lastMonthRentals = allRentals.filter(rental => {
-            const createdAt = new Date(rental.createdAt);
-            return createdAt >= startOfLastMonth && createdAt <= endOfLastMonth;
-          }).length;
-
-          // Calculate average rating (placeholder - would need review system)
-          // For now, we'll return null or a default value
-          const averageRating = null;
-
-          // Calculate trends
-          const earningsTrend = lastMonthEarnings > 0 
-            ? ((thisMonthEarnings - lastMonthEarnings) / lastMonthEarnings) * 100
-            : thisMonthEarnings > 0 ? 100 : 0;
-
-          const rentalsTrend = lastMonthRentals > 0
-            ? ((thisMonthRentals - lastMonthRentals) / lastMonthRentals) * 100
-            : thisMonthRentals > 0 ? 100 : 0;
-
-          const stats = {
-            totalRentals,
-            activeRentals,
-            pendingRequests,
-            completedRentals,
-            totalEarnings,
-            averageRating,
-            thisMonthEarnings,
-            thisMonthRentals,
-            trends: {
-              earnings: {
-                value: Math.round(earningsTrend),
-                isPositive: earningsTrend >= 0
-              },
-              rentals: {
-                value: Math.round(rentalsTrend),
-                isPositive: rentalsTrend >= 0
-              }
-            }
-          };
+          logger.info('Dashboard stats retrieved successfully', {
+            userId,
+            totalGear: stats.gear?.total || 0,
+            totalRentalsAsOwner: stats.rentals?.totalAsOwner || 0,
+            totalEarnings: stats.earnings?.total || 0,
+            averageRating: stats.reviews?.averageRating || 0
+          }, 'API');
 
           return NextResponse.json(stats);
 

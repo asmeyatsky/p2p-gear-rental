@@ -6,6 +6,7 @@ import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
 import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
+import { createRentalSchema } from '@/lib/validations/rental';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -97,14 +98,10 @@ export const POST = withErrorHandler(
           throw new AuthenticationError();
         }
 
-        // Parse request body
+        // Parse and validate request body
         const body = await request.json();
-        const { gearId, startDate, endDate, message } = body;
-
-        // Basic validation
-        if (!gearId || !startDate || !endDate) {
-          throw new ValidationError('Missing required fields: gearId, startDate, endDate');
-        }
+        const validatedData = createRentalSchema.parse(body);
+        const { gearId, startDate, endDate, message } = validatedData;
 
         logger.info('Rental creation request', { 
           userId: session.user.id,
@@ -112,14 +109,6 @@ export const POST = withErrorHandler(
           startDate,
           endDate
         }, 'API');
-
-        // Validate dates
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-
-        if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
-          throw new ValidationError('Invalid dates provided');
-        }
 
         // Check if gear exists and get ownerId
         const gear = await trackDatabaseQuery('gear.findUnique', () =>
@@ -138,6 +127,8 @@ export const POST = withErrorHandler(
         }
 
         // Calculate rental duration and amount
+        const start = new Date(startDate);
+        const end = new Date(endDate);
         const diffTime = Math.abs(end.getTime() - start.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         const amount = Math.round(gear.dailyRate * diffDays * 100); // Amount in cents

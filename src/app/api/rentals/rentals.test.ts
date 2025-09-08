@@ -1,52 +1,76 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { POST, GET } from './route'; // Assuming GET and POST are exported from route.ts
-import { PUT as approvePUT } from './[id]/approve/route';
-import { PUT as rejectPUT } from './[id]/reject/route';
-import { prisma } from '@/lib/prisma';
+import { NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import Stripe from 'stripe';
+import Stripe from 'stripe'; // Import Stripe for type hinting in mock
 
-// Mock Supabase, Prisma, and Stripe
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: {
-      getSession: jest.fn(),
-    },
-  },
-}));
-
+// Mock Prisma - MUST be before any imports that use prisma
 jest.mock('@/lib/prisma', () => ({
   prisma: {
+    gear: {
+      findUnique: jest.fn(),
+    },
     rental: {
       create: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
-      updateMany: jest.fn(),
-    },
-    gear: {
-      findUnique: jest.fn(),
-    },
-    user: {
-      upsert: jest.fn(),
     },
   },
 }));
 
-const mockPaymentIntents = {
-  create: jest.fn(),
-};
+// Import the mocked prisma instance after the mock is defined
+import { prisma } from '@/lib/prisma';
 
-const mockWebhooks = {
-  constructEvent: jest.fn(),
-};
-
+// Mock the entire stripe module
 jest.mock('stripe', () => {
-  return jest.fn().mockImplementation(() => ({
-    paymentIntents: mockPaymentIntents,
-    webhooks: mockWebhooks,
+  const StripeMock = jest.fn(() => ({
+    paymentIntents: {
+      create: jest.fn(),
+    },
+    webhooks: {
+      constructEvent: jest.fn(),
+    },
   }));
+  // Mock the static property `Stripe.errors` if needed
+  StripeMock.errors = {};
+  return StripeMock;
 });
+
+// Import the mocked Stripe instance
+const mockStripe = new (Stripe as jest.MockedClass<typeof Stripe>)(process.env.STRIPE_SECRET_KEY as string);
+const mockPaymentIntents = mockStripe.paymentIntents;
+const mockWebhooks = mockStripe.webhooks;
+
+// Mock api-error-handler
+jest.mock('@/lib/api-error-handler', () => ({
+  withErrorHandler: (handler: any) => async (...args: any[]) => {
+    try {
+      return await handler(...args);
+    } catch (error: any) {
+      // Ensure the mocked errors have a statusCode property
+      if (error.name === 'AuthenticationError') {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: error.statusCode || 401 });
+      } else if (error.name === 'ValidationError') {
+        return new Response(JSON.stringify({ error: error.message }), { status: error.statusCode || 400 });
+      } else if (error.name === 'NotFoundError') {
+        return new Response(JSON.stringify({ error: error.message }), { status: error.statusCode || 404 });
+      } else if (error.name === 'ForbiddenError') {
+        return new Response(JSON.stringify({ error: error.message }), { status: error.statusCode || 403 });
+      }
+      return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+    }
+  },
+  AuthenticationError: class extends Error { constructor(message = 'Unauthorized') { super(message); this.name = 'AuthenticationError'; this.statusCode = 401; } },
+  ValidationError: class extends Error { constructor(message) { super(message); this.name = 'ValidationError'; this.statusCode = 400; } },
+  NotFoundError: class extends Error { constructor(message) { super(message); this.name = 'NotFoundError'; this.statusCode = 404; } },
+  ForbiddenError: class extends Error { constructor(message) { super(message); this.name = 'ForbiddenError'; this.statusCode = 403; } },
+  // Mock other error classes if needed
+}));
+
+
+import { POST, GET } from './route'; // Assuming GET and POST are exported from route.ts
+import { PUT as approvePUT } from './[id]/approve/route';
+import { PUT as rejectPUT } from './[id]/reject/route';
+
 
 const mockSession = {
   user: {
@@ -109,6 +133,16 @@ const mockRejectedRental = {
 describe('Rentals API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset mocks for each test
+    mockPaymentIntents.create.mockReset();
+    mockWebhooks.constructEvent.mockReset();
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+    (prisma.gear.findUnique as jest.Mock).mockResolvedValue(mockGear);
+    (prisma.rental.create as jest.Mock).mockResolvedValue(mockRental);
+    (prisma.rental.findMany as jest.Mock).mockResolvedValue([mockRental]);
+    (prisma.rental.findUnique as jest.Mock).mockResolvedValue(mockRental);
+    (prisma.rental.update as jest.Mock).mockResolvedValue(mockApprovedRental);
+
     process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_mock';
   });
@@ -139,7 +173,7 @@ describe('Rentals API', () => {
 
       const response = await POST(request);
       expect(response.status).toBe(400);
-      await expect(response.json()).resolves.toEqual({ error: 'Missing required fields' });
+      await expect(response.json()).resolves.toEqual({ error: 'Missing required fields: gearId, startDate, endDate' });
     });
 
     it('should return 400 if dates are invalid', async () => {

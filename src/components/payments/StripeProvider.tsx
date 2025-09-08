@@ -1,14 +1,14 @@
 'use client';
 
 import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { ReactNode } from 'react';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 
 interface StripeProviderProps {
   children: ReactNode;
-  options?: any;
+  options?: StripeElementsOptions;
 }
 
 export default function StripeProvider({ children, options = {} }: StripeProviderProps) {

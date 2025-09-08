@@ -11,18 +11,22 @@ datasource db {
 }
 
 model User {
-  id              String    @id @unique
-  email           String    @unique
-  full_name       String?
-  gears           Gear[]
-  rentedItems     Rental[]  @relation("RenterRentals")
-  ownedRentals    Rental[]  @relation("OwnerRentals")
-  reviewsGiven    Review[]  @relation("ReviewsGiven")
-  reviewsReceived Review[]  @relation("ReviewsReceived")
-  averageRating   Float?
-  totalReviews    Int       @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                String    @id @unique
+  email             String    @unique
+  full_name         String?
+  gears             Gear[]
+  rentedItems       Rental[]  @relation("RenterRentals")
+  ownedRentals      Rental[]  @relation("OwnerRentals")
+  reviewsGiven      Review[]  @relation("ReviewsGiven")
+  reviewsReceived   Review[]  @relation("ReviewsReceived")
+  messagesSent      Message[] @relation("MessagesSent")
+  disputesReported  Dispute[] @relation("DisputesReported")
+  disputesAgainst   Dispute[] @relation("DisputesAgainst")
+  disputeResponses  DisputeResponse[] @relation("DisputeResponses")
+  averageRating     Float?
+  totalReviews      Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@index([email])
   @@index([createdAt])
@@ -55,28 +59,33 @@ model Gear {
   @@index([userId])
   @@index([createdAt])
   @@index([condition])
-  @@index([title])
-  @@index([description])
+  @@index([brand])
+  @@index([model])
+  @@index([brand, model])
+  @@index([weeklyRate])
+  @@index([monthlyRate])
 }
 
 model Rental {
-  id          String    @id @default(cuid())
-  gearId      String
-  gear        Gear      @relation(fields: [gearId], references: [id])
-  renterId    String
-  renter      User      @relation("RenterRentals", fields: [renterId], references: [id])
-  ownerId     String
-  owner       User      @relation("OwnerRentals", fields: [ownerId], references: [id])
-  startDate   DateTime
-  endDate     DateTime
-  status          String    @default("pending") // pending, approved, rejected, completed
-  message         String? // New field for basic messaging
+  id           String        @id @default(cuid())
+  gearId       String
+  gear         Gear          @relation(fields: [gearId], references: [id])
+  renterId     String
+  renter       User          @relation("RenterRentals", fields: [renterId], references: [id])
+  ownerId      String
+  owner        User          @relation("OwnerRentals", fields: [ownerId], references: [id])
+  startDate    DateTime
+  endDate      DateTime
+  status       String        @default("pending") // pending, approved, rejected, completed
+  message      String?       // New field for basic messaging
   paymentIntentId String?
-  clientSecret    String?
-  paymentStatus   String? // e.g., 'requires_payment_method', 'requires_confirmation', 'succeeded', 'failed'
-  review          Review?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  clientSecret String?
+  paymentStatus String?      // e.g., 'requires_payment_method', 'requires_confirmation', 'succeeded', 'failed'
+  review       Review?
+  conversation Conversation?
+  dispute      Dispute?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([renterId])
   @@index([ownerId])
@@ -103,4 +112,101 @@ model Review {
   @@index([revieweeId])
   @@index([rating])
   @@index([createdAt])
+}
+
+model Conversation {
+  id          String    @id @default(cuid())
+  rentalId    String    @unique
+  rental      Rental    @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([rentalId])
+  @@index([updatedAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  content        String
+  senderId       String
+  sender         User         @relation("MessagesSent", fields: [senderId], references: [id])
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+model Dispute {
+  id          String   @id @default(cuid())
+  rentalId    String   @unique
+  rental      Rental   @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  reporterId  String   // User who reported the dispute
+  reporter    User     @relation("DisputesReported", fields: [reporterId], references: [id])
+  respondentId String  // User being disputed against
+  respondent  User     @relation("DisputesAgainst", fields: [respondentId], references: [id])
+  category    DisputeCategory
+  subject     String
+  description String
+  status      DisputeStatus @default(OPEN)
+  priority    DisputePriority @default(MEDIUM)
+  evidence    String[] // Array of URLs to uploaded evidence files
+  resolution  String? // Admin's final resolution
+  adminNotes  String? // Internal admin notes
+  resolvedAt  DateTime?
+  resolvedBy  String? // Admin user ID who resolved it
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  responses   DisputeResponse[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([reporterId])
+  @@index([respondentId])
+  @@index([createdAt])
+}
+
+model DisputeResponse {
+  id        String   @id @default(cuid())
+  disputeId String
+  dispute   Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation("DisputeResponses", fields: [userId], references: [id])
+  message   String
+  isAdmin   Boolean  @default(false)
+  evidence  String[] // Array of URLs to uploaded evidence files
+  createdAt DateTime @default(now())
+
+  @@index([disputeId, createdAt])
+  @@index([userId])
+}
+
+enum DisputeCategory {
+  DAMAGE
+  MISSING_ITEM
+  PAYMENT_ISSUE
+  COMMUNICATION
+  POLICY_VIOLATION
+  SAFETY_CONCERN
+  OTHER
+}
+
+enum DisputeStatus {
+  OPEN
+  IN_REVIEW
+  AWAITING_RESPONSE
+  RESOLVED
+  CLOSED
+  ESCALATED
+}
+
+enum DisputePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }

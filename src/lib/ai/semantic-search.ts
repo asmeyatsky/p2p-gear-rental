@@ -6,6 +6,7 @@
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
 import { prisma } from '@/lib/prisma';
+import { Prisma, Gear, User } from '@prisma/client';
 
 export interface SemanticSearchQuery {
   originalQuery: string;
@@ -447,8 +448,8 @@ class SemanticSearchEngine {
     return Math.min(confidence, 0.95);
   }
 
-  private async getCandidateGear(filters: SearchFilters, limit: number): Promise<any[]> {
-    const whereClause: any = {};
+  private async getCandidateGear(filters: SearchFilters, limit: number): Promise<(Gear & { user: User })[]> {
+    const whereClause: Prisma.GearWhereInput = {};
 
     if (filters.category) {
       whereClause.category = { contains: filters.category, mode: 'insensitive' };
@@ -474,7 +475,7 @@ class SemanticSearchEngine {
       whereClause.state = { contains: filters.location.state, mode: 'insensitive' };
     }
 
-    return prisma.gear.findMany({
+    const results = await prisma.gear.findMany({
       where: whereClause,
       include: {
         user: { 
@@ -491,9 +492,12 @@ class SemanticSearchEngine {
         { createdAt: 'desc' }
       ]
     });
+
+    // Filter out gear without users and cast to correct type
+    return results.filter(gear => gear.user !== null) as (Gear & { user: User })[];
   }
 
-  private async scoreGearRelevance(gear: any, parsedQuery: SemanticSearchQuery): Promise<SemanticSearchResult> {
+  private async scoreGearRelevance(gear: Gear & { user: User }, parsedQuery: SemanticSearchQuery): Promise<SemanticSearchResult> {
     let relevanceScore = 0;
     let semanticScore = 0;
     const matchingEntities: SearchEntity[] = [];

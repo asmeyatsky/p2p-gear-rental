@@ -5,14 +5,21 @@
 
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
+import { Rental, User, Gear, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+
+const rentalWithGear = Prisma.validator<Prisma.RentalFindManyArgs>()({
+  include: { gear: true },
+})
+
+type RentalWithGear = Prisma.RentalGetPayload<typeof rentalWithGear>
 
 export interface FraudSignal {
   type: 'user_behavior' | 'listing_quality' | 'payment' | 'communication' | 'device_fingerprint';
   severity: 'low' | 'medium' | 'high' | 'critical';
   confidence: number; // 0-1
   description: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface FraudAssessment {
@@ -274,7 +281,7 @@ class FraudDetectionEngine {
   private async analyzeUserBehavior(
     profile: UserBehaviorProfile,
     actionType: string,
-    context: any
+    context: Record<string, unknown>
   ): Promise<FraudSignal[]> {
     const signals: FraudSignal[] = [];
 
@@ -346,29 +353,29 @@ class FraudDetectionEngine {
     return signals;
   }
 
-  private async analyzeDeviceAndLocation(userId: string, context: any): Promise<FraudSignal[]> {
+  private async analyzeDeviceAndLocation(userId: string, context: Record<string, unknown>): Promise<FraudSignal[]> {
     const signals: FraudSignal[] = [];
 
     if (context.ipAddress) {
       // Check for VPN/Proxy usage
-      const isVPN = await this.checkVPNUsage(context.ipAddress);
+      const isVPN = await this.checkVPNUsage(context.ipAddress as string);
       if (isVPN) {
         signals.push({
           type: 'device_fingerprint',
           severity: 'medium',
           confidence: 0.8,
           description: 'Using VPN or proxy service',
-          metadata: { ipAddress: this.maskIP(context.ipAddress) }
+          metadata: { ipAddress: this.maskIP(context.ipAddress as string) }
         });
       }
 
       // Check for suspicious location
-      const locationSignals = await this.analyzeLocationRisk(context.ipAddress, userId);
+      const locationSignals = await this.analyzeLocationRisk(context.ipAddress as string, userId);
       signals.push(...locationSignals);
     }
 
     if (context.deviceFingerprint) {
-      const deviceSignals = await this.analyzeDeviceFingerprint(context.deviceFingerprint);
+      const deviceSignals = await this.analyzeDeviceFingerprint(context.deviceFingerprint as string);
       signals.push(...deviceSignals);
     }
 
@@ -654,7 +661,7 @@ class FraudDetectionEngine {
   }
 
   // Helper methods
-  private calculateAverageTransactionValue(transactions: any[]): number {
+  private calculateAverageTransactionValue(transactions: RentalWithGear[]): number {
     if (transactions.length === 0) return 0;
     
     const totalValue = transactions.reduce((sum, t) => {
@@ -665,7 +672,7 @@ class FraudDetectionEngine {
     return totalValue / transactions.length;
   }
 
-  private async analyzeCommunicationPatterns(userId: string): Promise<any> {
+  private async analyzeCommunicationPatterns(userId: string): Promise<{ responseTime: number; messageLength: number; politenessScore: number; }> {
     // This would analyze message history in a real implementation
     return {
       responseTime: 12, // hours
@@ -679,11 +686,11 @@ class FraudDetectionEngine {
     return [];
   }
 
-  private extractLocationHistory(user: any): LocationData[] {
+  private extractLocationHistory(user: User & { gears: Gear[] }): LocationData[] {
     const locations: LocationData[] = [];
     
     // Extract from gear locations
-    user.gears.forEach((gear: any) => {
+    user.gears.forEach((gear: Gear) => {
       locations.push({
         city: gear.city,
         state: gear.state,
@@ -696,7 +703,7 @@ class FraudDetectionEngine {
     return locations;
   }
 
-  private analyzeTimePatterns(transactions: any[]): TimePattern[] {
+  private analyzeTimePatterns(transactions: Rental[]): TimePattern[] {
     const patterns: TimePattern[] = [];
     
     // Analyze transaction timing patterns
@@ -895,7 +902,7 @@ export const fraudDetectionEngine = new FraudDetectionEngine();
 export async function checkFraudRisk(
   userId: string,
   actionType: 'create_listing' | 'create_booking' | 'process_payment' | 'send_message',
-  context: Record<string, any>
+  context: Record<string, unknown>
 ): Promise<boolean> {
   const assessment = await fraudDetectionEngine.assessRisk(userId, actionType, context);
   

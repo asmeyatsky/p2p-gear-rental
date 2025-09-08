@@ -5,7 +5,7 @@ import { Component, ReactNode } from 'react';
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: any) => void;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
   className?: string;
 }
 
@@ -29,7 +29,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log to external service in production
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     

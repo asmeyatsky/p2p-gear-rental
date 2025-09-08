@@ -11,7 +11,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # Builder stage
 FROM node:18-alpine AS builder
@@ -28,6 +28,11 @@ COPY --from=deps /app/node_modules ./node_modules
 RUN npx prisma generate
 
 # Build the application
+# Set temporary environment variables for build time
+ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
+ENV NEXT_PUBLIC_SUPABASE_URL="https://fake.supabase.co"
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY="fake_key"
+ENV STRIPE_SECRET_KEY="sk_test_fake"
 RUN npm run build
 
 # Runner stage

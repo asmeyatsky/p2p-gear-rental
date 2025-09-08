@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { v4 as uuidv4 } from 'uuid';
 import { compressImage, validateImageFile } from '@/lib/image-utils';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 interface ImageUploadProps {
   onImagesChange: (imageUrls: string[]) => void;
@@ -71,7 +72,7 @@ export default function ImageUpload({
     const fileName = `${uploadId}.${fileExt}`;
     const filePath = `gear-images/${fileName}`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('images')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -304,10 +305,11 @@ export default function ImageUpload({
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {images.map((imageUrl, index) => (
               <div key={index} className="relative group">
-                <img
+                <Image
                   src={imageUrl}
                   alt={`Gear image ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                  fill
+                  className="object-cover rounded-lg border border-gray-200"
                 />
                 <button
                   onClick={() => removeImage(imageUrl)}

@@ -40,10 +40,10 @@ export default function ForgotPasswordPage() {
           <div className="text-center">
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Check your email</h2>
             <p className="mt-2 text-sm text-gray-600">
-              We've sent a password reset link to <strong>{email}</strong>
+              We&apos;ve sent a password reset link to <strong>{email}</strong>
             </p>
             <p className="mt-4 text-sm text-gray-600">
-              Didn't receive the email? Check your spam folder or{' '}
+              Didn&apos;t receive the email? Check your spam folder or{' '}
               <button 
                 onClick={() => setSent(false)}
                 className="font-medium text-indigo-600 hover:text-indigo-500"
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Reset your password</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email address and we'll send you a link to reset your password.
+            Enter your email address and we&apos;ll send you a link to reset your password.
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleResetPassword}>

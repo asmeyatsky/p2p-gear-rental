@@ -1,5 +1,3 @@
-import { NextResponse } from 'next/server';
-
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -47,18 +45,26 @@ export class RateLimitError extends ApiError {
   }
 }
 
+export class AuthorizationError extends ApiError {
+  constructor(message: string = 'Not authorized to perform this action') {
+    super(message, 403, 'AUTHORIZATION_ERROR');
+  }
+}
+
 export function handleApiError(error: unknown): NextResponse {
   // Log the error for monitoring
   console.error('API Error:', error);
 
-  if (error instanceof ApiError) {
+  if (error && typeof error === 'object' && 'name' in error && (error.name === 'ApiError' || error.name === 'AuthenticationError' || error.name === 'ForbiddenError' || error.name === 'NotFoundError' || error.name === 'BadRequestError' || error.name === 'ConflictError' || error.name === 'RateLimitError' || error.name === 'ValidationError')) {
+    // Cast to ApiError to access properties
+    const apiError = error as ApiError;
     return NextResponse.json(
-      { 
-        error: error.message, 
-        code: error.code,
-        timestamp: new Date().toISOString()
+      {
+        error: apiError.message,
+        code: apiError.code,
+        timestamp: new Date().toISOString(),
       },
-      { status: error.statusCode }
+      { status: apiError.statusCode }
     );
   }
   
@@ -89,23 +95,23 @@ export function handleApiError(error: unknown): NextResponse {
   );
 }
 
-// Async wrapper for API route handlers
-export function withErrorHandler<T extends any[]>(
-  handler: (...args: T) => Promise<NextResponse>
-) {
-  return async (...args: T): Promise<NextResponse> => {
-    try {
-      return await handler(...args);
-    } catch (error) {
-      return handleApiError(error);
-    }
-  };
-}
-
+// Helper to validate required environment variables
 // Helper to validate required environment variables
 export function validateEnvVar(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
+}
+
+import { NextRequest, NextResponse } from 'next/server';
+
+export function withErrorHandler(handler: Function) {
+  return async (req: NextRequest, ...args: any[]) => {
+    try {
+      return await handler(req, ...args);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
 }

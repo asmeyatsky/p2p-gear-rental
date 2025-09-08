@@ -19,7 +19,7 @@ export interface ActivityEvent {
   targetId: string;
   targetName?: string;
   action: string; // Human readable action description
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   metadata: {
     ipAddress?: string;
     userAgent?: string;
@@ -38,8 +38,8 @@ export interface LiveUpdate {
   type: 'field_update' | 'status_change' | 'new_comment' | 'price_change' | 'availability_update';
   data: {
     field?: string;
-    oldValue?: any;
-    newValue?: any;
+    oldValue?: unknown;
+    newValue?: unknown;
     userId: string;
     userName: string;
     timestamp: Date;
@@ -511,26 +511,26 @@ class CollaborationEngine {
   }
 
   // Private helper methods
-  private async handleCollaborationMessage(userId: string, data: any): Promise<void> {
+  private async handleCollaborationMessage(userId: string, data: Record<string, unknown>): Promise<void> {
     switch (data.type) {
       case 'join_session':
-        await this.joinCollaborativeSession(data.sessionId, userId, data.role);
+        await this.joinCollaborativeSession(data.sessionId as string, userId, data.role as 'owner' | 'collaborator' | 'viewer');
         break;
 
       case 'leave_session':
-        await this.leaveCollaborativeSession(data.sessionId, userId);
+        await this.leaveCollaborativeSession(data.sessionId as string, userId);
         break;
 
       case 'update_cursor':
-        await this.updateCursor(data.sessionId, userId, data.cursor);
+        await this.updateCursor(data.sessionId as string, userId, data.cursor as { x: number; y: number; element?: string });
         break;
 
       case 'subscribe_channel':
-        await this.subscribeToChannel(userId, data.channel, data.filters);
+        await this.subscribeToChannel(userId, data.channel as string, data.filters as Record<string, unknown>);
         break;
 
       case 'unsubscribe_channel':
-        await this.unsubscribeFromChannel(userId, data.subscriptionId);
+        await this.unsubscribeFromChannel(userId, data.subscriptionId as string);
         break;
 
       case 'activity_ping':
@@ -574,7 +574,7 @@ class CollaborationEngine {
 
   private async notifySessionParticipants(
     session: CollaborativeSession,
-    message: any,
+    message: Record<string, unknown>,
     excludeUsers: string[] = []
   ): Promise<void> {
     const notifications = session.participants
@@ -608,7 +608,7 @@ class CollaborationEngine {
     }
   }
 
-  private async sendToUser(userId: string, data: any): Promise<void> {
+  private async sendToUser(userId: string, data: Record<string, unknown>): Promise<void> {
     const connection = this.wsConnections.get(userId);
     
     if (connection && connection.readyState === WebSocket.OPEN) {
@@ -832,7 +832,7 @@ export async function trackUserActivity(
   action: string,
   targetType: ActivityEvent['targetType'],
   targetId: string,
-  details?: Record<string, any>
+  details?: Record<string, unknown>
 ): Promise<void> {
   await collaborationEngine.trackActivity({
     type: action as ActivityEvent['type'],

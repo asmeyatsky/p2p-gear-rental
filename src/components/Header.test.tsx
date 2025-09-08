@@ -3,6 +3,21 @@ import { render, screen } from '@testing-library/react';
 import Header from '@/components/Header';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 
+jest.mock('@/lib/supabase-browser', () => ({
+  createClient: jest.fn(() => ({
+    auth: {
+      getSession: jest.fn(() => Promise.resolve({ data: { session: null } })),
+      onAuthStateChange: jest.fn(() => ({
+        data: {
+          subscription: {
+            unsubscribe: jest.fn(),
+          },
+        },
+      })),
+    },
+  })),
+}));
+
 describe('Header', () => {
   it('renders the GearShare logo', () => {
     render(

@@ -68,15 +68,29 @@ export const updateGearSchema = createGearSchema.partial();
 
 export const gearQuerySchema = z.object({
   search: z.string().max(100).optional(),
-  category: z.string().optional(),
+  category: z.enum([
+    'cameras',
+    'lenses', 
+    'lighting',
+    'audio',
+    'drones',
+    'accessories',
+    'tripods',
+    'monitors',
+    'other'
+  ]).optional(),
+  condition: z.enum(['new', 'like-new', 'good', 'fair', 'poor']).optional(),
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(), 
   city: z.string().max(100).optional(),
   state: z.string().length(2).toUpperCase().optional(),
-  condition: z.string().optional(),
+  location: z.string().max(200).optional(), // General location search
+  radius: z.coerce.number().min(1).max(100).optional(), // Search radius in miles
+  startDate: z.string().datetime().optional(), // ISO 8601 date string
+  endDate: z.string().datetime().optional(),   // ISO 8601 date string
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(50).default(20),
-  sortBy: z.enum(['newest', 'price-low', 'price-high', 'distance']).default('newest'),
+  sortBy: z.enum(['newest', 'price-low', 'price-high', 'distance', 'rating', 'relevance']).default('newest'),
 });
 
 export type CreateGearInput = z.infer<typeof createGearSchema>;

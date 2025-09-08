@@ -46,9 +46,10 @@ export default function EditGearPage() {
           setBrand(data.brand || '');
           setModel(data.model || '');
           setCondition(data.condition || '');
-        } catch (err: any) {
-          setError(err.message); // Keep setError for internal state management
-          toast.error(err.message); // Add toast notification
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+          setError(errorMessage); // Keep setError for internal state management
+          toast.error(errorMessage); // Add toast notification
           setGear(null);
         } finally {
           setLoadingGear(false);
@@ -105,9 +106,10 @@ export default function EditGearPage() {
 
       toast.success('Gear updated successfully!');
       router.push(`/gear/${gear.id}`);
-    } catch (err: any) {
-      setError(err.message); // Keep setError for internal state management
-      toast.error(err.message); // Add toast notification
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage); // Keep setError for internal state management
+      toast.error(errorMessage); // Add toast notification
     } finally {
       setSubmitting(false);
     }

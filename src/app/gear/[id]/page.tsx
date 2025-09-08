@@ -141,6 +141,8 @@ export default function GearDetailsPage() {
                 alt={gear.title}
                 fill
                 className="object-cover rounded-lg"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority={true}
               />
             )}
           </div>
@@ -152,6 +154,8 @@ export default function GearDetailsPage() {
                   alt={`${gear.title} - ${index + 2}`}
                   fill
                   className="object-cover rounded-lg"
+                  sizes="(max-width: 768px) 33vw, 16vw"
+                  loading="lazy"
                 />
               </div>
             ))}

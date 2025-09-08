@@ -20,6 +20,9 @@ export default function GearCard({ gear }: GearCardProps) {
             alt={gear.title}
             fill
             className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority={false}
+            loading="lazy"
           />
         </div>
       </Link>

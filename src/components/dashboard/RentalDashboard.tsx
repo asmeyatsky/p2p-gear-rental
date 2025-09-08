@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 interface RentalStats {
   totalRentals: number;
@@ -67,7 +68,6 @@ export default function RentalDashboard() {
   }, [user]);
 
   useEffect(() => {
-    applyFilters();
   }, [rentals, filter, searchTerm, activeTab]);
 
   const fetchDashboardData = async () => {
@@ -94,32 +94,35 @@ export default function RentalDashboard() {
     }
   };
 
-  const applyFilters = () => {
-    let filtered = rentals;
+  useEffect(() => {
+    const applyFilters = () => {
+      let filtered = rentals;
 
-    // Filter by tab (incoming vs outgoing)
-    if (activeTab === 'incoming') {
-      filtered = filtered.filter(rental => rental.ownerId === user?.id);
-    } else if (activeTab === 'outgoing') {
-      filtered = filtered.filter(rental => rental.renterId === user?.id);
-    }
+      // Filter by tab (incoming vs outgoing)
+      if (activeTab === 'incoming') {
+        filtered = filtered.filter(rental => rental.ownerId === user?.id);
+      } else if (activeTab === 'outgoing') {
+        filtered = filtered.filter(rental => rental.renterId === user?.id);
+      }
 
-    // Filter by status
-    if (filter !== 'all') {
-      filtered = filtered.filter(rental => rental.status === filter);
-    }
+      // Filter by status
+      if (filter !== 'all') {
+        filtered = filtered.filter(rental => rental.status === filter);
+      }
 
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(rental =>
-        rental.gear.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        rental.renter.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        rental.owner.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+      // Filter by search term
+      if (searchTerm) {
+        filtered = filtered.filter(rental =>
+          rental.gear.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          rental.renter.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          rental.owner.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
 
-    setFilteredRentals(filtered);
-  };
+      setFilteredRentals(filtered);
+    };
+    applyFilters();
+  }, [rentals, filter, searchTerm, activeTab, user]);
 
   const handleApprove = async (rentalId: string) => {
     try {
@@ -328,9 +331,11 @@ export default function RentalDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRentals.map((rental) => (
               <div key={rental.id} className="bg-white rounded-lg shadow overflow-hidden">
-                <img
+                <Image
                   src={rental.gear.images[0] || '/placeholder-gear.jpg'}
                   alt={rental.gear.title}
+                  width={300}
+                  height={192}
                   className="w-full h-48 object-cover"
                 />
                 <div className="p-4">

@@ -30,7 +30,7 @@ export interface Notification {
   message: string;
   actionUrl?: string;
   actionText?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   channels: ('email' | 'push' | 'sms' | 'in_app')[];
   priority: 'low' | 'normal' | 'high' | 'urgent';
   status: 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
@@ -192,7 +192,7 @@ class NotificationEngine {
     userId: string,
     title: string,
     body: string,
-    data?: Record<string, any>,
+    data?: Record<string, unknown>,
     actionUrl?: string
   ): Promise<boolean> {
     const subscriptions = await this.getUserPushSubscriptions(userId);
@@ -333,7 +333,7 @@ class NotificationEngine {
     unreadCount: number;
   }> {
     const cacheKey = CacheManager.keys.custom(`user_notifications:${userId}:${JSON.stringify(options)}`);
-    const cached = await CacheManager.get<any>(cacheKey);
+    const cached = await CacheManager.get<{ notifications: Notification[]; total: number; unreadCount: number; }>(cacheKey);
     
     if (cached) {
       return cached;
@@ -428,7 +428,7 @@ class NotificationEngine {
       message: string;
       type: string;
       actionUrl?: string;
-      data?: Record<string, any>;
+      data?: Record<string, unknown>;
     }
   ): Promise<void> {
     // Send via WebSocket if user is online
@@ -746,7 +746,7 @@ class NotificationEngine {
     logger.debug('Sending email', { to: emailData.to, subject: emailData.subject }, 'NOTIFICATIONS');
   }
 
-  private async sendWebPush(subscription: PushSubscription, payload: any): Promise<void> {
+  private async sendWebPush(subscription: PushSubscription, payload: Record<string, unknown>): Promise<void> {
     // Send web push notification
     logger.debug('Sending web push', { endpoint: subscription.endpoint.substring(0, 50) }, 'NOTIFICATIONS');
   }
@@ -757,20 +757,20 @@ class NotificationEngine {
     return true;
   }
 
-  private async sendRealTimeNotification(userId: string, data: any): Promise<void> {
+  private async sendRealTimeNotification(userId: string, data: Record<string, unknown>): Promise<void> {
     // Send via WebSocket connection
     logger.debug('Sending real-time notification', { userId }, 'NOTIFICATIONS');
   }
 
   private async fetchUserNotificationsFromDB(
     userId: string,
-    options: any
+    options: { limit?: number; offset?: number; unreadOnly?: boolean; type?: Notification['type']; since?: Date; }
   ): Promise<Notification[]> {
     // Fetch notifications from database
     return [];
   }
 
-  private async countUserNotifications(userId: string, options: any): Promise<number> {
+  private async countUserNotifications(userId: string, options: { limit?: number; offset?: number; unreadOnly?: boolean; type?: Notification['type']; since?: Date; }): Promise<number> {
     // Count user notifications
     return 0;
   }

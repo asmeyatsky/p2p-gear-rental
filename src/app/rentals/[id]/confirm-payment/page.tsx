@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import StripeProvider from '@/components/payments/StripeProvider';
 import PaymentForm from '@/components/payments/PaymentForm';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 interface RentalDetails {
   id: string;
@@ -32,51 +33,7 @@ export default function ConfirmPaymentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login?redirectTo=/rentals/' + id + '/confirm-payment');
-      return;
-    }
-
-    if (user && id) {
-      fetchRentalDetails();
-    }
-  }, [user, authLoading, id, router]);
-
-  const fetchRentalDetails = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/rentals/${id}`);
-      
-      if (!res.ok) {
-        throw new Error('Failed to fetch rental details');
-      }
-
-      const rentalData = await res.json();
-      setRental(rentalData);
-
-      // Check if payment is already completed
-      if (rentalData.paymentStatus === 'succeeded') {
-        toast.success('Payment already completed!');
-        router.push('/dashboard');
-        return;
-      }
-
-      // If no client secret, create payment intent
-      if (!rentalData.clientSecret) {
-        await createPaymentIntent(rentalData);
-      }
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createPaymentIntent = async (rentalData: RentalDetails) => {
+  const createPaymentIntent = useCallback(async (rentalData: RentalDetails) => {
     try {
       const startDate = new Date(rentalData.startDate);
       const endDate = new Date(rentalData.endDate);
@@ -107,7 +64,51 @@ export default function ConfirmPaymentPage() {
       setError(errorMessage);
       toast.error(errorMessage);
     }
-  };
+  }, [setRental, setError]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login?redirectTo=/rentals/' + id + '/confirm-payment');
+      return;
+    }
+
+    const fetchRentalDetails = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/rentals/${id}`);
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch rental details');
+        }
+
+        const rentalData = await res.json();
+        setRental(rentalData);
+
+        // Check if payment is already completed
+        if (rentalData.paymentStatus === 'succeeded') {
+          toast.success('Payment already completed!');
+          router.push('/dashboard');
+          return;
+        }
+
+        // If no client secret, create payment intent
+        if (!rentalData.clientSecret) {
+          await createPaymentIntent(rentalData);
+        }
+
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user && id) {
+      fetchRentalDetails();
+    }
+  }, [user, authLoading, id, router, createPaymentIntent]);
 
   const handlePaymentSuccess = () => {
     toast.success('Payment completed successfully!');
@@ -204,10 +205,12 @@ export default function ConfirmPaymentPage() {
             
             <div className="space-y-4">
               <div className="flex items-start space-x-4">
-                <img
+                <Image
                   src={rental.gear.images[0] || '/placeholder-gear.jpg'}
                   alt={rental.gear.title}
-                  className="w-20 h-20 object-cover rounded-lg"
+                  width={80}
+                  height={80}
+                  className="object-cover rounded-lg"
                 />
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">{rental.gear.title}</h3>

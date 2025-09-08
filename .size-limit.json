@@ -1,0 +1,33 @@
+[
+  {
+    "name": "Client JS Bundle",
+    "path": ".next/static/chunks/pages/**/*.js",
+    "limit": "500 KB",
+    "gzip": true
+  },
+  {
+    "name": "Main CSS Bundle",
+    "path": ".next/static/css/**/*.css",
+    "limit": "50 KB",
+    "gzip": true
+  },
+  {
+    "name": "Framework Bundle",
+    "path": ".next/static/chunks/framework-*.js",
+    "limit": "130 KB",
+    "gzip": true
+  },
+  {
+    "name": "Commons Bundle",
+    "path": ".next/static/chunks/main-*.js",
+    "limit": "25 KB",
+    "gzip": true
+  },
+  {
+    "name": "Page Bundles Average",
+    "path": ".next/static/chunks/pages/**/*.js",
+    "limit": "100 KB",
+    "gzip": true,
+    "running": false
+  }
+]

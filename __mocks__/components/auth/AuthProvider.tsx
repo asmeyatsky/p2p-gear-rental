@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { act } from '@testing-library/react';
 
 interface AuthContextType {
   user: any | null;
@@ -11,28 +12,73 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Mock session and user data that can be controlled by tests
+let mockSession: any = null;
+let mockUser: any = null;
+
+export const setMockSession = (session: any) => {
+  mockSession = session;
+  mockUser = session?.user || null;
+};
+
+export const clearMockSession = () => {
+  mockSession = null;
+  mockUser = null;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(mockUser);
+  const [session, setSession] = useState<any>(mockSession);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Simulate async session fetching
+    const fetchSession = async () => {
+      setLoading(true);
+      // In a real scenario, this would be a call to supabase.auth.getSession()
+      await new Promise(resolve => setTimeout(resolve, 50)); // Simulate network delay
+      act(() => {
+        setUser(mockUser);
+        setSession(mockSession);
+        setLoading(false);
+      });
+    };
+
+    fetchSession();
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     // Mock sign-in logic
     if (email === 'test@example.com' && password === 'password') {
-      setUser({ id: '123', email } as any);
-      return { data: { user: { id: '123', email } }, error: null };
+      const newSession = { user: { id: '123', email } };
+      act(() => {
+        setMockSession(newSession);
+        setUser(newSession.user);
+        setSession(newSession);
+      });
+      return { data: { user: newSession.user }, error: null };
     }
     return { data: null, error: { message: 'Invalid credentials' } };
   };
 
   const signUp = async (email: string, password: string) => {
     // Mock sign-up logic
-    setUser({ id: '123', email });
-    return { data: { user: { id: '123', email } }, error: null };
+    const newSession = { user: { id: '123', email } };
+    act(() => {
+      setMockSession(newSession);
+      setUser(newSession.user);
+      setSession(newSession);
+    });
+    return { data: { user: newSession.user }, error: null };
   };
 
   const signOut = async () => {
     // Mock sign-out logic
-    setUser(null);
+    act(() => {
+      clearMockSession();
+      setUser(null);
+      setSession(null);
+    });
     return { error: null };
   };
 
@@ -40,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        session: null,
+        session,
         loading,
         signIn,
         signUp,

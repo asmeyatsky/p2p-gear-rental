@@ -1,0 +1,532 @@
+/**
+ * @jest-environment node
+ */
+import { NextRequest } from 'next/server';
+
+jest.mock('./route');
+jest.mock('./[id]/route');
+
+import { POST, GET } from './route';
+import { PUT, DELETE, GET as GET_BY_ID } from './[id]/route';
+import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
+
+jest.mock('@/lib/monitoring', () => ({
+  trackDatabaseQuery: jest.fn(async (operation, queryFn) => await queryFn()),
+  withMonitoring: jest.fn((handler) => handler),
+}));
+
+// Mock Supabase and Prisma
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: jest.fn(),
+    },
+  },
+}));
+
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    gear: {
+      create: jest.fn(() => Promise.resolve()),
+      findUnique: jest.fn(() => Promise.resolve()),
+      update: jest.fn(() => Promise.resolve()),
+      delete: jest.fn(() => Promise.resolve()),
+      findMany: jest.fn(() => Promise.resolve([mockGearData, mockOtherUserGearData])),
+      count: jest.fn(() => Promise.resolve(2)),
+    },
+    user: {
+      upsert: jest.fn(() => Promise.resolve()),
+    },
+  },
+}));
+
+const mockSession = {
+  user: {
+    id: 'test-user-id',
+    email: 'test@example.com',
+    user_metadata: {
+      full_name: 'Test User',
+    },
+  },
+};
+
+const mockGearData = {
+  id: 'existing-gear-id',
+  title: 'Existing Gear',
+  description: 'An existing gear item',
+  dailyRate: 15.0,
+  city: 'Existing City',
+  state: 'EX',
+  images: ['existing-image.jpg'],
+  category: 'lenses',
+  userId: 'test-user-id',
+};
+
+const mockOtherUserGearData = {
+  id: 'other-user-gear-id',
+  title: 'Other User Gear',
+  description: 'Gear from another user',
+  dailyRate: 20.0,
+  city: 'Other City',
+  state: 'OT',
+  images: ['other-image.jpg'],
+  category: 'audio',
+  userId: 'other-user-id',
+};
+
+describe('Gear API', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('POST /api/gear', () => {
+    it('should return 401 if not authenticated', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+
+      const request = new NextRequest('http://localhost/api/gear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(401);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({
+          error: 'Unauthorized',
+          code: 'AUTHENTICATION_ERROR',
+          timestamp: expect.any(String),
+        })
+      );
+    });
+
+    it('should return 400 if required fields are missing', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+
+      const request = new NextRequest('http://localhost/api/gear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Test Gear' }), // Missing other fields
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({
+          error: expect.any(String), // ZodError message can be complex, so expect any string
+          code: 'VALIDATION_ERROR',
+          timestamp: expect.any(String),
+        })
+      );
+    });
+
+    it('should create new gear if authenticated and fields are valid', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      (prisma.user.upsert as jest.Mock).mockResolvedValue(mockSession.user);
+      (prisma.gear.create as jest.Mock).mockResolvedValue({
+        ...mockGearData,
+        id: 'new-gear-id',
+        userId: mockSession.user.id,
+      });
+
+      const newGearData = {
+        title: 'New Test Gear',
+        description: 'A new test gear item',
+        dailyRate: 10.0,
+        city: 'New City',
+        state: 'NC',
+        images: ['new-image.jpg'],
+        category: 'cameras',
+      };
+
+      const request = new NextRequest('http://localhost/api/gear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newGearData),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(201);
+      await expect(response.json()).resolves.toEqual({
+        id: 'new-gear-id',
+        ...newGearData,
+        userId: mockSession.user.id,
+      });
+      expect(prisma.user.upsert).toHaveBeenCalledWith({
+        where: { id: mockSession.user.id },
+        update: {
+          email: mockSession.user.email,
+          full_name: mockSession.user.user_metadata.full_name,
+        },
+        create: {
+          id: mockSession.user.id,
+          email: mockSession.user.email,
+          full_name: mockSession.user.user_metadata.full_name,
+        },
+      });
+      expect(prisma.gear.create).toHaveBeenCalledWith({
+        data: {
+          ...newGearData,
+          userId: mockSession.user.id,
+        },
+      });
+    });
+  });
+
+  describe('PUT /api/gear/[id]', () => {
+    it('should return 401 if not authenticated', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+
+      const request = new NextRequest(`http://localhost/api/gear/${mockGearData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      const response = await PUT(request, { params: Promise.resolve({ id: mockGearData.id }) });
+      expect(response.status).toBe(401);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({
+          error: 'Unauthorized',
+          code: 'AUTHENTICATION_ERROR',
+          timestamp: expect.any(String),
+        })
+      );
+    });
+
+    it('should return 404 if gear not found', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const request = new NextRequest(`http://localhost/api/gear/non-existent-id`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Updated Title' }),
+      });
+
+      const response = await PUT(request, { params: Promise.resolve({ id: 'non-existent-id' }) });
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({
+          error: 'Gear not found',
+          code: 'NOT_FOUND_ERROR',
+          timestamp: expect.any(String),
+        })
+      );
+    });
+
+    it('should return 403 if user is not the owner', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue(mockOtherUserGearData);
+
+      const request = new NextRequest(`http://localhost/api/gear/${mockOtherUserGearData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Updated Title' }),
+      });
+
+      const response = await PUT(request, { params: Promise.resolve({ id: mockOtherUserGearData.id }) });
+      expect(response.status).toBe(403);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({
+          error: 'You do not own this gear', // Corrected error message
+          code: 'FORBIDDEN_ERROR',
+          timestamp: expect.any(String),
+        })
+      );
+    });
+
+    it('should update gear if authenticated and is owner', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue(mockGearData);
+      (prisma.gear.update as jest.Mock).mockResolvedValue({
+        ...mockGearData,
+        title: 'Updated Title',
+        dailyRate: 25.0,
+      });
+
+      const updatedData = { title: 'Updated Title', dailyRate: 25.0 };
+      const request = new NextRequest(`http://localhost/api/gear/${mockGearData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+
+      const response = await PUT(request, { params: Promise.resolve({ id: mockGearData.id }) });
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        ...mockGearData,
+        title: 'Updated Title',
+        dailyRate: 25.0,
+      });
+      expect(prisma.gear.update).toHaveBeenCalledWith({
+        where: { id: mockGearData.id },
+        data: {
+          title: 'Updated Title',
+          dailyRate: 25.0,
+        },
+      });
+    });
+  });
+
+  describe('DELETE /api/gear/[id]', () => {
+    it('should return 401 if not authenticated', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+
+      const request = new NextRequest(`http://localhost/api/gear/${mockGearData.id}`, {
+        method: 'DELETE',
+      });
+
+      const response = await DELETE(request, { params: Promise.resolve({ id: mockGearData.id }) });
+      expect(response.status).toBe(401);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({
+          error: 'Unauthorized',
+          code: 'AUTHENTICATION_ERROR',
+          timestamp: expect.any(String),
+        })
+      );
+    });
+
+    it('should return 404 if gear not found', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const request = new NextRequest(`http://localhost/api/gear/non-existent-id`, {
+        method: 'DELETE',
+      });
+
+      const response = await DELETE(request, { params: Promise.resolve({ id: 'non-existent-id' }) });
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({
+          error: 'Gear not found',
+          code: 'NOT_FOUND_ERROR',
+          timestamp: expect.any(String),
+        })
+      );
+    });
+
+    it('should return 403 if user is not the owner', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue(mockOtherUserGearData);
+
+      const request = new NextRequest(`http://localhost/api/gear/${mockOtherUserGearData.id}`, {
+        method: 'DELETE',
+      });
+
+      const response = await DELETE(request, { params: Promise.resolve({ id: mockOtherUserGearData.id }) });
+      expect(response.status).toBe(403);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({
+          error: 'You do not own this gear', // Corrected error message
+          code: 'FORBIDDEN_ERROR',
+          timestamp: expect.any(String),
+        })
+      );
+    });
+
+    it('should delete gear if authenticated and is owner', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue(mockGearData);
+      (prisma.gear.delete as jest.Mock).mockResolvedValue(mockGearData);
+
+      const request = new NextRequest(`http://localhost/api/gear/${mockGearData.id}`, {
+        method: 'DELETE',
+      });
+
+      const response = await DELETE(request, { params: Promise.resolve({ id: mockGearData.id }) });
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({ message: 'Gear deleted successfully' });
+      expect(prisma.gear.delete).toHaveBeenCalledWith({
+        where: { id: mockGearData.id },
+      });
+    });
+  });
+
+  describe('GET /api/gear', () => {
+    it('should return all gear items', async () => {
+      (prisma.gear.findMany as jest.Mock).mockResolvedValue([mockGearData, mockOtherUserGearData]);
+
+      const request = new NextRequest('http://localhost/api/gear');
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        data: [mockGearData, mockOtherUserGearData],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 2,
+          pages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      });
+      expect(prisma.gear.findMany).toHaveBeenCalledWith({
+        where: { dailyRate: { gte: 0, lte: 10000 } },
+        skip: 0,
+        take: 20,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: { id: true, email: true, full_name: true }
+          }
+        }
+      });
+    });
+
+    it('should filter gear by search term', async () => {
+      (prisma.gear.findMany as jest.Mock).mockResolvedValue([mockGearData]);
+      (prisma.gear.count as jest.Mock).mockResolvedValue(1);
+
+      const request = new NextRequest('http://localhost/api/gear?search=Existing');
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        data: [mockGearData],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 1,
+          pages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      });
+      expect(prisma.gear.findMany).toHaveBeenCalledWith({
+        where: {
+          dailyRate: { gte: 0, lte: 10000 },
+          OR: [
+            { title: { contains: 'Existing', mode: 'insensitive' } },
+            { description: { contains: 'Existing', mode: 'insensitive' } },
+            { brand: { contains: 'Existing', mode: 'insensitive' } },
+            { model: { contains: 'Existing', mode: 'insensitive' } },
+          ],
+        },
+        skip: 0,
+        take: 20,
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    it('should filter gear by category', async () => {
+      (prisma.gear.findMany as jest.Mock).mockResolvedValue([mockGearData]);
+      (prisma.gear.count as jest.Mock).mockResolvedValue(1);
+
+      const request = new NextRequest('http://localhost/api/gear?category=lenses');
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        data: [mockGearData],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 1,
+          pages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      });
+      expect(prisma.gear.findMany).toHaveBeenCalledWith({
+        where: {
+          dailyRate: { gte: 0, lte: 10000 },
+          category: 'lenses',
+        },
+        skip: 0,
+        take: 20,
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    it('should filter gear by price range', async () => {
+      (prisma.gear.findMany as jest.Mock).mockResolvedValue([mockGearData]);
+      (prisma.gear.count as jest.Mock).mockResolvedValue(1);
+
+      const request = new NextRequest('http://localhost/api/gear?minPrice=10&maxPrice=20');
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        data: [mockGearData],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 1,
+          pages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      });
+      expect(prisma.gear.findMany).toHaveBeenCalledWith({
+        where: {
+          dailyRate: { gte: 10, lte: 20 },
+        },
+        skip: 0,
+        take: 20,
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    it('should filter gear by city and state', async () => {
+      (prisma.gear.findMany as jest.Mock).mockResolvedValue([mockGearData]);
+      (prisma.gear.count as jest.Mock).mockResolvedValue(1);
+
+      const request = new NextRequest('http://localhost/api/gear?city=Existing City&state=EX');
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        data: [mockGearData],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 1,
+          pages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      });
+      expect(prisma.gear.findMany).toHaveBeenCalledWith({
+        where: {
+          dailyRate: { gte: 0, lte: 10000 },
+          city: { contains: 'Existing City', mode: 'insensitive' },
+          state: { contains: 'EX', mode: 'insensitive' },
+        },
+        skip: 0,
+        take: 20,
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+  });
+
+  describe('GET /api/gear/[id]', () => {
+    it('should return a specific gear item by ID', async () => {
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue(mockGearData);
+
+      const request = new NextRequest(`http://localhost/api/gear/${mockGearData.id}`);
+      const response = await GET_BY_ID(request, { params: Promise.resolve({ id: mockGearData.id }) });
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual(mockGearData);
+      expect(prisma.gear.findUnique).toHaveBeenCalledWith({
+        where: { id: mockGearData.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              full_name: true,
+            },
+          },
+        },
+      });
+    });
+
+    it('should return 404 if gear is not found', async () => {
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const request = new NextRequest(`http://localhost/api/gear/non-existent-id`);
+      const response = await GET_BY_ID(request, { params: Promise.resolve({ id: 'non-existent-id' }) });
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual({ error: 'Gear not found' });
+    });
+  });
+});

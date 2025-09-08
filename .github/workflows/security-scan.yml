@@ -1,0 +1,385 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # Weekly on Monday at 2 AM UTC
+  push:
+    branches: [main]
+    paths:
+      - 'package*.json'
+      - 'Dockerfile'
+      - 'src/**'
+  workflow_dispatch:
+
+jobs:
+  dependency-scan:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run npm audit
+        run: npm audit --audit-level high --json > npm-audit.json
+        continue-on-error: true
+      
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --json > snyk-results.json
+        continue-on-error: true
+      
+      - name: Run custom security audit
+        run: npm run security:audit:verbose
+      
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-results
+          path: |
+            npm-audit.json
+            snyk-results.json
+            security-audit-report.json
+
+  docker-security-scan:
+    name: Docker Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: gearshare:security-scan
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'gearshare:security-scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  code-analysis:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for better relevancy of analysis
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          queries: security-extended,security-and-quality
+      
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
+      
+      - name: Run ESLint security rules
+        run: npm run lint -- --ext .js,.jsx,.ts,.tsx --format json -o eslint-security.json src/
+        continue-on-error: true
+      
+      - name: Upload ESLint results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-security-results
+          path: eslint-security.json
+
+  penetration-test:
+    name: Penetration Testing
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Setup test environment
+        run: |
+          npx prisma migrate deploy
+          npx prisma generate
+          npm run db:seed
+      
+      - name: Build and start application
+        run: |
+          npm run build
+          npm run start &
+          sleep 15
+        env:
+          NODE_ENV: production
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+      
+      - name: Run OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.11.0
+        with:
+          target: 'http://localhost:3000'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a -j -m 5 -T 60'
+      
+      - name: Upload ZAP scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-scan-results
+          path: report_html.html
+
+  compliance-check:
+    name: Compliance and Privacy Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check for sensitive data exposure
+        run: |
+          echo "Checking for potential sensitive data exposure..."
+          
+          # Check for hardcoded secrets
+          if grep -r -i "password\|secret\|key\|token" src/ --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" | grep -v "process.env" | grep -v "// " | grep -v "/* " | grep -v "\*"; then
+            echo "⚠️  Potential hardcoded secrets found!"
+            exit 1
+          fi
+          
+          # Check for exposed environment variables
+          if grep -r "console.log.*process.env" src/ --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx"; then
+            echo "⚠️  Environment variables being logged!"
+            exit 1
+          fi
+          
+          echo "✅ No sensitive data exposure detected"
+      
+      - name: Check privacy compliance
+        run: |
+          echo "Checking privacy compliance requirements..."
+          
+          # Check for required legal pages
+          if [ ! -f "src/app/privacy/page.tsx" ]; then
+            echo "⚠️  Privacy policy page missing!"
+          fi
+          
+          if [ ! -f "src/app/terms/page.tsx" ]; then
+            echo "⚠️  Terms of service page missing!"
+          fi
+          
+          # Check for cookie consent implementation
+          if ! grep -r "cookie.*consent" src/ --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx"; then
+            echo "⚠️  Cookie consent implementation not found!"
+          fi
+          
+          echo "✅ Privacy compliance check completed"
+      
+      - name: Data retention policy check
+        run: |
+          echo "Checking data retention policies..."
+          
+          # Look for data cleanup jobs or policies
+          if [ -d "scripts/cleanup" ]; then
+            echo "✅ Data cleanup scripts found"
+          else
+            echo "⚠️  Consider implementing data cleanup procedures"
+          fi
+          
+          # Check for database data retention configuration
+          if grep -r "deleteMany\|cleanup\|retention" prisma/ src/lib/ --include="*.ts" --include="*.js"; then
+            echo "✅ Data retention logic found"
+          else
+            echo "⚠️  Consider implementing data retention policies"
+          fi
+
+  security-monitoring:
+    name: Security Monitoring Setup
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check security monitoring configuration
+        run: |
+          echo "Verifying security monitoring setup..."
+          
+          # Check for rate limiting implementation
+          if [ -f "src/lib/rate-limit.ts" ]; then
+            echo "✅ Rate limiting implementation found"
+          else
+            echo "❌ Rate limiting not implemented!"
+            exit 1
+          fi
+          
+          # Check for security headers middleware
+          if [ -f "middleware.ts" ] && grep -q "security.*headers" middleware.ts; then
+            echo "✅ Security headers middleware found"
+          else
+            echo "❌ Security headers middleware missing!"
+            exit 1
+          fi
+          
+          # Check for logging and monitoring
+          if [ -f "src/lib/logger.ts" ] && [ -f "src/lib/monitoring.ts" ]; then
+            echo "✅ Logging and monitoring infrastructure found"
+          else
+            echo "❌ Logging/monitoring infrastructure incomplete!"
+            exit 1
+          fi
+      
+      - name: Validate environment security
+        run: |
+          echo "Checking environment security configuration..."
+          
+          # Check for proper environment variable validation
+          if grep -r "process.env" src/ --include="*.ts" --include="*.tsx" | grep -v "||.*throw\|??.*throw" | head -5; then
+            echo "⚠️  Some environment variables may not have proper fallbacks"
+          fi
+          
+          # Check for development-only code in production builds
+          if grep -r "NODE_ENV.*development" src/app --include="*.ts" --include="*.tsx"; then
+            echo "⚠️  Development-specific code found in app directory"
+          fi
+          
+          echo "✅ Environment security check completed"
+
+  create-security-issue:
+    name: Create Security Issue
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, docker-security-scan, code-analysis, penetration-test, compliance-check]
+    if: failure() && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Create security issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🔒 Security Scan Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            ## Security Scan Failure Report
+            
+            **Date:** ${new Date().toISOString()}
+            **Commit:** ${context.sha}
+            **Branch:** ${context.ref}
+            
+            ### Failed Jobs
+            ${JSON.stringify(context.payload.workflow_run?.conclusion)}
+            
+            ### Next Steps
+            1. Review security scan artifacts
+            2. Address identified vulnerabilities
+            3. Re-run security scans
+            4. Update security documentation if needed
+            
+            ### Artifacts
+            - Check workflow artifacts for detailed reports
+            - Review CodeQL findings in Security tab
+            - Check Snyk dashboard for dependency issues
+            
+            **Priority:** High
+            **Labels:** security, bug, urgent
+            `;
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'bug', 'urgent']
+            });
+
+  notify-security-team:
+    name: Notify Security Team
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, docker-security-scan, code-analysis, penetration-test]
+    if: failure() && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Send security alert
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          fields: repo,message,commit,author,workflow
+          text: |
+            🚨 SECURITY ALERT: Security scan failed for GearShare
+            
+            Critical security issues detected that require immediate attention.
+            
+            Please review the GitHub Security tab and workflow artifacts.
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SECURITY_SLACK_WEBHOOK_URL }}

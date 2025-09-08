@@ -1,3 +1,10 @@
+import { NextRequest } from 'next/server';
+
+interface CustomNextRequest extends NextRequest {
+  ip?: string;
+  user?: { id: string };
+}
+
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -10,7 +17,7 @@ export interface LogEntry {
   level: LogLevel;
   message: string;
   timestamp: Date;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   stack?: string;
   userId?: string;
   requestId?: string;
@@ -50,7 +57,7 @@ class Logger {
     return `${timestamp} ${levelName} ${component} ${entry.message}`;
   }
 
-  private log(level: LogLevel, message: string, context?: Record<string, any>, component?: string): void {
+  private log(level: LogLevel, message: string, context?: Record<string, unknown>, component?: string): void {
     if (!this.shouldLog(level)) {
       return;
     }
@@ -80,7 +87,7 @@ class Logger {
     this.sendToExternalService(entry);
   }
 
-  private getConsoleMethod(level: LogLevel): (...args: any[]) => void {
+  private getConsoleMethod(level: LogLevel): (...args: unknown[]) => void {
     switch (level) {
       case LogLevel.DEBUG:
         return console.debug;
@@ -136,28 +143,28 @@ class Logger {
     }
   }
 
-  debug(message: string, context?: Record<string, any>, component?: string): void {
+  debug(message: string, context?: Record<string, unknown>, component?: string): void {
     this.log(LogLevel.DEBUG, message, context, component);
   }
 
-  info(message: string, context?: Record<string, any>, component?: string): void {
+  info(message: string, context?: Record<string, unknown>, component?: string): void {
     this.log(LogLevel.INFO, message, context, component);
   }
 
-  warn(message: string, context?: Record<string, any>, component?: string): void {
+  warn(message: string, context?: Record<string, unknown>, component?: string): void {
     this.log(LogLevel.WARN, message, context, component);
   }
 
-  error(message: string, context?: Record<string, any>, component?: string): void {
+  error(message: string, context?: Record<string, unknown>, component?: string): void {
     this.log(LogLevel.ERROR, message, context, component);
   }
 
-  critical(message: string, context?: Record<string, any>, component?: string): void {
+  critical(message: string, context?: Record<string, unknown>, component?: string): void {
     this.log(LogLevel.CRITICAL, message, context, component);
   }
 
   // Convenience methods for common scenarios
-  apiRequest(method: string, path: string, statusCode: number, responseTime: number, context?: Record<string, any>): void {
+  apiRequest(method: string, path: string, statusCode: number, responseTime: number, context?: Record<string, unknown>): void {
     const level = statusCode >= 500 ? LogLevel.ERROR : 
                   statusCode >= 400 ? LogLevel.WARN : LogLevel.INFO;
     
@@ -174,15 +181,15 @@ class Logger {
     }
   }
 
-  userAction(action: string, userId: string, context?: Record<string, any>): void {
+  userAction(action: string, userId: string, context?: Record<string, unknown>): void {
     this.info(`User action: ${action}`, { userId, ...context }, 'USER');
   }
 
-  securityEvent(event: string, context?: Record<string, any>): void {
+  securityEvent(event: string, context?: Record<string, unknown>): void {
     this.critical(`Security event: ${event}`, context, 'SECURITY');
   }
 
-  cacheOperation(operation: 'hit' | 'miss' | 'set' | 'delete', key: string, context?: Record<string, any>): void {
+  cacheOperation(operation: 'hit' | 'miss' | 'set' | 'delete', key: string, context?: Record<string, unknown>): void {
     this.debug(`Cache ${operation}: ${key}`, context, 'CACHE');
   }
 }
@@ -191,12 +198,12 @@ class Logger {
 export const logger = new Logger();
 
 // Utility functions for specific logging scenarios
-export function logApiError(error: Error, req?: any, context?: Record<string, any>): void {
+export function logApiError(error: Error, req?: NextRequest, context?: Record<string, unknown>): void {
   const requestInfo = req ? {
     method: req.method,
     url: req.url,
     headers: req.headers,
-    ip: req.ip || req.connection?.remoteAddress,
+    ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
   } : {};
 
   logger.error(`API Error: ${error.message}`, {
@@ -206,15 +213,15 @@ export function logApiError(error: Error, req?: any, context?: Record<string, an
   }, 'API');
 }
 
-export function logUserActivity(userId: string, action: string, details?: Record<string, any>): void {
+export function logUserActivity(userId: string, action: string, details?: Record<string, unknown>): void {
   logger.userAction(action, userId, details);
 }
 
-export function logSecurityIncident(incident: string, details?: Record<string, any>): void {
+export function logSecurityIncident(incident: string, details?: Record<string, unknown>): void {
   logger.securityEvent(incident, details);
 }
 
-export function logPerformanceMetric(metric: string, value: number, unit: string = 'ms', context?: Record<string, any>): void {
+export function logPerformanceMetric(metric: string, value: number, unit: string = 'ms', context?: Record<string, unknown>): void {
   if (value > 5000) {
     logger.warn(`Performance: ${metric} = ${value}${unit}`, context, 'PERFORMANCE');
   } else {
@@ -224,24 +231,13 @@ export function logPerformanceMetric(metric: string, value: number, unit: string
 
 // Request logging middleware helper
 export function createRequestLogger(component: string = 'API') {
-  return (req: any, method: string, path: string, statusCode: number, responseTime: number, error?: Error) => {
-    const context = {
-      userAgent: req.headers?.['user-agent'],
-      ip: req.ip || req.headers?.['x-forwarded-for'],
-      userId: req.user?.id,
-      requestId: req.id || req.headers?.['x-request-id'],
+  return (req: CustomNextRequest, method: string, path: string, statusCode: number, responseTime: number, error?: Error) => {
+    const context: Record<string, unknown> = {
+      userAgent: req.headers?.get('user-agent'),
+      ip: req.headers?.get('x-forwarded-for') || req.headers?.get('x-real-ip') || 'unknown',
+      userId: 'unknown',
+      requestId: req.headers?.get('x-request-id') || 'unknown',
     };
-
-    if (error) {
-      logger.error(`${method} ${path} failed with error: ${error.message}`, {
-        ...context,
-        statusCode,
-        responseTime,
-        stack: error.stack,
-      }, component);
-    } else {
-      logger.apiRequest(method, path, statusCode, responseTime, context);
-    }
   };
 }
 

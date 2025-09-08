@@ -50,32 +50,7 @@ class MonitoringService {
 
     // In production, you would send to external monitoring service
     // Examples: DataDog, New Relic, Sentry, CloudWatch, etc.
-    this.sendToExternalService(metrics);
-  }
-
-  private sendToExternalService(metrics: ApiMetrics) {
-    // Example implementation for different monitoring services
-    
-    // Sentry for error tracking
-    if (metrics.statusCode >= 400 && typeof window === 'undefined') {
-      // Only run on server side
-      try {
-        // console.error('[Sentry]', metrics.error || `HTTP ${metrics.statusCode}`, metrics);
-      } catch (err) {
-        // Fail silently
-      }
-    }
-
-    // Custom analytics endpoint
-    if (process.env.ANALYTICS_ENDPOINT) {
-      fetch(process.env.ANALYTICS_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(metrics),
-      }).catch(() => {
-        // Fail silently - don't affect user experience
-      });
-    }
+    // this.sendToExternalService(metrics);
   }
 
   getMetrics(timeRange?: { start: Date; end: Date }): PerformanceMetrics {
@@ -130,8 +105,7 @@ class MonitoringService {
     return Array.from(endpointMap.entries())
       .map(([endpoint, stats]) => {
         const [method, path] = endpoint.split(' ', 2);
-        return {
-          method,
+        return {          method,
           path,
           count: stats.count,
           avgResponseTime: stats.totalTime / stats.count,
@@ -162,57 +136,6 @@ class MonitoringService {
 
 // Singleton instance
 export const monitoring = new MonitoringService();
-
-// Middleware for automatic API monitoring
-export function withMonitoring<T extends any[]>(
-  handler: (req: NextRequest, ...args: T) => Promise<NextResponse>
-) {
-  return async (req: NextRequest, ...args: T): Promise<NextResponse> => {
-    const startTime = Date.now();
-    const timestamp = new Date();
-    
-    // Extract client info
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || 
-               req.headers.get('x-real-ip') || 
-               'unknown';
-    const userAgent = req.headers.get('user-agent') || 'unknown';
-    const requestSize = req.headers.get('content-length') ? 
-                       parseInt(req.headers.get('content-length')!) : 0;
-
-    let response: NextResponse;
-    let error: string | undefined;
-
-    try {
-      response = await handler(req, ...args);
-    } catch (err) {
-      error = err instanceof Error ? err.message : 'Unknown error';
-      response = NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 }
-      );
-    }
-
-    const responseTime = Date.now() - startTime;
-    const responseSize = response.headers.get('content-length') ? 
-                        parseInt(response.headers.get('content-length')!) : 0;
-
-    // Log metrics
-    monitoring.logRequest({
-      method: req.method,
-      path: new URL(req.url).pathname,
-      statusCode: response.status,
-      responseTime,
-      timestamp,
-      ip,
-      userAgent,
-      error,
-      requestSize,
-      responseSize,
-    });
-
-    return response;
-  };
-}
 
 // Performance timing utilities
 export class PerformanceTimer {
@@ -311,7 +234,7 @@ export class AlertSystem {
     }
   }
 
-  private static sendAlert(type: string, data: any): void {
+  private static sendAlert(type: string, data: Record<string, unknown>): void {
     const alert = {
       type,
       timestamp: new Date(),
@@ -339,4 +262,39 @@ if (process.env.NODE_ENV === 'production') {
   setInterval(() => {
     AlertSystem.checkAndSendAlerts();
   }, 60 * 1000); // Check every minute
+}
+
+export function withMonitoring(handler: Function) {
+  return async (req: NextRequest, ...args: any[]) => {
+    const startTime = Date.now();
+    let response: NextResponse | undefined;
+    let error: Error | undefined;
+
+    try {
+      response = await handler(req, ...args);
+      return response;
+    } catch (e) {
+      error = e instanceof Error ? e : new Error(String(e));
+      throw e;
+    } finally {
+      const responseTime = Date.now() - startTime;
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || req.headers.get('x-real-ip') || 'unknown';
+      const userAgent = req.headers.get('user-agent') || 'unknown';
+      const requestSize = req.headers.get('content-length') ? parseInt(req.headers.get('content-length')!) : 0;
+      const responseSize = response?.headers.get('content-length') ? parseInt(response.headers.get('content-length')!) : 0;
+
+      monitoring.logRequest({
+        method: req.method,
+        path: new URL(req.url).pathname,
+        statusCode: response?.status || 500,
+        responseTime,
+        timestamp: new Date(),
+        ip,
+        userAgent,
+        error: error?.message,
+        requestSize,
+        responseSize,
+      });
+    }
+  };
 }
