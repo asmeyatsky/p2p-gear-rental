@@ -342,8 +342,8 @@ export class QueryOptimizer {
           total: earningsData._sum.amount || 0
         },
         reviews: {
-          averageRating: reviewStats._avg.rating || 0,
-          totalReviews: reviewStats._count.id || 0
+          averageRating: reviewStats?._avg?.rating || 0,
+          totalReviews: reviewStats?._count?.id || 0
         },
         recentActivity
       };

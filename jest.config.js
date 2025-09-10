@@ -17,7 +17,7 @@ module.exports = {
     '^@/lib/prisma$': '<rootDir>/__mocks__/@/lib/prisma.ts',
   },
   transform: {
-    '^.+\.(ts|tsx)$': 'babel-jest',
+    '^.+\.(ts|tsx|js)$': 'babel-jest',
   },
   transformIgnorePatterns: [
     '/node_modules/(?!@supabase)',

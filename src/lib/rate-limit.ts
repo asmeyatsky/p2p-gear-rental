@@ -106,7 +106,7 @@ export const rateLimitConfig = {
   payment: { limiter: authRateLimit, limit: 10 }, // 10 payment requests per 15 minutes
   
   // Health check endpoints (permissive)
-  health: { limiter: generalRateLimit, limit: 50 }, // 50 health checks per minute
+  health: { limiter: strictRateLimit, limit: 50 }, // 50 health checks per minute
 } as const;
 
 export function withRateLimit(limiter: RateLimiter, limit: number) {

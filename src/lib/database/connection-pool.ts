@@ -102,11 +102,7 @@ class DatabaseConnectionPool {
   // Setup connection event handlers
   private setupConnectionHandlers(client: PrismaClient, name: string) {
     // Handle connection events
-    client.$on('beforeExit', async () => {
-      logger.info(`Database connection ${name} is shutting down`);
-      this.connectionCount--;
-      this.prismaClients.delete(name);
-    });
+    
 
     // Setup connection health check
     this.scheduleHealthCheck(client, name);

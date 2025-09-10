@@ -52,6 +52,8 @@ model Gear {
   rentals     Rental[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  averageRating     Float?
+  totalReviews      Int       @default(0)
 
   @@index([category])
   @@index([city, state])
@@ -64,6 +66,7 @@ model Gear {
   @@index([brand, model])
   @@index([weeklyRate])
   @@index([monthlyRate])
+  @@index([averageRating])
 }
 
 model Rental {

@@ -34,7 +34,8 @@
     "security:audit:json": "tsx scripts/security-audit.ts --format json",
     "security:audit:verbose": "tsx scripts/security-audit.ts --verbose",
     "security:check": "npm audit && tsx scripts/security-audit.ts --no-exit",
-    "security:fix": "npm audit fix"
+    "security:fix": "npm audit fix",
+    "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",

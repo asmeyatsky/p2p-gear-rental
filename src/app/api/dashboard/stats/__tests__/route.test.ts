@@ -173,6 +173,9 @@ describe('API /dashboard/stats', () => {
         { id: '2', dailyRate: 100 },
         { id: '3', dailyRate: 150 }
       ] as any);
+      mockPrisma.gear.aggregate.mockResolvedValueOnce({
+        _avg: { dailyRate: 100 }
+      } as any);
       
       // Mock other required calls with defaults
       mockPrisma.rental.count.mockResolvedValue(0);
