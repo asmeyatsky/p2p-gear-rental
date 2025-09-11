@@ -95,4 +95,44 @@ export function PageLayout({
   );
 }
 
-export { Layout, PageLayout };
+// Container component for legacy compatibility
+export function Container({ 
+  children, 
+  size = 'xl',
+  className = '' 
+}: { 
+  children: React.ReactNode; 
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  className?: string;
+}) {
+  return <Layout maxWidth={size} className={className}>{children}</Layout>;
+}
+
+// Grid component for layout
+export function Grid({ 
+  children, 
+  cols = 1,
+  gap = 6,
+  className = '' 
+}: { 
+  children: React.ReactNode; 
+  cols?: number;
+  gap?: number;
+  className?: string;
+}) {
+  const gridCols = {
+    1: 'grid-cols-1',
+    2: 'grid-cols-2',
+    3: 'grid-cols-3',
+    4: 'grid-cols-4',
+    6: 'grid-cols-6',
+    12: 'grid-cols-12'
+  };
+
+  return (
+    <div className={`grid ${gridCols[cols as keyof typeof gridCols] || 'grid-cols-1'} gap-${gap} ${className}`}>
+      {children}
+    </div>
+  );
+}
+

@@ -3,19 +3,28 @@ export interface GearItem {
   title: string;
   description: string;
   dailyRate: number;
-  weeklyRate?: number;
-  monthlyRate?: number;
+  weeklyRate?: number | null;
+  monthlyRate?: number | null;
   images: string[];
   city: string;
   state: string;
-  brand?: string;
-  model?: string;
-  condition?: string;
-  category?: string;
-  userId?: string;
+  brand?: string | null;
+  model?: string | null;
+  condition?: string | null;
+  category?: string | null;
+  userId?: string | null;
+  averageRating?: number | null;
+  totalReviews: number;
   createdAt: string;
   updatedAt: string;
   features?: string[];
+  user?: {
+    id: string;
+    email: string;
+    full_name?: string | null;
+    averageRating?: number | null;
+    totalReviews: number;
+  } | null;
 }
 
 export interface RentalItem {

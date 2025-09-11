@@ -6,6 +6,7 @@ interface CardProps {
   className?: string;
   padding?: 'none' | 'sm' | 'md' | 'lg';
   shadow?: 'none' | 'sm' | 'md' | 'lg';
+  hoverable?: boolean;
 }
 
 export default function Card({
@@ -13,6 +14,7 @@ export default function Card({
   className,
   padding = 'md',
   shadow = 'md',
+  hoverable = false,
 }: CardProps) {
   const baseStyles = 'bg-white rounded-lg border border-gray-200';
   
@@ -31,7 +33,13 @@ export default function Card({
   };
 
   return (
-    <div className={clsx(baseStyles, paddingStyles[padding], shadowStyles[shadow], className)}>
+    <div className={clsx(
+      baseStyles, 
+      paddingStyles[padding], 
+      shadowStyles[shadow], 
+      hoverable && 'hover:shadow-lg transition-shadow cursor-pointer',
+      className
+    )}>
       {children}
     </div>
   );

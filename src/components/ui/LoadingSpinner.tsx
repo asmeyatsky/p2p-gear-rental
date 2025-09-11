@@ -6,6 +6,7 @@ interface LoadingSpinnerProps {
   color?: 'primary' | 'white' | 'gray';
   className?: string;
   label?: string;
+  text?: string;
 }
 
 export default function LoadingSpinner({
@@ -13,6 +14,7 @@ export default function LoadingSpinner({
   color = 'primary',
   className,
   label = 'Loading...',
+  text,
 }: LoadingSpinnerProps) {
   const sizeStyles = {
     sm: 'w-4 h-4',
@@ -28,7 +30,7 @@ export default function LoadingSpinner({
   };
 
   return (
-    <div className="flex items-center justify-center" role="status" aria-label={label}>
+    <div className="flex flex-col items-center justify-center" role="status" aria-label={text || label}>
       <svg
         className={clsx(
           'animate-spin',
@@ -54,7 +56,8 @@ export default function LoadingSpinner({
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         />
       </svg>
-      <span className="sr-only">{label}</span>
+      {text && <span className="mt-2 text-sm text-gray-600">{text}</span>}
+      <span className="sr-only">{text || label}</span>
     </div>
   );
 }
@@ -72,4 +75,4 @@ export function PageLoadingSpinner({ message = 'Loading...' }: PageLoadingSpinne
   );
 }
 
-export { LoadingSpinner, PageLoadingSpinner };
+export { LoadingSpinner };

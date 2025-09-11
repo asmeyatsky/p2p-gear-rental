@@ -8,6 +8,9 @@ import { logger } from '@/lib/logger';
 export { connectionPool, optimizedPrisma, executeWithRetry, getConnectionStats };
 export { queryOptimizer };
 
+// Export prisma client for direct usage
+export const prisma = optimizedPrisma;
+
 // Database health monitoring
 export async function getDatabaseHealth() {
   try {

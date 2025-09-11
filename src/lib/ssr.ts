@@ -155,6 +155,81 @@ export async function generateGearStaticPaths(limit: number = 50) {
   }
 }
 
+// Get featured gear for homepage
+export async function getFeaturedGearSSR(limit: number = 12) {
+  try {
+    const featuredGear = await prisma.gear.findMany({
+      take: limit,
+      orderBy: [
+        { averageRating: 'desc' },
+        { totalReviews: 'desc' },
+        { createdAt: 'desc' }
+      ],
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            full_name: true,
+            averageRating: true,
+            totalReviews: true
+          }
+        },
+        _count: {
+          select: {
+            rentals: true
+          }
+        }
+      }
+    });
+
+    return featuredGear.map(gear => ({
+      ...gear,
+      createdAt: gear.createdAt.toISOString(),
+      updatedAt: gear.updatedAt.toISOString(),
+    }));
+  } catch (error) {
+    logger.error('Failed to fetch featured gear for SSR:', { error });
+    return [];
+  }
+}
+
+// Get categories for homepage
+export async function getCategoriesSSR() {
+  try {
+    const categories = await prisma.gear.groupBy({
+      by: ['category'],
+      where: {
+        category: { not: null }
+      },
+      _count: {
+        category: true
+      },
+      orderBy: {
+        _count: {
+          category: 'desc'
+        }
+      },
+      take: 8
+    });
+
+    return categories.map(cat => ({
+      name: cat.category,
+      count: cat._count.category
+    }));
+  } catch (error) {
+    logger.error('Failed to fetch categories for SSR:', { error });
+    return [
+      { name: 'cameras', count: 0 },
+      { name: 'lenses', count: 0 },
+      { name: 'lighting', count: 0 },
+      { name: 'audio', count: 0 },
+      { name: 'drones', count: 0 },
+      { name: 'accessories', count: 0 }
+    ];
+  }
+}
+
 // Cache revalidation utility
 export async function revalidateGearCache(gearId: string) {
   // In a real implementation, this would trigger ISR revalidation

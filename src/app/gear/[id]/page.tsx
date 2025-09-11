@@ -16,7 +16,7 @@ export async function generateMetadata(
     return await generateGearMetadata(resolvedParams.id);
   } catch (error) {
     const resolvedParams = await params;
-    logger.error('Failed to generate metadata for gear:', error, { gearId: resolvedParams.id });
+    logger.error('Failed to generate metadata for gear:', { gearId: resolvedParams.id, error });
     return {
       title: 'Gear Details | P2P Gear Rental',
       description: 'View details for photography and videography equipment available for rent.',
@@ -66,7 +66,7 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
             {/* Thumbnail images */}
             {gear.images && gear.images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
-                {gear.images.slice(1, 5).map((image, index) => (
+                {gear.images.slice(1, 5).map((image: string, index: number) => (
                   <div key={index} className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
                     <Image
                       src={image}
@@ -172,48 +172,12 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
             )}
             
             {/* Reviews Section */}
-            {gear.reviews && gear.reviews.length > 0 && (
-              <div className="border-t pt-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Reviews</h2>
-                <div className="space-y-4">
-                  {gear.reviews.slice(0, 3).map((review: any) => (
-                    <div key={review.id} className="bg-gray-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium text-gray-900">
-                            {review.reviewer?.full_name || 'Anonymous'}
-                          </span>
-                          <div className="flex items-center">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <span
-                                key={i}
-                                className={`text-sm ${
-                                  i < review.rating ? 'text-yellow-400' : 'text-gray-300'
-                                }`}
-                              >
-                                ★
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {review.comment && (
-                        <p className="text-gray-700 text-sm">{review.comment}</p>
-                      )}
-                    </div>
-                  ))}
-                  
-                  {gear._count?.reviews && gear._count.reviews > 3 && (
-                    <p className="text-sm text-gray-600">
-                      ... and {gear._count.reviews - 3} more reviews
-                    </p>
-                  )}
-                </div>
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Reviews</h2>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-gray-600">Reviews will be displayed here after rentals are completed.</p>
               </div>
-            )}
+            </div>
             
             {/* Client-side interactive components */}
             <div className="border-t pt-6">
@@ -225,7 +189,7 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
     );
   } catch (error) {
     perf.end();
-    logger.error('Gear details server error:', error, { gearId });
+    logger.error('Gear details server error:', { gearId, error });
     throw error;
   }
 }
