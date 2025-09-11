@@ -130,7 +130,7 @@ export default function ReviewsList({
         </div>
       ) : (
         <div className="space-y-4">
-          {reviews.map((review) => (
+          {reviews.map((review: ReviewData) => (
             <ReviewCard
               key={review.id}
               review={review}

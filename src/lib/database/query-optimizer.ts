@@ -102,11 +102,7 @@ export class QueryOptimizer {
               }
             },
             // Only include reviews count, not full reviews
-            _count: {
-              select: {
-                reviews: true
-              }
-            }
+            _count: true
           }
         }),
 
@@ -141,7 +137,7 @@ export class QueryOptimizer {
       return result;
 
     } catch (error) {
-      logger.error('Query optimization error in getGearListings:', error);
+      logger.error('Query optimization error in getGearListings:', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -192,26 +188,8 @@ export class QueryOptimizer {
               createdAt: true
             }
           },
-          // Get recent reviews with pagination
-          reviews: {
-            take: 10,
-            orderBy: { createdAt: 'desc' },
-            select: {
-              id: true,
-              rating: true,
-              comment: true,
-              createdAt: true,
-              reviewer: {
-                select: {
-                  id: true,
-                  full_name: true
-                }
-              }
-            }
-          },
           _count: {
             select: {
-              reviews: true,
               rentals: {
                 where: {
                   status: { in: ['pending', 'approved', 'confirmed'] }
@@ -235,7 +213,7 @@ export class QueryOptimizer {
       return gear;
 
     } catch (error) {
-      logger.error('Query optimization error in getGearDetail:', error);
+      logger.error('Query optimization error in getGearDetail:', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -291,14 +269,15 @@ export class QueryOptimizer {
           })
         ]),
 
-        // Earnings data
-        prisma.payment.aggregate({
-          where: {
-            rental: { ownerId: userId },
-            status: 'completed'
-          },
-          _sum: { amount: true }
-        }),
+        // Earnings data - Payment model not implemented yet
+        // prisma.payment.aggregate({
+        //   where: {
+        //     rental: { ownerId: userId },
+        //     status: 'completed'
+        //   },
+        //   _sum: { amount: true }
+        // }),
+        Promise.resolve({ _sum: { amount: 0 } }),
 
         // Recent activity (limited and optimized)
         prisma.rental.findMany({
@@ -310,7 +289,6 @@ export class QueryOptimizer {
             status: true,
             startDate: true,
             endDate: true,
-            totalAmount: true,
             gear: { select: { title: true } },
             renter: { select: { full_name: true } }
           }
@@ -361,7 +339,7 @@ export class QueryOptimizer {
       return result;
 
     } catch (error) {
-      logger.error('Query optimization error in getUserDashboardStats:', error);
+      logger.error('Query optimization error in getUserDashboardStats:', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -398,7 +376,7 @@ export class QueryOptimizer {
       return !conflictingRental;
 
     } catch (error) {
-      logger.error('Query optimization error in checkGearAvailability:', error);
+      logger.error('Query optimization error in checkGearAvailability:', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }

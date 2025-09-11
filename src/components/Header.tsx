@@ -129,14 +129,14 @@ export default function Header() {
                 >
                   Sign In
                 </Link>
-                <Button
-                  as={Link}
-                  href="/auth/signup"
-                  size="sm"
-                  variant="primary"
-                >
-                  Get Started
-                </Button>
+                <Link href="/auth/signup">
+                  <Button
+                    size="sm"
+                    variant="primary"
+                  >
+                    Get Started
+                  </Button>
+                </Link>
               </div>
             )}
           </div>

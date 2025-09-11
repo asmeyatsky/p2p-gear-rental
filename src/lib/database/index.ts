@@ -49,7 +49,7 @@ export async function getDatabaseHealth() {
       timestamp: new Date().toISOString()
     };
   } catch (error) {
-    logger.error('Database health check failed:', error);
+    logger.error('Database health check failed:', { error: error instanceof Error ? error.message : String(error) });
     return {
       status: 'unhealthy',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -121,8 +121,15 @@ export class DatabaseOperations {
     limit?: number;
     sortBy?: string;
   }) {
+    const searchParams = {
+      ...params,
+      search: params.query, // Map query to search
+      startDate: params.startDate?.toISOString(),
+      endDate: params.endDate?.toISOString()
+    };
+    
     return executeWithRetry(() =>
-      queryOptimizer.getGearListings(params, {
+      queryOptimizer.getGearListings(searchParams, {
         useCache: true,
         cacheTTL: CacheManager.TTL.MEDIUM
       })
@@ -231,7 +238,7 @@ export class DatabaseOperations {
 
       return { success: true, stats };
     } catch (error) {
-      logger.error('Database maintenance failed:', error);
+      logger.error('Database maintenance failed:', { error: error instanceof Error ? error.message : String(error) });
       return { success: false, error };
     }
   }
@@ -262,7 +269,7 @@ export async function initializeDatabase() {
     logger.info('Database initialization completed successfully');
     return true;
   } catch (error) {
-    logger.error('Database initialization failed:', error);
+    logger.error('Database initialization failed:', { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }

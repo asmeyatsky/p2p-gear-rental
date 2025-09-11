@@ -61,7 +61,7 @@ const securityConfigSchema = z.object({
  */
 export class SecurityConfig {
   private static instance: SecurityConfig;
-  private config: z.infer<typeof securityConfigSchema>;
+  private config!: z.infer<typeof securityConfigSchema>;
   
   private constructor() {
     this.validateAndLoadConfig();
@@ -119,7 +119,7 @@ export class SecurityConfig {
       
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const missingVars = error.errors.map(e => e.path.join('.')).join(', ');
+        const missingVars = error.issues.map(e => e.path.join('.')).join(', ');
         throw new Error(`Invalid or missing environment variables: ${missingVars}`);
       }
       throw error;

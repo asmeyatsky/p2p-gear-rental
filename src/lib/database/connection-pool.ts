@@ -169,7 +169,7 @@ class DatabaseConnectionPool {
   }
 
   // Get appropriate log level based on environment
-  private getLogLevel() {
+  private getLogLevel(): any[] {
     switch (process.env.NODE_ENV) {
       case 'development':
         return ['query', 'info', 'warn', 'error'];
@@ -186,13 +186,13 @@ class DatabaseConnectionPool {
       try {
         await client.$queryRaw`SELECT 1`;
       } catch (error) {
-        logger.error(`Health check failed for connection ${name}`, error);
+        logger.error(`Health check failed for connection ${name}`, { error: error instanceof Error ? error.message : String(error) });
         
         // Attempt to reconnect
         try {
           await this.reconnectClient(name);
         } catch (reconnectError) {
-          logger.error(`Failed to reconnect database client ${name}`, reconnectError);
+          logger.error(`Failed to reconnect database client ${name}`, { error: reconnectError instanceof Error ? reconnectError.message : String(reconnectError) });
         }
       }
     }, 30000); // Check every 30 seconds
@@ -208,7 +208,7 @@ class DatabaseConnectionPool {
       try {
         await existingClient.$disconnect();
       } catch (error) {
-        logger.warn(`Error disconnecting client ${name}:`, error);
+        logger.warn(`Error disconnecting client ${name}:`, { error: error instanceof Error ? error.message : String(error) });
       }
       
       // Clear health check interval
@@ -244,7 +244,7 @@ class DatabaseConnectionPool {
     operation: () => Promise<T>,
     maxRetries = this.config.retryAttempts
   ): Promise<T> {
-    let lastError: Error;
+    let lastError: Error = new Error('Unknown error');
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -268,7 +268,7 @@ class DatabaseConnectionPool {
       }
     }
 
-    logger.error(`Database operation failed after ${maxRetries} attempts`, lastError);
+    logger.error(`Database operation failed after ${maxRetries} attempts`, { error: lastError instanceof Error ? lastError.message : String(lastError) });
     throw lastError!;
   }
 
@@ -322,7 +322,7 @@ class DatabaseConnectionPool {
           await client.$disconnect();
           logger.info(`Disconnected database client: ${name}`);
         } catch (error) {
-          logger.warn(`Error disconnecting client ${name}:`, error);
+          logger.warn(`Error disconnecting client ${name}:`, { error: error instanceof Error ? error.message : String(error) });
         }
       }
     );
@@ -336,7 +336,7 @@ class DatabaseConnectionPool {
   }
 
   // Health check for monitoring
-  async healthCheck(): Promise<{ healthy: boolean; connections: any; latency?: number }> {
+  async healthCheck(): Promise<{ healthy: boolean; connections: any; latency?: number; error?: string }> {
     try {
       const start = Date.now();
       const client = this.getClient('default');
@@ -352,7 +352,7 @@ class DatabaseConnectionPool {
       return {
         healthy: false,
         connections: this.getConnectionStats(),
-        error: error instanceof Error ? error.message : error
+        error: error instanceof Error ? error.message : String(error)
       };
     }
   }

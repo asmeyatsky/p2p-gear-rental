@@ -125,7 +125,7 @@ async function FeaturedGearSection() {
     );
   } catch (error) {
     perf.end();
-    logger.error('Failed to load featured gear:', error);
+    logger.error('Failed to load featured gear:', { error: error instanceof Error ? error.message : String(error) });
     
     return (
       <section className="container mx-auto px-4 py-8">
@@ -165,18 +165,18 @@ async function CategoryShowcase() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {categories.slice(0, 8).map((category) => (
               <Link
-                key={category.category}
-                href={`/browse?category=${encodeURIComponent(category.category)}`}
+                key={category.name}
+                href={`/browse?category=${encodeURIComponent(category.name || '')}`}
                 className="bg-white rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-200 border border-gray-100"
               >
                 <h3 className="font-semibold text-lg mb-2 text-gray-900 capitalize">
-                  {category.category}
+                  {category.name}
                 </h3>
                 <p className="text-gray-600 text-sm mb-3">
                   {category.count} item{category.count !== 1 ? 's' : ''} available
                 </p>
                 <p className="text-blue-600 font-medium">
-                  From ${Math.round(category.averagePrice)}/day
+                  View Category →
                 </p>
               </Link>
             ))}
@@ -185,7 +185,7 @@ async function CategoryShowcase() {
       </section>
     );
   } catch (error) {
-    logger.error('Failed to load categories:', error);
+    logger.error('Failed to load categories:', { error: error instanceof Error ? error.message : String(error) });
     return null;
   }
 }
@@ -238,7 +238,7 @@ export default async function Home() {
     return result;
   } catch (error) {
     perf.end();
-    logger.error('Homepage render error:', error);
+    logger.error('Homepage render error:', { error: error instanceof Error ? error.message : String(error) });
     
     return (
       <div className="container mx-auto px-4 py-8">

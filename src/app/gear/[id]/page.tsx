@@ -242,7 +242,7 @@ export async function generateStaticParams() {
       id: path.params.id,
     }));
   } catch (error) {
-    logger.error('Failed to generate static params for gear:', error);
+    logger.error('Failed to generate static params for gear:', { error: error instanceof Error ? error.message : String(error) });
     return [];
   }
 }

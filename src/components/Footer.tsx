@@ -30,7 +30,7 @@ export default function Footer() {
     <footer className="bg-gray-50 border-t border-gray-200 mt-auto">
       <Container>
         <div className="py-12">
-          <Grid cols={4} gap="lg" responsive>
+          <Grid cols={4} gap={8}>
             {/* Brand Section */}
             <div className="col-span-1 md:col-span-2 lg:col-span-1">
               <div className="flex items-center space-x-2 mb-4">
