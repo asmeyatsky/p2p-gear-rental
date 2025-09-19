@@ -264,11 +264,15 @@ export class SecurityAuditor {
   }
 
   private auditNextjsConfig(): void {
-    const nextConfigPath = path.join(this.projectRoot, 'next.config.ts');
-    const nextConfigJsPath = path.join(this.projectRoot, 'next.config.js');
-    
-    const configPath = existsSync(nextConfigPath) ? nextConfigPath : 
-                      existsSync(nextConfigJsPath) ? nextConfigJsPath : null;
+    const nextConfigPath = path.join(this.projectRoot, 'config/next.config.ts');
+    const nextConfigJsPath = path.join(this.projectRoot, 'config/next.config.js');
+    const rootNextConfigPath = path.join(this.projectRoot, 'next.config.ts');
+    const rootNextConfigJsPath = path.join(this.projectRoot, 'next.config.js');
+
+    const configPath = existsSync(nextConfigPath) ? nextConfigPath :
+                      existsSync(nextConfigJsPath) ? nextConfigJsPath :
+                      existsSync(rootNextConfigPath) ? rootNextConfigPath :
+                      existsSync(rootNextConfigJsPath) ? rootNextConfigJsPath : null;
 
     if (!configPath) {
       this.addIssue({

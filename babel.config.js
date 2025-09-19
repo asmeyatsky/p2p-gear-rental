@@ -1,7 +1,2 @@
-module.exports = {
-  presets: [
-    ['@babel/preset-env', { targets: { node: 'current' } }],
-    ['@babel/preset-react', { runtime: 'automatic' }],
-    '@babel/preset-typescript',
-  ],
-};
+// Re-export the config from the config folder
+module.exports = require('./config/babel.config.js');

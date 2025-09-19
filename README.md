@@ -207,7 +207,7 @@ npm run docker:prod:down
 
 ## 📝 License
 
-This project is private and proprietary.
+This project is released into the public domain. You are free to use, modify, and distribute this code without any restrictions.
 
 ## 🔗 Learn More
 

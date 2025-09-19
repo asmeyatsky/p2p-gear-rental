@@ -1,7 +1,8 @@
 module.exports = {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/config/jest.setup.ts'],
   testPathIgnorePatterns: ['<rootDir>/e2e/', '<rootDir>/.next/'],
+  rootDir: '..',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@supabase/supabase-js$': '<rootDir>/__mocks__/@supabase/supabase-js.ts',
