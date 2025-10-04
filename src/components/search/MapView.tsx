@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-// import Map, { Marker, Popup, ViewState } from 'react-map-gl';
+import type { MapRef } from 'react-map-gl';
 import { GearItem } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import Image from 'next/image';
@@ -30,7 +30,7 @@ export default function MapView({
   className = '',
   onMarkerClick,
 }: MapViewProps) {
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<MapRef>(null);
   const [viewState, setViewState] = useState<ViewState>({
     longitude: center?.longitude || -122.4194,
     latitude: center?.latitude || 37.7749,

@@ -205,7 +205,7 @@ export default function DashboardOverview() {
       {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">Welcome back!</h1>
-        <p className="opacity-90">Here's what's happening with your gear rental business</p>
+        <p className="opacity-90">Here&apos;s what&apos;s happening with your gear rental business</p>
       </div>
 
       {/* Stats Grid */}

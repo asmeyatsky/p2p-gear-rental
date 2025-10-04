@@ -7,6 +7,8 @@ import { POST } from '../route';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
 import Stripe from 'stripe';
+import { User, Rental, Gear, Payment } from '@prisma/client';
+import { Session } from '@supabase/supabase-js';
 
 // Mock dependencies
 jest.mock('@/lib/prisma');
@@ -23,7 +25,7 @@ const mockStripeInstance = {
   paymentIntents: {
     create: jest.fn(),
   },
-} as any;
+} as unknown as Stripe;
 
 describe('API /create-payment-intent', () => {
   beforeEach(() => {
@@ -38,31 +40,47 @@ describe('API /create-payment-intent', () => {
       currency: 'usd'
     };
 
+    const mockUser: User = {
+      id: 'user-1',
+      email: 'renter@example.com',
+      full_name: 'Test Renter',
+      averageRating: 0,
+      totalReviews: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      stripeCustomerId: null,
+      lastLogin: null,
+      isOnline: false,
+      bio: null,
+      location: null,
+      website: null,
+      avatarUrl: null,
+    };
+
+    const mockSession: Partial<Session> = {
+      user: {
+        id: 'user-1',
+        email: 'renter@example.com',
+        user_metadata: { full_name: 'Test Renter' },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      }
+    };
+
     beforeEach(() => {
       // Mock authenticated user
       mockSupabase.auth.getSession.mockResolvedValue({
-        data: {
-          session: {
-            user: {
-              id: 'user-1',
-              email: 'renter@example.com',
-              user_metadata: { full_name: 'Test Renter' }
-            }
-          }
-        },
+        data: { session: mockSession as Session },
         error: null
-      } as any);
+      });
 
       // Mock user upsert
-      mockPrisma.user.upsert.mockResolvedValue({
-        id: 'user-1',
-        email: 'renter@example.com',
-        full_name: 'Test Renter'
-      } as any);
+      mockPrisma.user.upsert.mockResolvedValue(mockUser);
     });
 
     it('should create payment intent for valid rental', async () => {
-      const mockRental = {
+      const mockRental: Partial<Rental & { gear: Partial<Gear> }> = {
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2',
@@ -77,7 +95,7 @@ describe('API /create-payment-intent', () => {
         }
       };
 
-      const mockPaymentIntent = {
+      const mockPaymentIntent: Partial<Stripe.PaymentIntent> = {
         id: 'pi_test123',
         client_secret: 'pi_test123_secret',
         amount: 25000,
@@ -85,8 +103,8 @@ describe('API /create-payment-intent', () => {
         status: 'requires_payment_method'
       };
 
-      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as any);
-      mockStripeInstance.paymentIntents.create.mockResolvedValue(mockPaymentIntent);
+      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as Rental);
+      (mockStripeInstance.paymentIntents.create as jest.Mock).mockResolvedValue(mockPaymentIntent);
 
       const request = new NextRequest('http://localhost:3000/api/create-payment-intent', {
         method: 'POST',
@@ -114,7 +132,7 @@ describe('API /create-payment-intent', () => {
     });
 
     it('should prevent payment for non-approved rentals', async () => {
-      const mockRental = {
+      const mockRental: Partial<Rental> = {
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2',
@@ -122,7 +140,7 @@ describe('API /create-payment-intent', () => {
         totalAmount: 250.00
       };
 
-      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as any);
+      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as Rental);
 
       const request = new NextRequest('http://localhost:3000/api/create-payment-intent', {
         method: 'POST',
@@ -136,7 +154,7 @@ describe('API /create-payment-intent', () => {
     });
 
     it('should prevent payment by non-renter', async () => {
-      const mockRental = {
+      const mockRental: Partial<Rental> = {
         id: 'rental-1',
         renterId: 'user-2', // Different user
         ownerId: 'user-3',
@@ -144,7 +162,7 @@ describe('API /create-payment-intent', () => {
         totalAmount: 250.00
       };
 
-      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as any);
+      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as Rental);
 
       const request = new NextRequest('http://localhost:3000/api/create-payment-intent', {
         method: 'POST',
@@ -172,7 +190,7 @@ describe('API /create-payment-intent', () => {
     });
 
     it('should validate amount matches rental total', async () => {
-      const mockRental = {
+      const mockRental: Partial<Rental> = {
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2',
@@ -180,7 +198,7 @@ describe('API /create-payment-intent', () => {
         totalAmount: 300.00 // Different amount
       };
 
-      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as any);
+      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as Rental);
 
       const request = new NextRequest('http://localhost:3000/api/create-payment-intent', {
         method: 'POST',
@@ -197,7 +215,7 @@ describe('API /create-payment-intent', () => {
       mockSupabase.auth.getSession.mockResolvedValue({
         data: { session: null },
         error: null
-      } as any);
+      });
 
       const request = new NextRequest('http://localhost:3000/api/create-payment-intent', {
         method: 'POST',
@@ -245,7 +263,7 @@ describe('API /create-payment-intent', () => {
     });
 
     it('should handle Stripe errors', async () => {
-      const mockRental = {
+      const mockRental: Partial<Rental> = {
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2',
@@ -253,8 +271,8 @@ describe('API /create-payment-intent', () => {
         totalAmount: 250.00
       };
 
-      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as any);
-      mockStripeInstance.paymentIntents.create.mockRejectedValue(
+      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as Rental);
+      (mockStripeInstance.paymentIntents.create as jest.Mock).mockRejectedValue(
         new Error('Your card was declined')
       );
 
@@ -284,7 +302,7 @@ describe('API /create-payment-intent', () => {
     });
 
     it('should prevent duplicate payment intents for same rental', async () => {
-      const mockRental = {
+      const mockRental: Partial<Rental & { payments: Partial<Payment>[] }> = {
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2',
@@ -299,7 +317,7 @@ describe('API /create-payment-intent', () => {
         ]
       };
 
-      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as any);
+      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as Rental);
 
       const request = new NextRequest('http://localhost:3000/api/create-payment-intent', {
         method: 'POST',

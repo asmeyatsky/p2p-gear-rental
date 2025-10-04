@@ -6,6 +6,8 @@ import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
+import { User, Gear } from '@/lib/prisma';
+import { Session } from '@supabase/supabase-js';
 
 // Mock dependencies
 jest.mock('@/lib/prisma');
@@ -24,12 +26,14 @@ describe('API /gear', () => {
   describe('GET /api/gear', () => {
     it('should return gear list with pagination', async () => {
       // Mock data
-      const mockGear = [
+      const mockGear: (Gear & { user: User })[] = [
         {
           id: 'gear-1',
           title: 'Test Camera',
           description: 'Test description',
           dailyRate: 50,
+          weeklyRate: null,
+          monthlyRate: null,
           images: ['image1.jpg'],
           city: 'San Francisco',
           state: 'CA',
@@ -37,14 +41,29 @@ describe('API /gear', () => {
           user: {
             id: 'user-1',
             email: 'test@example.com',
-            full_name: 'Test User'
+            full_name: 'Test User',
+            averageRating: 0,
+            totalReviews: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            stripeCustomerId: null,
+            lastLogin: null,
+            isOnline: false,
+            bio: null,
+            location: null,
+            website: null,
+            avatarUrl: null,
           },
+          category: 'cameras',
+          brand: 'Test Brand',
+          model: 'Test Model',
+          condition: 'good',
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         }
       ];
 
-      mockPrisma.gear.findMany.mockResolvedValue(mockGear as any);
+      mockPrisma.gear.findMany.mockResolvedValue(mockGear);
       mockPrisma.gear.count.mockResolvedValue(1);
 
       const request = new NextRequest('http://localhost:3000/api/gear?page=1&limit=20');
@@ -144,44 +163,58 @@ describe('API /gear', () => {
       condition: 'like-new'
     };
 
+    const mockUser: User = {
+        id: 'user-1',
+        email: 'test@example.com',
+        full_name: 'Test User',
+        averageRating: 0,
+        totalReviews: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        stripeCustomerId: null,
+        lastLogin: null,
+        isOnline: false,
+        bio: null,
+        location: null,
+        website: null,
+        avatarUrl: null,
+    };
+
+    const mockSession: Partial<Session> = {
+        user: {
+            id: 'user-1',
+            email: 'test@example.com',
+            user_metadata: { full_name: 'Test User' },
+            app_metadata: {},
+            aud: 'authenticated',
+            created_at: new Date().toISOString(),
+        }
+    };
+
     beforeEach(() => {
       // Mock authenticated user
       mockSupabase.auth.getSession.mockResolvedValue({
-        data: {
-          session: {
-            user: {
-              id: 'user-1',
-              email: 'test@example.com',
-              user_metadata: { full_name: 'Test User' }
-            }
-          }
-        },
+        data: { session: mockSession as Session },
         error: null
-      } as any);
+      });
 
       // Mock user upsert
-      mockPrisma.user.upsert.mockResolvedValue({
-        id: 'user-1',
-        email: 'test@example.com',
-        full_name: 'Test User'
-      } as any);
+      mockPrisma.user.upsert.mockResolvedValue(mockUser);
     });
 
     it('should create gear with valid data', async () => {
-      const mockCreatedGear = {
+      const mockCreatedGear: Gear & { user: User } = {
         id: 'gear-1',
         ...validGearData,
         userId: 'user-1',
-        user: {
-          id: 'user-1',
-          email: 'test@example.com',
-          full_name: 'Test User'
-        },
+        user: mockUser,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        weeklyRate: 300,
+        monthlyRate: 1000,
       };
 
-      mockPrisma.gear.create.mockResolvedValue(mockCreatedGear as any);
+      mockPrisma.gear.create.mockResolvedValue(mockCreatedGear);
 
       const request = new NextRequest('http://localhost:3000/api/gear', {
         method: 'POST',
@@ -201,7 +234,7 @@ describe('API /gear', () => {
       mockSupabase.auth.getSession.mockResolvedValue({
         data: { session: null },
         error: null
-      } as any);
+      });
 
       const request = new NextRequest('http://localhost:3000/api/gear', {
         method: 'POST',
@@ -314,8 +347,6 @@ describe('API /gear', () => {
     it('should handle rate limiting', async () => {
       // This would test the rate limiting middleware
       // In a real scenario, you'd mock the rate limiter to return an error
-      const request = new NextRequest('http://localhost:3000/api/gear');
-      
       // Mock rate limit exceeded
       jest.doMock('@/lib/rate-limit', () => ({
         withRateLimit: () => () => async () => {

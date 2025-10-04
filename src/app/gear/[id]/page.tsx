@@ -238,7 +238,7 @@ export async function generateStaticParams() {
     const { generateGearStaticPaths } = await import('@/lib/ssr');
     const { paths } = await generateGearStaticPaths(50); // Generate for top 50 gear items
     
-    return paths.map((path: any) => ({
+    return paths.map((path: { params: { id: string } }) => ({
       id: path.params.id,
     }));
   } catch (error) {

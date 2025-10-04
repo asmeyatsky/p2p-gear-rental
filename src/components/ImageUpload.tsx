@@ -195,7 +195,7 @@ export default function ImageUpload({
       
       toast.success('Image removed successfully');
     } catch (error) {
-      toast.error('Failed to remove image');
+      toast.error((error as Error)?.message || 'Failed to remove image');
     }
   };
 

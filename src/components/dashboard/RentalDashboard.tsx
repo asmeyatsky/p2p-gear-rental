@@ -88,7 +88,7 @@ export default function RentalDashboard() {
         setStats(statsData);
       }
     } catch (error) {
-      toast.error('Failed to fetch dashboard data');
+      toast.error((error as Error)?.message || 'Failed to fetch dashboard data');
     } finally {
       setLoading(false);
     }
@@ -138,7 +138,7 @@ export default function RentalDashboard() {
         throw new Error('Failed to approve rental');
       }
     } catch (error) {
-      toast.error('Failed to approve rental');
+      toast.error((error as Error)?.message || 'Failed to approve rental');
     }
   };
 
@@ -156,7 +156,7 @@ export default function RentalDashboard() {
         throw new Error('Failed to reject rental');
       }
     } catch (error) {
-      toast.error('Failed to reject rental');
+      toast.error((error as Error)?.message || 'Failed to reject rental');
     }
   };
 

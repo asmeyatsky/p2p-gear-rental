@@ -6,6 +6,8 @@ import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
+import { User, Rental, Gear } from '@/lib/prisma';
+import { Session } from '@supabase/supabase-js';
 
 // Mock dependencies
 jest.mock('@/lib/prisma');
@@ -18,6 +20,34 @@ const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
 describe('API /rentals', () => {
+  const mockUser: User = {
+    id: 'user-1',
+    email: 'test@example.com',
+    full_name: 'Test User',
+    averageRating: 0,
+    totalReviews: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    stripeCustomerId: null,
+    lastLogin: null,
+    isOnline: false,
+    bio: null,
+    location: null,
+    website: null,
+    avatarUrl: null,
+  };
+
+  const mockSession: Partial<Session> = {
+    user: {
+      id: 'user-1',
+      email: 'test@example.com',
+      user_metadata: { full_name: 'Test User' },
+      app_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+    }
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -26,20 +56,13 @@ describe('API /rentals', () => {
     beforeEach(() => {
       // Mock authenticated user
       mockSupabase.auth.getSession.mockResolvedValue({
-        data: {
-          session: {
-            user: {
-              id: 'user-1',
-              email: 'test@example.com'
-            }
-          }
-        },
+        data: { session: mockSession as Session },
         error: null
-      } as any);
+      });
     });
 
     it('should return user rentals', async () => {
-      const mockRentals = [
+      const mockRentals: (Rental & { gear: Gear & { user: User }, renter: User, payments: unknown[] })[] = [
         {
           id: 'rental-1',
           gearId: 'gear-1',
@@ -48,6 +71,11 @@ describe('API /rentals', () => {
           startDate: new Date('2024-12-01'),
           endDate: new Date('2024-12-05'),
           status: 'pending',
+          message: null,
+          paymentIntentId: null,
+          clientSecret: null,
+          paymentStatus: null,
+          totalAmount: 250,
           createdAt: new Date(),
           updatedAt: new Date(),
           gear: {
@@ -57,19 +85,37 @@ describe('API /rentals', () => {
             dailyRate: 50,
             user: {
               id: 'user-2',
-              full_name: 'Owner User'
-            }
+              full_name: 'Owner User',
+              email: 'owner@example.com',
+              averageRating: 0,
+              totalReviews: 0,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              stripeCustomerId: null,
+              lastLogin: null,
+              isOnline: false,
+              bio: null,
+              location: null,
+              website: null,
+              avatarUrl: null,
+            },
+            description: '',
+            weeklyRate: null,
+            monthlyRate: null,
+            city: '',
+            state: '',
+            category: null,
+            brand: null,
+            model: null,
+            condition: null,
+            userId: 'user-2',
           },
-          renter: {
-            id: 'user-1',
-            full_name: 'Renter User',
-            email: 'renter@example.com'
-          },
+          renter: mockUser,
           payments: []
         }
       ];
 
-      mockPrisma.rental.findMany.mockResolvedValue(mockRentals as any);
+      mockPrisma.rental.findMany.mockResolvedValue(mockRentals);
 
       const request = new NextRequest('http://localhost:3000/api/rentals');
       const response = await GET(request);
@@ -108,7 +154,7 @@ describe('API /rentals', () => {
       mockSupabase.auth.getSession.mockResolvedValue({
         data: { session: null },
         error: null
-      } as any);
+      });
 
       const request = new NextRequest('http://localhost:3000/api/rentals');
       const response = await GET(request);
@@ -128,53 +174,56 @@ describe('API /rentals', () => {
     beforeEach(() => {
       // Mock authenticated user
       mockSupabase.auth.getSession.mockResolvedValue({
-        data: {
-          session: {
-            user: {
-              id: 'user-1',
-              email: 'renter@example.com',
-              user_metadata: { full_name: 'Test Renter' }
-            }
-          }
-        },
+        data: { session: mockSession as Session },
         error: null
-      } as any);
+      });
 
       // Mock user upsert
-      mockPrisma.user.upsert.mockResolvedValue({
-        id: 'user-1',
-        email: 'renter@example.com',
-        full_name: 'Test Renter'
-      } as any);
+      mockPrisma.user.upsert.mockResolvedValue(mockUser);
     });
 
     it('should create rental request with valid data', async () => {
-      const mockGear = {
+      const mockGear: Gear = {
         id: 'gear-1',
         title: 'Test Camera',
         userId: 'user-2', // Different owner
-        dailyRate: 50
+        dailyRate: 50,
+        description: '',
+        weeklyRate: null,
+        monthlyRate: null,
+        images: [],
+        city: '',
+        state: '',
+        category: null,
+        brand: null,
+        model: null,
+        condition: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      const mockCreatedRental = {
+      const mockCreatedRental: Rental & { gear: Gear, renter: User } = {
         id: 'rental-1',
-        ...validRentalData,
+        gearId: 'gear-1',
         renterId: 'user-1',
         ownerId: 'user-2',
+        startDate: new Date(validRentalData.startDate),
+        endDate: new Date(validRentalData.endDate),
         status: 'pending',
+        message: validRentalData.message,
+        paymentIntentId: null,
+        clientSecret: null,
+        paymentStatus: null,
+        totalAmount: 250,
         createdAt: new Date(),
         updatedAt: new Date(),
         gear: mockGear,
-        renter: {
-          id: 'user-1',
-          full_name: 'Test Renter',
-          email: 'renter@example.com'
-        }
+        renter: mockUser
       };
 
-      mockPrisma.gear.findUnique.mockResolvedValue(mockGear as any);
+      mockPrisma.gear.findUnique.mockResolvedValue(mockGear);
       mockPrisma.rental.findFirst.mockResolvedValue(null); // No conflicting rentals
-      mockPrisma.rental.create.mockResolvedValue(mockCreatedRental as any);
+      mockPrisma.rental.create.mockResolvedValue(mockCreatedRental);
 
       const request = new NextRequest('http://localhost:3000/api/rentals', {
         method: 'POST',
@@ -191,14 +240,26 @@ describe('API /rentals', () => {
     });
 
     it('should prevent users from renting their own gear', async () => {
-      const mockGear = {
+      const mockGear: Gear = {
         id: 'gear-1',
         title: 'Test Camera',
         userId: 'user-1', // Same as authenticated user
-        dailyRate: 50
+        dailyRate: 50,
+        description: '',
+        weeklyRate: null,
+        monthlyRate: null,
+        images: [],
+        city: '',
+        state: '',
+        category: null,
+        brand: null,
+        model: null,
+        condition: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      mockPrisma.gear.findUnique.mockResolvedValue(mockGear as any);
+      mockPrisma.gear.findUnique.mockResolvedValue(mockGear);
 
       const request = new NextRequest('http://localhost:3000/api/rentals', {
         method: 'POST',
@@ -212,22 +273,44 @@ describe('API /rentals', () => {
     });
 
     it('should prevent booking unavailable gear', async () => {
-      const mockGear = {
+      const mockGear: Gear = {
         id: 'gear-1',
         title: 'Test Camera',
         userId: 'user-2',
-        dailyRate: 50
+        dailyRate: 50,
+        description: '',
+        weeklyRate: null,
+        monthlyRate: null,
+        images: [],
+        city: '',
+        state: '',
+        category: null,
+        brand: null,
+        model: null,
+        condition: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      const conflictingRental = {
+      const conflictingRental: Rental = {
         id: 'existing-rental',
         startDate: new Date('2024-12-02'),
         endDate: new Date('2024-12-04'),
-        status: 'approved'
+        status: 'approved',
+        gearId: 'gear-1',
+        renterId: 'user-3',
+        ownerId: 'user-2',
+        message: null,
+        paymentIntentId: null,
+        clientSecret: null,
+        paymentStatus: null,
+        totalAmount: 250,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      mockPrisma.gear.findUnique.mockResolvedValue(mockGear as any);
-      mockPrisma.rental.findFirst.mockResolvedValue(conflictingRental as any);
+      mockPrisma.gear.findUnique.mockResolvedValue(mockGear);
+      mockPrisma.rental.findFirst.mockResolvedValue(conflictingRental);
 
       const request = new NextRequest('http://localhost:3000/api/rentals', {
         method: 'POST',
@@ -326,7 +409,7 @@ describe('API /rentals', () => {
       mockSupabase.auth.getSession.mockResolvedValue({
         data: { session: null },
         error: null
-      } as any);
+      });
 
       const request = new NextRequest('http://localhost:3000/api/rentals', {
         method: 'POST',
@@ -358,14 +441,26 @@ describe('API /rentals', () => {
     });
 
     it('should handle database errors', async () => {
-      const mockGear = {
+      const mockGear: Gear = {
         id: 'gear-1',
         title: 'Test Camera',
         userId: 'user-2',
-        dailyRate: 50
+        dailyRate: 50,
+        description: '',
+        weeklyRate: null,
+        monthlyRate: null,
+        images: [],
+        city: '',
+        state: '',
+        category: null,
+        brand: null,
+        model: null,
+        condition: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      mockPrisma.gear.findUnique.mockResolvedValue(mockGear as any);
+      mockPrisma.gear.findUnique.mockResolvedValue(mockGear);
       mockPrisma.rental.findFirst.mockResolvedValue(null);
       mockPrisma.rental.create.mockRejectedValue(new Error('Database error'));
 

@@ -52,7 +52,7 @@ export default function AdvancedSearchFilters({
 }: AdvancedSearchFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const updateFilter = (key: keyof SearchFilters, value: any) => {
+  const updateFilter = (key: keyof SearchFilters, value: unknown) => {
     onFiltersChange({
       ...filters,
       [key]: value,

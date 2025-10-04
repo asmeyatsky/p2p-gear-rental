@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     });
     setLoading(false);
-    return { data, error } as any;
+    return { data, error } as { data: unknown; error: unknown };
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
     setLoading(false);
-    return { data, error } as any;
+    return { data, error } as { data: unknown; error: unknown };
   };
 
   const signOut = async () => {

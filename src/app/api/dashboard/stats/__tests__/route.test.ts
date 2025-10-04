@@ -6,6 +6,8 @@ import { NextRequest } from 'next/server';
 import { GET } from '../route';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
+import { User, Rental, Gear, Payment, Review } from '@prisma/client';
+import { Session } from '@supabase/supabase-js';
 
 // Mock dependencies
 jest.mock('@/lib/prisma');
@@ -17,29 +19,45 @@ const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
 describe('API /dashboard/stats', () => {
+  const mockUser: User = {
+    id: 'user-1',
+    email: 'test@example.com',
+    full_name: 'Test User',
+    averageRating: 0,
+    totalReviews: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    stripeCustomerId: null,
+    lastLogin: null,
+    isOnline: false,
+    bio: null,
+    location: null,
+    website: null,
+    avatarUrl: null,
+  };
+
+  const mockSession: Partial<Session> = {
+    user: {
+      id: 'user-1',
+      email: 'test@example.com',
+      user_metadata: { full_name: 'Test User' },
+      app_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+    }
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     
     // Mock authenticated user
     mockSupabase.auth.getSession.mockResolvedValue({
-      data: {
-        session: {
-          user: {
-            id: 'user-1',
-            email: 'test@example.com',
-            user_metadata: { full_name: 'Test User' }
-          }
-        }
-      },
+      data: { session: mockSession as Session },
       error: null
-    } as any);
+    });
 
     // Mock user upsert
-    mockPrisma.user.upsert.mockResolvedValue({
-      id: 'user-1',
-      email: 'test@example.com',
-      full_name: 'Test User'
-    } as any);
+    mockPrisma.user.upsert.mockResolvedValue(mockUser);
   });
 
   describe('GET /api/dashboard/stats', () => {
@@ -50,7 +68,7 @@ describe('API /dashboard/stats', () => {
         { id: '1', dailyRate: 50 },
         { id: '2', dailyRate: 75 },
         { id: '3', dailyRate: 100 }
-      ] as any); // for average daily rate calculation
+      ] as Partial<Gear>[]); // for average daily rate calculation
 
       // Mock rental stats as owner
       mockPrisma.rental.count
@@ -62,7 +80,7 @@ describe('API /dashboard/stats', () => {
       // Mock earnings
       mockPrisma.payment.aggregate.mockResolvedValueOnce({
         _sum: { amount: 2500.00 }
-      } as any);
+      } as { _sum: { amount: number | null } });
 
       // Mock monthly earnings (last 12 months)
       const monthlyData = Array.from({ length: 12 }, (_, i) => ({
@@ -74,7 +92,7 @@ describe('API /dashboard/stats', () => {
       mockPrisma.$queryRaw.mockResolvedValueOnce(monthlyData);
 
       // Mock recent activity
-      const recentRentals = [
+      const recentRentals: Partial<Rental & { gear: Partial<Gear>, renter: Partial<User> }>[] = [
         {
           id: 'rental-1',
           status: 'confirmed',
@@ -95,13 +113,13 @@ describe('API /dashboard/stats', () => {
         }
       ];
 
-      mockPrisma.rental.findMany.mockResolvedValueOnce(recentRentals as any);
+      mockPrisma.rental.findMany.mockResolvedValueOnce(recentRentals as Rental[]);
 
       // Mock reviews stats
       mockPrisma.review.aggregate.mockResolvedValueOnce({
         _avg: { rating: 4.8 },
         _count: { id: 24 }
-      } as any);
+      } as { _avg: { rating: number | null }, _count: { id: number } });
 
       const request = new NextRequest('http://localhost:3000/api/dashboard/stats');
       const response = await GET(request);
@@ -146,13 +164,13 @@ describe('API /dashboard/stats', () => {
         .mockResolvedValue(0);
       mockPrisma.payment.aggregate.mockResolvedValueOnce({
         _sum: { amount: null }
-      } as any);
+      } as { _sum: { amount: number | null } });
       mockPrisma.$queryRaw.mockResolvedValueOnce([]);
       mockPrisma.rental.findMany.mockResolvedValueOnce([]);
       mockPrisma.review.aggregate.mockResolvedValueOnce({
         _avg: { rating: null },
         _count: { id: 0 }
-      } as any);
+      } as { _avg: { rating: number | null }, _count: { id: number } });
 
       const request = new NextRequest('http://localhost:3000/api/dashboard/stats');
       const response = await GET(request);
@@ -172,35 +190,35 @@ describe('API /dashboard/stats', () => {
         { id: '1', dailyRate: 50 },
         { id: '2', dailyRate: 100 },
         { id: '3', dailyRate: 150 }
-      ] as any);
+      ] as Partial<Gear>[]);
       mockPrisma.gear.aggregate.mockResolvedValueOnce({
         _avg: { dailyRate: 100 }
-      } as any);
+      } as { _avg: { dailyRate: number | null } });
       
       // Mock other required calls with defaults
       mockPrisma.rental.count.mockResolvedValue(0);
       mockPrisma.payment.aggregate.mockResolvedValueOnce({
         _sum: { amount: null }
-      } as any);
+      } as { _sum: { amount: number | null } });
       mockPrisma.$queryRaw.mockResolvedValueOnce([]);
       mockPrisma.rental.findMany.mockResolvedValueOnce([]);
       mockPrisma.review.aggregate.mockResolvedValueOnce({
         _avg: { rating: null },
         _count: { id: 0 }
-      } as any);
+      } as { _avg: { rating: number | null }, _count: { id: number } });
 
       const request = new NextRequest('http://localhost:3000/api/dashboard/stats');
       const response = await GET(request);
       const data = await response.json();
 
-      expect(data.gear.averageDailyRate).toBe(100); // (50 + 100 + 150) / 3
+      expect(data.gear.averageDailyRate).toBe(100);
     });
 
     it('should require authentication', async () => {
       mockSupabase.auth.getSession.mockResolvedValue({
         data: { session: null },
         error: null
-      } as any);
+      });
 
       const request = new NextRequest('http://localhost:3000/api/dashboard/stats');
       const response = await GET(request);
@@ -224,7 +242,7 @@ describe('API /dashboard/stats', () => {
       mockPrisma.rental.count.mockResolvedValue(0);
       mockPrisma.payment.aggregate.mockResolvedValueOnce({
         _sum: { amount: 1000 }
-      } as any);
+      } as { _sum: { amount: number | null } });
 
       // Mock monthly data with specific format
       const mockMonthlyData = [
@@ -238,7 +256,7 @@ describe('API /dashboard/stats', () => {
       mockPrisma.review.aggregate.mockResolvedValueOnce({
         _avg: { rating: null },
         _count: { id: 0 }
-      } as any);
+      } as { _avg: { rating: number | null }, _count: { id: number } });
 
       const request = new NextRequest('http://localhost:3000/api/dashboard/stats');
       const response = await GET(request);
@@ -259,15 +277,15 @@ describe('API /dashboard/stats', () => {
       mockPrisma.rental.count.mockResolvedValue(0);
       mockPrisma.payment.aggregate.mockResolvedValueOnce({
         _sum: { amount: 0 }
-      } as any);
+      } as { _sum: { amount: number | null } });
       mockPrisma.$queryRaw.mockResolvedValueOnce([]);
       mockPrisma.review.aggregate.mockResolvedValueOnce({
         _avg: { rating: null },
         _count: { id: 0 }
-      } as any);
+      } as { _avg: { rating: number | null }, _count: { id: number } });
 
       // Create 15 recent rentals
-      const manyRentals = Array.from({ length: 15 }, (_, i) => ({
+      const manyRentals: Partial<Rental>[] = Array.from({ length: 15 }, (_, i) => ({
         id: `rental-${i}`,
         status: 'completed',
         startDate: new Date(),
@@ -277,7 +295,7 @@ describe('API /dashboard/stats', () => {
         renter: { full_name: `User ${i}` }
       }));
 
-      mockPrisma.rental.findMany.mockResolvedValueOnce(manyRentals as any);
+      mockPrisma.rental.findMany.mockResolvedValueOnce(manyRentals as Rental[]);
 
       const request = new NextRequest('http://localhost:3000/api/dashboard/stats');
       const response = await GET(request);
@@ -303,13 +321,13 @@ describe('API /dashboard/stats', () => {
       mockPrisma.gear.findMany.mockResolvedValueOnce([]);
       mockPrisma.payment.aggregate.mockResolvedValueOnce({
         _sum: { amount: 0 }
-      } as any);
+      } as { _sum: { amount: number | null } });
       mockPrisma.$queryRaw.mockResolvedValueOnce([]);
       mockPrisma.rental.findMany.mockResolvedValueOnce([]);
       mockPrisma.review.aggregate.mockResolvedValueOnce({
         _avg: { rating: null },
         _count: { id: 0 }
-      } as any);
+      } as { _avg: { rating: number | null }, _count: { id: number } });
 
       // Mock rental counts in specific order
       mockPrisma.rental.count

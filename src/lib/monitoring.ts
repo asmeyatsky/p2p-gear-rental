@@ -264,8 +264,10 @@ if (process.env.NODE_ENV === 'production') {
   }, 60 * 1000); // Check every minute
 }
 
-export function withMonitoring(handler: Function) {
-  return async (req: NextRequest, ...args: any[]) => {
+type MonitoringHandler = (req: NextRequest, ...args: unknown[]) => Promise<NextResponse | undefined>;
+
+export function withMonitoring(handler: MonitoringHandler) {
+  return async (req: NextRequest, ...args: unknown[]) => {
     const startTime = Date.now();
     let response: NextResponse | undefined;
     let error: Error | undefined;

@@ -42,10 +42,10 @@ const mockWebhooks = mockStripe.webhooks;
 
 // Mock api-error-handler
 jest.mock('@/lib/api-error-handler', () => ({
-  withErrorHandler: (handler: any) => async (...args: any[]) => {
+  withErrorHandler: (handler: (req: NextRequest, context: { params: Promise<{ id: string }> }) => Promise<Response>) => async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
     try {
-      return await handler(...args);
-    } catch (error: any) {
+      return await handler(req, context);
+    } catch (error: unknown) {
       // Ensure the mocked errors have a statusCode property
       if (error.name === 'AuthenticationError') {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: error.statusCode || 401 });

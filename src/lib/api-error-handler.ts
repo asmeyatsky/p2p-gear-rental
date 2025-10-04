@@ -106,8 +106,10 @@ export function validateEnvVar(name: string, value: string | undefined): string 
 
 import { NextRequest, NextResponse } from 'next/server';
 
-export function withErrorHandler(handler: Function) {
-  return async (req: NextRequest, ...args: any[]) => {
+type ApiHandler = (req: NextRequest, ...args: unknown[]) => Promise<NextResponse> | NextResponse;
+
+export function withErrorHandler(handler: ApiHandler) {
+  return async (req: NextRequest, ...args: unknown[]) => {
     try {
       return await handler(req, ...args);
     } catch (error) {

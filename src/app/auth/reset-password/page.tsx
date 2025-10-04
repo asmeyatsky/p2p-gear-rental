@@ -50,7 +50,7 @@ function ResetPasswordForm() {
         router.push('/');
       }
     } catch (error) {
-      toast.error('An unexpected error occurred. Please try again.');
+      toast.error((error as Error)?.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma, Prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
 import { withErrorHandler, AuthenticationError, ValidationError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
@@ -47,7 +47,7 @@ export const GET = withErrorHandler(
         }
 
         // Build where clause - user can see disputes they reported or are respondent in
-        const where: any = {
+        const where: Prisma.DisputeWhereInput = {
           OR: [
             { reporterId: userId },
             { respondentId: userId }
@@ -68,7 +68,7 @@ export const GET = withErrorHandler(
         }
 
         // Build order by
-        let orderBy: any = { createdAt: 'desc' };
+        let orderBy: Prisma.DisputeOrderByWithRelationInput | Prisma.DisputeOrderByWithRelationInput[] = { createdAt: 'desc' };
         
         switch (sortBy) {
           case 'oldest':

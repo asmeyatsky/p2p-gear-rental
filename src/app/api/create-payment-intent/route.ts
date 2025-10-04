@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
   const timestamp = new Date();
   let response: NextResponse = new NextResponse();
   let error: string | undefined;
-  let statusCode: number = 200; // Default status code
 
   // Extract client info for monitoring
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
@@ -34,12 +33,11 @@ export async function POST(request: NextRequest) {
     const limit = rateLimitConfig.payment.limit;
 
     try {
-      const rateLimitResult = await rateLimiter.check(identifier, limit);
+      await rateLimiter.check(identifier, limit);
       // Add rate limit headers if possible
       // Note: Headers can only be set on the final NextResponse object
     } catch (err) {
       if (err instanceof RateLimitError) {
-        statusCode = err.statusCode;
         throw err; // Re-throw to be caught by the outer error handler
       }
       // If rate limiting fails for other reasons, log and re-throw
@@ -196,7 +194,6 @@ export async function POST(request: NextRequest) {
     if (err instanceof ApiError) {
       // Cast to ApiError to access properties
       const apiError = err as ApiError;
-      statusCode = apiError.statusCode;
       response = NextResponse.json(
         {
           error: apiError.message,
@@ -211,7 +208,6 @@ export async function POST(request: NextRequest) {
         ? 'Internal server error' 
         : err.message;
 
-      statusCode = 500;
       response = NextResponse.json(
         {
           error: message,

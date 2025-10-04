@@ -312,14 +312,14 @@ export default function DisputeCenter() {
 
       {/* Filter Tabs */}
       <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-        {[
-          { key: 'all', label: 'All Disputes', count: disputes.length },
-          { key: 'open', label: 'Open', count: disputes.filter(d => !['RESOLVED', 'CLOSED'].includes(d.status)).length },
-          { key: 'resolved', label: 'Resolved', count: disputes.filter(d => ['RESOLVED', 'CLOSED'].includes(d.status)).length }
-        ].map(tab => (
+        {([
+          { key: 'all' as const, label: 'All Disputes', count: disputes.length },
+          { key: 'open' as const, label: 'Open', count: disputes.filter(d => !['RESOLVED', 'CLOSED'].includes(d.status)).length },
+          { key: 'resolved' as const, label: 'Resolved', count: disputes.filter(d => ['RESOLVED', 'CLOSED'].includes(d.status)).length }
+        ] as const).map(tab => (
           <button
             key={tab.key}
-            onClick={() => setFilter(tab.key as any)}
+            onClick={() => setFilter(tab.key)}
             className={cn(
               'flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors',
               filter === tab.key

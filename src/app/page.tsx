@@ -244,7 +244,7 @@ export default async function Home() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12 bg-red-50 rounded-lg border border-red-200">
           <h1 className="text-2xl font-bold text-red-800 mb-4">Service Temporarily Unavailable</h1>
-          <p className="text-red-600 mb-6">We're experiencing technical difficulties. Please try again in a few moments.</p>
+          <p className="text-red-600 mb-6">We&apos;re experiencing technical difficulties. Please try again in a few moments.</p>
           <Link 
             href="/browse" 
             className="inline-block bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"

@@ -1,26 +1,26 @@
 import { useState, useCallback } from 'react';
 import { toast, handleApiError } from '@/lib/toast';
 
-interface UseApiOptions {
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
+interface UseApiOptions<T> {
+  onSuccess?: (data: T) => void;
+  onError?: (error: unknown) => void;
   showSuccessToast?: boolean;
   showErrorToast?: boolean;
   successMessage?: string;
   errorMessage?: string;
 }
 
-interface ApiState {
+interface ApiState<T> {
   loading: boolean;
-  error: any;
-  data: any;
+  error: unknown;
+  data: T | null;
 }
 
-export function useApi<T = any>(
-  apiFunction: (...args: any[]) => Promise<T>,
-  options: UseApiOptions = {}
+export function useApi<T, TArgs extends unknown[] = unknown[]>(
+  apiFunction: (...args: TArgs) => Promise<T>,
+  options: UseApiOptions<T> = {}
 ) {
-  const [state, setState] = useState<ApiState>({
+  const [state, setState] = useState<ApiState<T>>({
     loading: false,
     error: null,
     data: null,
@@ -36,7 +36,7 @@ export function useApi<T = any>(
   } = options;
 
   const execute = useCallback(
-    async (...args: any[]) => {
+    async (...args: Parameters<typeof apiFunction>) => {
       setState({ loading: true, error: null, data: null });
 
       try {
@@ -76,19 +76,19 @@ export function useApi<T = any>(
 }
 
 // Specialized hook for form submissions
-export function useFormApi<T = any>(
-  apiFunction: (...args: any[]) => Promise<T>,
-  options: UseApiOptions & {
+export function useFormApi<T, TArgs>(
+  apiFunction: (args: TArgs) => Promise<T>,
+  options: UseApiOptions<T> & {
     resetOnSuccess?: boolean;
   } = {}
 ) {
   const { resetOnSuccess = false, ...apiOptions } = options;
-  const api = useApi(apiFunction, apiOptions);
+  const api = useApi<T, [TArgs]>(apiFunction as (...args: [TArgs]) => Promise<T>, apiOptions as UseApiOptions<T>);
 
   const submitForm = useCallback(
-    async (formData: any, ...args: any[]) => {
+    async (formData: TArgs) => {
       try {
-        const result = await api.execute(formData, ...args);
+        const result = await api.execute(formData);
         if (resetOnSuccess) {
           // Form should be reset by the component
         }
@@ -98,7 +98,7 @@ export function useFormApi<T = any>(
         throw error;
       }
     },
-    [api.execute, resetOnSuccess]
+    [api, resetOnSuccess]
   );
 
   return {
@@ -108,15 +108,15 @@ export function useFormApi<T = any>(
 }
 
 // Hook for mutations with loading states
-export function useMutation<T = any, TArgs = any>(
+export function useMutation<T, TArgs>(
   mutationFn: (args: TArgs) => Promise<T>,
-  options: UseApiOptions = {}
+  options: UseApiOptions<T> = {}
 ) {
-  const api = useApi(mutationFn, options);
+  const api = useApi<T>(mutationFn, options);
 
   const mutate = useCallback(
     (args: TArgs) => api.execute(args),
-    [api.execute]
+    [api]
   );
 
   return {

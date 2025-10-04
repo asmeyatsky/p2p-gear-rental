@@ -5,6 +5,7 @@
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
 import { prisma } from '@/lib/prisma';
+import { Rental, Payment, Dispute } from '@/lib/prisma';
 import Stripe from 'stripe';
 
 // Mock dependencies
@@ -20,12 +21,12 @@ const mockStripeInstance = {
   webhooks: {
     constructEvent: jest.fn(),
   },
-} as any;
+} as Partial<Stripe>;
 
 describe('API /stripe-webhook', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockStripe.mockImplementation(() => mockStripeInstance);
+    mockStripe.mockImplementation(() => mockStripeInstance as unknown as Stripe);
     
     // Mock environment variable
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test123';
@@ -52,7 +53,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      const mockRental = {
+      const mockRental: Partial<Rental> = {
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2',
@@ -60,7 +61,7 @@ describe('API /stripe-webhook', () => {
         totalAmount: 250.00
       };
 
-      const mockUpdatedRental = {
+      const mockUpdatedRental: Partial<Rental & { payments: Partial<Payment>[] }> = {
         ...mockRental,
         status: 'confirmed',
         payments: [
@@ -73,14 +74,10 @@ describe('API /stripe-webhook', () => {
         ]
       };
 
-      mockStripeInstance.webhooks.constructEvent.mockReturnValue(mockEvent);
-      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as any);
-      mockPrisma.rental.update.mockResolvedValue(mockUpdatedRental as any);
-      mockPrisma.payment.create.mockResolvedValue({
-        id: 'payment-1',
-        amount: 250.00,
-        status: 'completed'
-      } as any);
+      (mockStripeInstance.webhooks.constructEvent as jest.Mock).mockReturnValue(mockEvent as Stripe.Event);
+      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as Rental);
+      mockPrisma.rental.update.mockResolvedValue(mockUpdatedRental as Rental);
+      mockPrisma.payment.create.mockResolvedValue({ id: 'payment-1' } as Payment);
 
       const rawBody = JSON.stringify(mockEvent);
       const request = new NextRequest('http://localhost:3000/api/stripe-webhook', {
@@ -134,11 +131,8 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripeInstance.webhooks.constructEvent.mockReturnValue(mockEvent);
-      mockPrisma.payment.create.mockResolvedValue({
-        id: 'payment-1',
-        status: 'failed'
-      } as any);
+      (mockStripeInstance.webhooks.constructEvent as jest.Mock).mockReturnValue(mockEvent as Stripe.Event);
+      mockPrisma.payment.create.mockResolvedValue({ id: 'payment-1', status: 'failed' } as Payment);
 
       const rawBody = JSON.stringify(mockEvent);
       const request = new NextRequest('http://localhost:3000/api/stripe-webhook', {
@@ -182,13 +176,8 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripeInstance.webhooks.constructEvent.mockReturnValue(mockEvent);
-      mockPrisma.dispute.create.mockResolvedValue({
-        id: 'dispute-1',
-        rentalId: 'rental-1',
-        reason: 'fraudulent',
-        status: 'pending'
-      } as any);
+      (mockStripeInstance.webhooks.constructEvent as jest.Mock).mockReturnValue(mockEvent as Stripe.Event);
+      mockPrisma.dispute.create.mockResolvedValue({ id: 'dispute-1' } as Dispute);
 
       const rawBody = JSON.stringify(mockEvent);
       const request = new NextRequest('http://localhost:3000/api/stripe-webhook', {
@@ -207,7 +196,7 @@ describe('API /stripe-webhook', () => {
     });
 
     it('should reject requests without valid signature', async () => {
-      mockStripeInstance.webhooks.constructEvent.mockImplementation(() => {
+      (mockStripeInstance.webhooks.constructEvent as jest.Mock).mockImplementation(() => {
         throw new Error('Invalid signature');
       });
 
@@ -235,7 +224,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripeInstance.webhooks.constructEvent.mockReturnValue(mockEvent);
+      (mockStripeInstance.webhooks.constructEvent as jest.Mock).mockReturnValue(mockEvent as Stripe.Event);
 
       const rawBody = JSON.stringify(mockEvent);
       const request = new NextRequest('http://localhost:3000/api/stripe-webhook', {
@@ -266,7 +255,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripeInstance.webhooks.constructEvent.mockReturnValue(mockEvent);
+      (mockStripeInstance.webhooks.constructEvent as jest.Mock).mockReturnValue(mockEvent as Stripe.Event);
 
       const rawBody = JSON.stringify(mockEvent);
       const request = new NextRequest('http://localhost:3000/api/stripe-webhook', {
@@ -299,7 +288,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripeInstance.webhooks.constructEvent.mockReturnValue(mockEvent);
+      (mockStripeInstance.webhooks.constructEvent as jest.Mock).mockReturnValue(mockEvent as Stripe.Event);
       mockPrisma.rental.findUnique.mockRejectedValue(new Error('Database error'));
 
       const rawBody = JSON.stringify(mockEvent);
@@ -333,7 +322,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripeInstance.webhooks.constructEvent.mockReturnValue(mockEvent);
+      (mockStripeInstance.webhooks.constructEvent as jest.Mock).mockReturnValue(mockEvent as Stripe.Event);
       mockPrisma.rental.findUnique.mockResolvedValue(null);
 
       const rawBody = JSON.stringify(mockEvent);
@@ -367,15 +356,15 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      const mockRental = {
+      const mockRental: Partial<Rental> = {
         id: 'rental-1',
         totalAmount: 250.00
       };
 
-      mockStripeInstance.webhooks.constructEvent.mockReturnValue(mockEvent);
-      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as any);
-      mockPrisma.rental.update.mockResolvedValue(mockRental as any);
-      mockPrisma.payment.create.mockResolvedValue({} as any);
+      (mockStripeInstance.webhooks.constructEvent as jest.Mock).mockReturnValue(mockEvent as Stripe.Event);
+      mockPrisma.rental.findUnique.mockResolvedValue(mockRental as Rental);
+      mockPrisma.rental.update.mockResolvedValue(mockRental as Rental);
+      mockPrisma.payment.create.mockResolvedValue({} as Payment);
 
       const rawBody = JSON.stringify(mockEvent);
       const request = new NextRequest('http://localhost:3000/api/stripe-webhook', {

@@ -37,7 +37,7 @@ export default function LoginPage() {
         router.push('/dashboard');
       }
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      toast.error((error as Error)?.message || 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -127,7 +127,7 @@ export default function LoginPage() {
 
             <div className="mt-6 pt-6 border-t border-gray-200">
               <div className="text-center">
-                <span className="text-gray-600">Don't have an account? </span>
+                <span className="text-gray-600">Don&apos;t have an account? </span>
                 <Link
                   href="/auth/signup"
                   className="font-medium text-primary-600 hover:text-primary-500"

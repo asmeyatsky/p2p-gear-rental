@@ -109,9 +109,11 @@ export const rateLimitConfig = {
   health: { limiter: strictRateLimit, limit: 50 }, // 50 health checks per minute
 } as const;
 
+type RateLimitHandler = (req: NextRequest, ...args: unknown[]) => Promise<unknown>;
+
 export function withRateLimit(limiter: RateLimiter, limit: number) {
-  return (handler: Function) => {
-    return async (req: NextRequest, ...args: any[]) => {
+  return (handler: RateLimitHandler) => {
+    return async (req: NextRequest, ...args: unknown[]) => {
       const identifier = getClientIdentifier(req);
       try {
         await limiter.check(identifier, limit);

@@ -64,7 +64,7 @@ export default function BrowsePage() {
     sortBy: searchParams.get('sortBy') || 'newest',
   });
 
-  const fetchGear = async (pageNum: number = 1, newFilters?: SearchFilters, reset: boolean = false) => {
+  const fetchGear = useCallback(async (pageNum: number = 1, newFilters?: SearchFilters, reset: boolean = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -105,7 +105,7 @@ export default function BrowsePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
@@ -120,7 +120,7 @@ export default function BrowsePage() {
 
   useEffect(() => {
     fetchGear(1, filters, true);
-  }, []);
+  }, [fetchGear, filters]);
 
   if (loading && gear.length === 0) {
     return (
@@ -168,7 +168,7 @@ export default function BrowsePage() {
               </h2>
               {filters.query && (
                 <p className="text-gray-600">
-                  Results for "{filters.query}"
+                  Results for &quot;{filters.query}&quot;
                 </p>
               )}
             </div>

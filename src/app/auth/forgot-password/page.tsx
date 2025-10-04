@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
         toast.success('Password reset email sent! Check your inbox.');
       }
     } catch (error) {
-      toast.error('An unexpected error occurred. Please try again.');
+      toast.error((error as Error)?.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
