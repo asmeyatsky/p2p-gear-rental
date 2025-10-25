@@ -1,6 +1,6 @@
 # P2P Gear Rental Platform
 
-A modern peer-to-peer marketplace for renting photography and videography equipment. Built with Next.js 15, React 19, and TypeScript, this platform enables users to list their gear for rent and discover equipment from other creators in their area.
+A modern peer-to-peer marketplace for renting photography and videography equipment. Built with Next.js 15, React 19, and TypeScript, this platform enables users to list their gear for rent and discover equipment from other creators in their area. The application follows Clean/Hexagonal Architecture with Domain-Driven Design (DDD) principles.
 
 ## 🎯 Features
 
@@ -18,6 +18,17 @@ A modern peer-to-peer marketplace for renting photography and videography equipm
 - **Location Services**: Map integration for gear discovery and meetup coordination
 - **Mobile Responsive**: Optimized for all device sizes
 
+## 🏗️ Architecture
+
+This application implements Clean/Hexagonal Architecture with the following layers:
+
+- **Domain Layer**: Contains business entities, services, and domain rules
+- **Application Layer**: Contains use cases and DTOs
+- **Infrastructure Layer**: Contains implementations for repositories and external services
+- **Presentation Layer**: Contains API controllers and UI components
+
+For detailed architecture documentation, see [ARCHITECTURE.md](./ARCHITECTURE.md)
+
 ## 🛠️ Technology Stack
 
 ### Frontend
@@ -26,6 +37,12 @@ A modern peer-to-peer marketplace for renting photography and videography equipm
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Utility-first CSS framework
 - **Clsx & Tailwind Merge** - Dynamic class management
+
+### Backend Architecture
+- **Clean/Hexagonal Architecture** - Clear separation of concerns
+- **Domain-Driven Design (DDD)** - Business-focused design patterns
+- **Dependency Injection** - Loose coupling of components
+- **Repository Pattern with Ports/Adapters** - Flexible data access
 
 ### Backend & Database
 - **Next.js API Routes** - Serverless API endpoints
@@ -45,8 +62,8 @@ A modern peer-to-peer marketplace for renting photography and videography equipm
 - **GitHub Actions** - CI/CD pipeline (configured)
 
 ### Performance & Monitoring
-- **Redis** - Caching layer (ready for implementation)
-- **LRU Cache** - In-memory caching for performance
+- **Redis** - Caching layer with LRU strategy
+- **Query Optimization** - Intelligent database query optimization
 - **Security Audit Scripts** - Built-in security monitoring
 
 ## 🚀 Getting Started
@@ -102,8 +119,20 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ```
 src/
-├── app/                    # Next.js 13+ app router
-│   ├── api/               # API routes
+├── domain/                 # Domain layer (entities, services, ports)
+│   ├── entities/          # Business entities (Gear, User, Rental)
+│   ├── services/          # Domain services
+│   └── ports/             # Interface definitions (repositories, external services)
+├── application/            # Application layer (use cases, DTOs)
+│   └── use-cases/         # Business use cases
+├── infrastructure/         # Infrastructure layer (repositories, adapters)
+│   ├── repositories/      # Repository implementations
+│   ├── adapters/          # External service adapters
+│   └── config/            # Dependency injection container
+├── presentation/           # Presentation layer (API controllers)
+│   └── api/               # API route handlers
+├── app/                    # Next.js 15 app router
+│   ├── api/               # API routes (legacy - being migrated)
 │   ├── auth/              # Authentication pages
 │   ├── gear/              # Gear-related pages
 │   └── my-rentals/        # User rental management
@@ -133,8 +162,8 @@ npm run test:e2e:ui
 ```
 
 ### Testing Strategy
-- **Unit Tests**: Components, utilities, and API routes
-- **Integration Tests**: Database operations and API workflows
+- **Unit Tests**: Domain entities, services, and use cases
+- **Integration Tests**: Repository implementations and external service adapters
 - **E2E Tests**: Critical user journeys and rental flows
 
 ## 🐳 Docker Development
@@ -208,6 +237,14 @@ npm run docker:prod:down
 ## 📝 License
 
 This project is released into the public domain. You are free to use, modify, and distribute this code without any restrictions.
+
+## World-Class Improvements
+
+For a comprehensive list of world-class improvements that can be implemented, see [IMPROVEMENTS.md](./IMPROVEMENTS.md)
+
+## Architecture Documentation
+
+For detailed architecture documentation, see [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ## 🔗 Learn More
 

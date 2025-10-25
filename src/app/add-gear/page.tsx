@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/auth/AuthProvider';
-import ImageUpload from '@/components/ImageUpload';
+import { useAuth } from '../../components/auth/AuthProvider';
+import ImageUpload from '../../components/ImageUpload';
 import toast from 'react-hot-toast';
-import { event } from '@/lib/gtag';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Card from '@/components/ui/Card';
-import Layout from '@/components/ui/Layout';
+import { event } from '../../lib/gtag';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import Card from '../../components/ui/Card';
+import Layout from '../../components/ui/Layout';
 
 export default function AddGearPage() {
   const { user } = useAuth();

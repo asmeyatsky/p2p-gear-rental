@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { prisma } from '@/lib/prisma';
-import { supabase } from '@/lib/supabase';
-import { AuthenticationError, ValidationError, ApiError, RateLimitError } from '@/lib/api-error-handler'; // Import necessary error classes
-import { rateLimitConfig, getClientIdentifier } from '@/lib/rate-limit'; // Import rate limit utilities
-import { monitoring } from '@/lib/monitoring'; // Import monitoring instance
-import { logger } from '@/lib/logger';
-import { createPaymentIntentSchema } from '@/lib/validations/payment';
+import { prisma } from '../../../lib/prisma';
+import { supabase } from '../../../lib/supabase';
+import { AuthenticationError, ValidationError, ApiError, RateLimitError } from '../../../lib/api-error-handler'; // Import necessary error classes
+import { rateLimitConfig, getClientIdentifier } from '../../../lib/rate-limit'; // Import rate limit utilities
+import { monitoring } from '../../../lib/monitoring'; // Import monitoring instance
+import { logger } from '../../../lib/logger';
+import { createPaymentIntentSchema } from '../../../lib/validations/payment';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2025-07-30.basil',

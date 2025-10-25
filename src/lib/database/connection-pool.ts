@@ -90,11 +90,12 @@ class DatabaseConnectionPool {
     url.searchParams.set('socket_timeout', '60');
     
     // PostgreSQL specific optimizations
-    if (url.protocol === 'postgresql:' || url.protocol === 'postgres:') {
-      url.searchParams.set('pgbouncer', 'true');
-      url.searchParams.set('prepared_statements', 'false'); // Better for connection poolers
-      url.searchParams.set('statement_cache_size', '0');
-    }
+    // Commented out pgbouncer settings as they can cause issues with direct PostgreSQL connections
+    // if (url.protocol === 'postgresql:' || url.protocol === 'postgres:') {
+    //   url.searchParams.set('pgbouncer', 'true');
+    //   url.searchParams.set('prepared_statements', 'false'); // Better for connection poolers
+    //   url.searchParams.set('statement_cache_size', '0');
+    // }
 
     return url.toString();
   }

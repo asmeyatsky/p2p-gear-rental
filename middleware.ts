@@ -11,54 +11,68 @@ export async function middleware(req: NextRequest) {
   // Add comprehensive security headers
   addSecurityHeaders(res, req);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: any) {
-          req.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          res = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          });
-          res.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: any) {
-          req.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-          res = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          });
-          res.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-        },
-      },
-    }
-  );
+  // Check if Supabase credentials are configured
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Refresh session if expired - required for Server Components
-  const { data: { session } } = await supabase.auth.getSession();
+  let session = null;
+
+  // Only attempt Supabase auth if credentials are properly configured
+  if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+    const supabase = createServerClient(
+      supabaseUrl,
+      supabaseKey,
+      {
+        cookies: {
+          get(name: string) {
+            return req.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            req.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+            res = NextResponse.next({
+              request: {
+                headers: req.headers,
+              },
+            });
+            res.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+          },
+          remove(name: string, options: any) {
+            req.cookies.set({
+              name,
+              value: '',
+              ...options,
+            });
+            res = NextResponse.next({
+              request: {
+                headers: req.headers,
+              },
+            });
+            res.cookies.set({
+              name,
+              value: '',
+              ...options,
+            });
+          },
+        },
+      }
+    );
+
+    // Refresh session if expired - required for Server Components
+    try {
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+    } catch (error) {
+      console.warn('Supabase auth check failed:', error);
+    }
+  }
 
   // Protected routes that require authentication
   const protectedRoutes = [
