@@ -38,7 +38,7 @@ export class AuthenticationService {
       // Validate session
       if (!this.validateSession(session)) {
         logger.warn('Invalid session', {
-          sessionId: session.id,
+          userId: session.user?.id,
           url: request.url
         }, 'AUTH');
         
@@ -113,7 +113,7 @@ export class AuthenticationService {
       }
 
       logger.info('Session refreshed successfully', {
-        sessionId: data.session.id
+        userId: data.session.user?.id
       }, 'AUTH');
 
       return {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Layout from '@/components/ui/Layout';
 import SearchFiltersClient from '@/components/gear/SearchFiltersClient';

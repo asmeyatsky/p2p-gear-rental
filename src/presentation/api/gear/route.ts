@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { container } from '../../infrastructure/config/dependency-injection';
+import { container } from '../../../infrastructure/config/dependency-injection';
 import { CreateGearCommand } from '../../../application/commands/gear/CreateGearCommand';
 import { GetGearQuery } from '../../../application/queries/gear/GetGearQuery';
-import { logger, CorrelationLogger } from '../../infrastructure/logging/CorrelationLogger';
-import { Span } from '../../infrastructure/tracing/DistributedTracer';
+import { logger, CorrelationLogger } from '../../../infrastructure/logging/CorrelationLogger';
+import { Span } from '../../../infrastructure/tracing/DistributedTracer';
 
 export async function POST(request: NextRequest) {
   const correlationId = request.headers.get('x-correlation-id') || CorrelationLogger.generateCorrelationId();
@@ -37,13 +37,13 @@ export async function POST(request: NextRequest) {
       
       // Create and execute command
       const command = new CreateGearCommand(body);
-      const result = await commandBus.execute(command);
-      
-      logger.info('Gear created successfully', { 
+      const result = await commandBus.execute(command) as { id: string };
+
+      logger.info('Gear created successfully', {
         gearId: result.id,
         userId: body.userId
       }, 'API-Gear');
-      
+
       span.setTag('result.gear.id', result.id);
       span.setTag('result.user.id', body.userId);
       
@@ -110,21 +110,21 @@ export async function GET(request: NextRequest) {
       
       // Create and execute query
       const query = new GetGearQuery({
-        id,
-        userId,
-        category,
-        search,
+        id: id ?? undefined,
+        userId: userId ?? undefined,
+        category: category ?? undefined,
+        search: search ?? undefined,
         page,
         limit
       });
       
-      const result = await queryBus.execute(query);
-      
-      logger.info('Gears fetched successfully', { 
+      const result = await queryBus.execute(query) as { data: unknown[]; total: number };
+
+      logger.info('Gears fetched successfully', {
         resultCount: result.data.length,
         total: result.total
       }, 'API-Gear');
-      
+
       span.setTag('result.count', result.data.length);
       span.setTag('result.total', result.total);
       

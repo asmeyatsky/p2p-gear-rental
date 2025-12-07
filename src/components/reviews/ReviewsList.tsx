@@ -38,7 +38,7 @@ export default function ReviewsList({
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'rating-high' | 'rating-low'>('newest');
 
-  const { data, loading, error, execute } = useApi<ReviewsResponse>(
+  const { data, loading, error, execute } = useApi<ReviewsResponse, [ReviewQuery]>(
     async (queryParams: ReviewQuery) => {
       const params = new URLSearchParams();
       Object.entries(queryParams).forEach(([key, value]) => {
@@ -49,8 +49,8 @@ export default function ReviewsList({
 
       const response = await fetch(`/api/reviews?${params.toString()}`);
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch reviews');
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to fetch reviews');
       }
       return response.json();
     },

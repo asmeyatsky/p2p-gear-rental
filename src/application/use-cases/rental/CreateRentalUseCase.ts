@@ -1,8 +1,7 @@
-import { Rental } from '../../domain/entities/Rental';
-import { User } from '../../domain/entities/User';
-import { IGearRepository, IRentalRepository, IUserRepository } from '../../domain/ports/repositories';
-import { IGearDomainService } from '../../domain/services/GearDomainService';
-import { IPaymentService } from '../../domain/ports/external-services';
+import { Rental } from '../../../domain/entities/Rental';
+import { IGearRepository, IRentalRepository, IUserRepository } from '../../../domain/ports/repositories';
+import { IGearDomainService } from '../../../domain/services/GearDomainService';
+import { IPaymentService } from '../../../domain/ports/external-services';
 
 export interface CreateRentalInput {
   gearId: string;

@@ -109,11 +109,14 @@ export const rateLimitConfig = {
   health: { limiter: strictRateLimit, limit: 50 }, // 50 health checks per minute
 } as const;
 
-type RateLimitHandler = (req: NextRequest, ...args: unknown[]) => Promise<unknown>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RateLimitHandler = (req: NextRequest, context?: any) => Promise<NextResponse>;
 
 export function withRateLimit(limiter: RateLimiter, limit: number) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (handler: RateLimitHandler) => {
-    return async (req: NextRequest, ...args: unknown[]) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return async (req: NextRequest, context?: any): Promise<NextResponse> => {
       const identifier = getClientIdentifier(req);
       try {
         await limiter.check(identifier, limit);
@@ -121,10 +124,10 @@ export function withRateLimit(limiter: RateLimiter, limit: number) {
         if (error instanceof RateLimitError) {
           throw error;
         }
-        // Log other errors if necessary
+        logger.error('Unexpected rate limiting error', { error }, 'API');
         throw new Error('An unexpected error occurred during rate limiting.');
       }
-      return handler(req, ...args);
+      return handler(req, context);
     };
   };
 }

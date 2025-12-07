@@ -48,7 +48,7 @@ export const PUT = withErrorHandler(
           throw new ForbiddenError('You are not the owner of this rental request');
         }
 
-        if (rental.status !== 'pending') {
+        if (rental.status !== 'PENDING') {
           throw new ValidationError(`Rental request is already ${rental.status}`);
         }
 
@@ -57,7 +57,8 @@ export const PUT = withErrorHandler(
           prisma.rental.update({
             where: { id },
             data: {
-              status: 'approved',
+              status: 'APPROVED',
+              approvedAt: new Date(),
               message: message || rental.message,
             },
             include: {

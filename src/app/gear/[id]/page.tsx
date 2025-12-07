@@ -2,10 +2,33 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 import { getGearDetailSSR, generateGearMetadata, measureSSRPerformance, revalidateGearCache } from '@/lib/ssr';
 import GearDetailsClient from './GearDetailsClient';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { logger } from '@/lib/logger';
+
+async function getServerSession() {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+        },
+      }
+    );
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
+  } catch {
+    return null;
+  }
+}
 
 // Generate metadata for SEO
 export async function generateMetadata(
@@ -27,9 +50,13 @@ export async function generateMetadata(
 // Server component for gear details
 async function GearDetailsServer({ gearId }: { gearId: string }) {
   const perf = measureSSRPerformance('gear-detail-page');
-  
+
   try {
-    const gear = await getGearDetailSSR(gearId);
+    const [gear, session] = await Promise.all([
+      getGearDetailSSR(gearId),
+      getServerSession()
+    ]);
+    const currentUserId = session?.user?.id || null;
     perf.end();
     
     if (!gear) {
@@ -181,7 +208,7 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
             
             {/* Client-side interactive components */}
             <div className="border-t pt-6">
-              <GearDetailsClient gear={gear} />
+              <GearDetailsClient gear={gear} currentUserId={currentUserId} />
             </div>
           </div>
         </div>

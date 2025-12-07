@@ -127,7 +127,7 @@ export const POST = withErrorHandler(
         throw new ValidationError('You can only review rentals you were the renter for');
       }
 
-      if (rental.status !== 'completed') {
+      if (rental.status !== 'COMPLETED') {
         throw new ValidationError('You can only review completed rentals');
       }
 

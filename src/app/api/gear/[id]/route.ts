@@ -152,7 +152,7 @@ export const DELETE = withErrorHandler(
             prisma.rental.count({
               where: {
                 gearId,
-                status: { in: ['pending', 'approved', 'active'] }
+                status: { in: ['PENDING', 'APPROVED', 'PAYMENT_PENDING', 'CONFIRMED', 'ACTIVE'] }
               }
             })
           )

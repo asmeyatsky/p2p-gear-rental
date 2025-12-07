@@ -126,6 +126,49 @@ export const POST = withErrorHandler(
           throw new ValidationError('Cannot rent your own gear');
         }
 
+        // Check for booking conflicts - prevent double booking
+        const conflictingRentals = await trackDatabaseQuery('rental.findMany.conflicts', () =>
+          prisma.rental.findMany({
+            where: {
+              gearId,
+              status: {
+                in: ['PENDING', 'APPROVED', 'PAYMENT_PENDING', 'CONFIRMED', 'ACTIVE'],
+              },
+              OR: [
+                // New rental starts during existing rental
+                {
+                  startDate: { lte: new Date(startDate) },
+                  endDate: { gte: new Date(startDate) },
+                },
+                // New rental ends during existing rental
+                {
+                  startDate: { lte: new Date(endDate) },
+                  endDate: { gte: new Date(endDate) },
+                },
+                // New rental completely overlaps existing rental
+                {
+                  startDate: { gte: new Date(startDate) },
+                  endDate: { lte: new Date(endDate) },
+                },
+              ],
+            },
+          })
+        );
+
+        if (conflictingRentals.length > 0) {
+          logger.warn('Booking conflict detected', {
+            gearId,
+            requestedDates: { startDate, endDate },
+            conflictingRentals: conflictingRentals.map(r => ({
+              id: r.id,
+              startDate: r.startDate,
+              endDate: r.endDate,
+              status: r.status,
+            })),
+          }, 'API');
+          throw new ValidationError('This gear is not available for the selected dates. Please choose different dates.');
+        }
+
         // Calculate rental duration and amount
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -170,7 +213,8 @@ export const POST = withErrorHandler(
               ownerId: gear.userId || '',
               startDate,
               endDate,
-              status: 'pending',
+              status: 'PENDING',
+              totalPrice: amount / 100,
               message,
               paymentIntentId: paymentIntent.id,
               clientSecret: paymentIntent.client_secret,

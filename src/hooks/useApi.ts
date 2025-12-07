@@ -112,7 +112,10 @@ export function useMutation<T, TArgs>(
   mutationFn: (args: TArgs) => Promise<T>,
   options: UseApiOptions<T> = {}
 ) {
-  const api = useApi<T>(mutationFn, options);
+  const api = useApi<T, [TArgs]>(
+    mutationFn as (arg: TArgs) => Promise<T>,
+    options
+  );
 
   const mutate = useCallback(
     (args: TArgs) => api.execute(args),

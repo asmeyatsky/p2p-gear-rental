@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import type { MapRef } from 'react-map-gl';
+import { useEffect, useState } from 'react';
 import { GearItem } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import Image from 'next/image';
@@ -30,7 +29,6 @@ export default function MapView({
   className = '',
   onMarkerClick,
 }: MapViewProps) {
-  const mapRef = useRef<MapRef>(null);
   const [viewState, setViewState] = useState<ViewState>({
     longitude: center?.longitude || -122.4194,
     latitude: center?.latitude || 37.7749,
@@ -68,19 +66,17 @@ export default function MapView({
     }
   }, [gearItems]);
 
-  // Auto-fit map to show all markers
+  // Auto-fit map to show all markers (disabled for now)
   useEffect(() => {
-    if (gearWithCoords.length > 0 && mapRef.current) {
+    if (gearWithCoords.length > 0) {
       const validCoords = gearWithCoords
         .filter(gear => gear.coordinates)
         .map(gear => gear.coordinates!);
-      
+
       if (validCoords.length > 0) {
         const bounds = calculateBounds(validCoords);
-        mapRef.current.fitBounds(
-          [[bounds.minLng, bounds.minLat], [bounds.maxLng, bounds.maxLat]],
-          { padding: 50 }
-        );
+        // Map fitBounds disabled - will re-enable when mapRef is restored
+        console.log('Map bounds calculated:', bounds);
       }
     }
   }, [gearWithCoords]);

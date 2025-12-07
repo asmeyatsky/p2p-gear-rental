@@ -21,30 +21,32 @@ export interface Span {
 }
 
 class TracerSpan implements Span {
-  private context: TraceContext;
+  private _context: TraceContext;
   private ended: boolean = false;
 
-  constructor(context: TraceContext) {
-    this.context = context;
+  constructor(ctx: TraceContext) {
+    this._context = ctx;
   }
 
   context(): TraceContext {
-    return this.context;
+    return this._context;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setTag(key: string, value: any): void {
-    if (!this.context.tags) {
-      this.context.tags = new Map();
+    if (!this._context.tags) {
+      this._context.tags = new Map();
     }
-    this.context.tags.set(key, value);
+    this._context.tags.set(key, value);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addEvent(name: string, attributes?: Map<string, any>): void {
-    if (!this.context.logs) {
-      this.context.logs = [];
+    if (!this._context.logs) {
+      this._context.logs = [];
     }
-    
-    this.context.logs.push({
+
+    this._context.logs.push({
       timestamp: Date.now(),
       fields: new Map([['event', name], ...Array.from(attributes || new Map())])
     });
@@ -52,18 +54,18 @@ class TracerSpan implements Span {
 
   end(): void {
     if (this.ended) return;
-    
-    const duration = Date.now() - this.context.startTime;
-    
+
+    const duration = Date.now() - this._context.startTime;
+
     // Log the completed span
-    logger.info(`Span completed: ${this.context.operationName}`, {
-      traceId: this.context.traceId,
-      spanId: this.context.spanId,
+    logger.info(`Span completed: ${this._context.operationName}`, {
+      traceId: this._context.traceId,
+      spanId: this._context.spanId,
       duration,
-      serviceName: this.context.serviceName,
-      operationName: this.context.operationName,
-      tags: this.context.tags ? Object.fromEntries(this.context.tags) : undefined,
-      logs: this.context.logs?.map(log => ({
+      serviceName: this._context.serviceName,
+      operationName: this._context.operationName,
+      tags: this._context.tags ? Object.fromEntries(this._context.tags) : undefined,
+      logs: this._context.logs?.map(log => ({
         timestamp: log.timestamp,
         fields: Object.fromEntries(log.fields)
       }))

@@ -2,14 +2,17 @@
 import { LRUCache } from 'lru-cache';
 import { CacheLevel, CacheConfig } from './MultiLevelCache';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CacheOptions = { max?: number; ttl?: number };
+
 export class MemoryCache implements CacheLevel {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private cache: LRUCache<string, any>;
 
-  constructor(options?: LRUCache.Options<string, any>) {
+  constructor(options?: CacheOptions) {
     this.cache = new LRUCache({
-      max: 1000, // Default max items
-      ttl: 300000, // Default 5 minutes
-      ...options,
+      max: options?.max ?? 1000, // Default max items
+      ttl: options?.ttl ?? 300000, // Default 5 minutes
     });
   }
 
@@ -41,7 +44,8 @@ export class MemoryCache implements CacheLevel {
     return this.cache.size;
   }
 
-  dump(): LRUCacheDump<string, any> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dump(): [string, LRUCache.Entry<any>][] {
     return this.cache.dump();
   }
 }

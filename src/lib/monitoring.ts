@@ -264,16 +264,18 @@ if (process.env.NODE_ENV === 'production') {
   }, 60 * 1000); // Check every minute
 }
 
-type MonitoringHandler = (req: NextRequest, ...args: unknown[]) => Promise<NextResponse | undefined>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MonitoringHandler = (req: NextRequest, context?: any) => Promise<NextResponse>;
 
 export function withMonitoring(handler: MonitoringHandler) {
-  return async (req: NextRequest, ...args: unknown[]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return async (req: NextRequest, context?: any): Promise<NextResponse> => {
     const startTime = Date.now();
     let response: NextResponse | undefined;
     let error: Error | undefined;
 
     try {
-      response = await handler(req, ...args);
+      response = await handler(req, context);
       return response;
     } catch (e) {
       error = e instanceof Error ? e : new Error(String(e));

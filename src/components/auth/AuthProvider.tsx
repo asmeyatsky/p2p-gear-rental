@@ -43,19 +43,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<AuthResponse> => {
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const result = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     setLoading(false);
-    return { data, error } as { data: unknown; error: unknown };
+    return result;
   };
 
-  const signUp = async (email: string, password: string, name?: string) => {
+  const signUp = async (email: string, password: string, name?: string): Promise<AuthResponse> => {
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
+    const result = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
     setLoading(false);
-    return { data, error } as { data: unknown; error: unknown };
+    return result;
   };
 
   const signOut = async () => {

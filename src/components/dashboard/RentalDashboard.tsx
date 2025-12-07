@@ -404,14 +404,140 @@ export default function RentalDashboard() {
       )}
 
       {/* Analytics Tab */}
-      {activeTab === 'analytics' && (
+      {activeTab === 'analytics' && stats && (
         <div className="space-y-6">
+          {/* Revenue Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{formatCurrency(stats.totalEarnings)}</p>
+              <p className="text-sm text-gray-500 mt-1">All time earnings</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-gray-500">This Month</h3>
+              <p className="text-3xl font-bold text-green-600 mt-2">{formatCurrency(stats.thisMonthEarnings)}</p>
+              <p className="text-sm text-gray-500 mt-1">{stats.thisMonthRentals} rentals</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-gray-500">Avg Per Rental</h3>
+              <p className="text-3xl font-bold text-blue-600 mt-2">
+                {stats.completedRentals > 0
+                  ? formatCurrency(stats.totalEarnings / stats.completedRentals)
+                  : '$0'}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">Based on {stats.completedRentals} rentals</p>
+            </div>
+          </div>
+
+          {/* Performance Metrics */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">Coming Soon</h3>
-            <p className="text-gray-600">
-              Advanced analytics including rental trends, popular gear categories, 
-              seasonal patterns, and revenue forecasting will be available here.
-            </p>
+            <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div>
+                <p className="text-sm text-gray-500">Completion Rate</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.totalRentals > 0
+                    ? `${((stats.completedRentals / stats.totalRentals) * 100).toFixed(0)}%`
+                    : '0%'}
+                </p>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                  <div
+                    className="bg-green-500 h-2 rounded-full transition-all"
+                    style={{ width: `${stats.totalRentals > 0 ? (stats.completedRentals / stats.totalRentals) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Response Time</p>
+                <p className="text-2xl font-bold text-gray-900">{'<'} 1 hr</p>
+                <p className="text-xs text-green-600 mt-1">Excellent</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Customer Rating</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.averageRating ? stats.averageRating.toFixed(1) : 'N/A'}
+                </p>
+                <div className="flex text-yellow-400 mt-1">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <span key={star}>
+                      {stats.averageRating && stats.averageRating >= star ? '★' : '☆'}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Active Listings</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.activeRentals}</p>
+                <p className="text-xs text-blue-600 mt-1">Currently rented</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+            {rentals.length > 0 ? (
+              <div className="space-y-3">
+                {rentals.slice(0, 5).map(rental => (
+                  <div key={rental.id} className="flex items-center justify-between py-3 border-b last:border-0">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden">
+                        {rental.gear.images[0] && (
+                          <Image
+                            src={rental.gear.images[0]}
+                            alt={rental.gear.title}
+                            width={40}
+                            height={40}
+                            className="object-cover"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{rental.gear.title}</p>
+                        <p className="text-xs text-gray-500">
+                          {rental.ownerId === user?.id ? 'Rented by' : 'Rented from'}{' '}
+                          {rental.ownerId === user?.id
+                            ? rental.renter.full_name || rental.renter.email
+                            : rental.owner.full_name || rental.owner.email
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(rental.status)}`}>
+                        {rental.status}
+                      </span>
+                      <p className="text-xs text-gray-500 mt-1">{formatDate(rental.createdAt)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">No recent activity</p>
+            )}
+          </div>
+
+          {/* Tips for Success */}
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow p-6 text-white">
+            <h3 className="text-lg font-semibold mb-3">Tips to Increase Earnings</h3>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center">
+                <span className="mr-2">📸</span>
+                Add high-quality photos to your listings
+              </li>
+              <li className="flex items-center">
+                <span className="mr-2">💰</span>
+                Offer weekly and monthly discounts for longer rentals
+              </li>
+              <li className="flex items-center">
+                <span className="mr-2">⚡</span>
+                Respond to requests within 1 hour for higher visibility
+              </li>
+              <li className="flex items-center">
+                <span className="mr-2">⭐</span>
+                Maintain a 4.5+ rating to become a featured host
+              </li>
+            </ul>
           </div>
         </div>
       )}

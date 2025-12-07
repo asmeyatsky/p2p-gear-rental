@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
+import AvailabilityCalendar from '@/components/gear/AvailabilityCalendar';
 
 interface GearDetailsClientProps {
   gear: {
@@ -26,33 +28,152 @@ interface GearDetailsClientProps {
       totalReviews: number;
     } | null;
   };
+  currentUserId?: string | null;
 }
 
-export default function GearDetailsClient({ gear }: GearDetailsClientProps) {
+export default function GearDetailsClient({ gear, currentUserId }: GearDetailsClientProps) {
+  const router = useRouter();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showRentalModal, setShowRentalModal] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isOwnGear = currentUserId === gear.user?.id;
+
+  const calculateTotalPrice = useCallback(() => {
+    if (!startDate || !endDate) return 0;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    if (days <= 0) return 0;
+
+    // Apply weekly/monthly rates if applicable
+    if (days >= 30 && gear.monthlyRate) {
+      const months = Math.floor(days / 30);
+      const remainingDays = days % 30;
+      return months * gear.monthlyRate + remainingDays * gear.dailyRate;
+    }
+    if (days >= 7 && gear.weeklyRate) {
+      const weeks = Math.floor(days / 7);
+      const remainingDays = days % 7;
+      return weeks * gear.weeklyRate + remainingDays * gear.dailyRate;
+    }
+    return days * gear.dailyRate;
+  }, [startDate, endDate, gear.dailyRate, gear.weeklyRate, gear.monthlyRate]);
+
+  const handleRequestRental = useCallback(() => {
+    if (!currentUserId) {
+      router.push('/login?redirect=' + encodeURIComponent(`/gear/${gear.id}`));
+      return;
+    }
+    setShowRentalModal(true);
+  }, [currentUserId, router, gear.id]);
+
+  const handleMessageOwner = useCallback(() => {
+    if (!currentUserId) {
+      router.push('/login?redirect=' + encodeURIComponent(`/gear/${gear.id}`));
+      return;
+    }
+    if (gear.user?.id) {
+      router.push(`/messages?userId=${gear.user.id}&gearId=${gear.id}`);
+    }
+  }, [currentUserId, router, gear.id, gear.user?.id]);
+
+  const handleSubmitRental = useCallback(async () => {
+    if (!startDate || !endDate) {
+      setError('Please select both start and end dates');
+      return;
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (start < today) {
+      setError('Start date cannot be in the past');
+      return;
+    }
+
+    if (end <= start) {
+      setError('End date must be after start date');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/rentals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gearId: gear.id,
+          startDate: startDate,
+          endDate: endDate,
+          totalPrice: calculateTotalPrice(),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create rental request');
+      }
+
+      const rental = await response.json();
+      setShowRentalModal(false);
+      router.push(`/rentals/${rental.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [startDate, endDate, gear.id, calculateTotalPrice, router]);
+
+  const totalPrice = calculateTotalPrice();
+  const rentalDays = startDate && endDate
+    ? Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
 
   return (
     <div className="space-y-4">
       {/* Image Gallery */}
-      <div className="grid grid-cols-4 gap-2">
-        {gear.images.map((image, index) => (
-          <button
-            key={index}
-            onClick={() => setSelectedImageIndex(index)}
-            className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-              index === selectedImageIndex 
-                ? 'border-blue-500' 
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            <img 
-              src={image} 
-              alt={`${gear.title} - Image ${index + 1}`}
+      {gear.images.length > 0 && (
+        <>
+          <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+            <img
+              src={gear.images[selectedImageIndex]}
+              alt={`${gear.title} - Main Image`}
               className="w-full h-full object-cover"
             />
-          </button>
-        ))}
-      </div>
+          </div>
+          {gear.images.length > 1 && (
+            <div className="grid grid-cols-4 gap-2">
+              {gear.images.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                    index === selectedImageIndex
+                      ? 'border-blue-500'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`${gear.title} - Image ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
 
       {/* Gear Info */}
       <div className="space-y-6">
@@ -101,16 +222,18 @@ export default function GearDetailsClient({ gear }: GearDetailsClientProps) {
         {gear.user && (
           <div className="border-t pt-4">
             <h3 className="font-semibold mb-2">Owner</h3>
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
                 {gear.user.full_name?.charAt(0) || gear.user.email.charAt(0).toUpperCase()}
               </div>
               <div>
                 <p className="font-medium">{gear.user.full_name || gear.user.email}</p>
-                {gear.user.averageRating && gear.user.totalReviews > 0 && (
+                {gear.user.averageRating && gear.user.totalReviews > 0 ? (
                   <p className="text-sm text-gray-600">
-                    ⭐ {gear.user.averageRating.toFixed(1)} ({gear.user.totalReviews} reviews)
+                    <span className="text-yellow-500">★</span> {gear.user.averageRating.toFixed(1)} ({gear.user.totalReviews} reviews)
                   </p>
+                ) : (
+                  <p className="text-sm text-gray-500">New owner</p>
                 )}
               </div>
             </div>
@@ -118,14 +241,100 @@ export default function GearDetailsClient({ gear }: GearDetailsClientProps) {
         )}
 
         <div className="space-y-3">
-          <Button className="w-full">
-            Request Rental
-          </Button>
-          <Button variant="outline" className="w-full">
-            Message Owner
-          </Button>
+          {isOwnGear ? (
+            <Button
+              onClick={() => router.push(`/gear/${gear.id}/edit`)}
+              className="w-full"
+            >
+              Edit Listing
+            </Button>
+          ) : (
+            <>
+              <Button
+                onClick={handleRequestRental}
+                className="w-full"
+              >
+                Request Rental
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleMessageOwner}
+                className="w-full"
+              >
+                Message Owner
+              </Button>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Rental Request Modal */}
+      {showRentalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold">Request Rental</h2>
+              <button
+                onClick={() => setShowRentalModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Availability Calendar */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Dates
+                </label>
+                <AvailabilityCalendar
+                  gearId={gear.id}
+                  selectedStart={startDate}
+                  selectedEnd={endDate}
+                  onDateSelect={(start, end) => {
+                    setStartDate(start);
+                    setEndDate(end);
+                  }}
+                />
+              </div>
+
+              {rentalDays > 0 && (
+                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">{rentalDays} day{rentalDays !== 1 ? 's' : ''}</span>
+                    <span>${gear.dailyRate}/day</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-lg border-t pt-2">
+                    <span>Total</span>
+                    <span>${totalPrice.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
+              <Button
+                onClick={handleSubmitRental}
+                disabled={isSubmitting || !startDate || !endDate}
+                className="w-full"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Request'}
+              </Button>
+
+              <p className="text-xs text-gray-500 text-center">
+                You won't be charged until the owner accepts your request
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

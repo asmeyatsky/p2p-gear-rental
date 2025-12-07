@@ -1,6 +1,6 @@
 // src/application/handlers/commands/CreateGearCommandHandler.ts
 import { ICommandHandler } from './ICommandHandler';
-import { CreateGearCommand } from '../../application/commands/gear/CreateGearCommand';
+import { CreateGearCommand } from '../../commands/gear/CreateGearCommand';
 import { IGearRepository } from '../../../domain/ports/repositories';
 import { IGearDomainService } from '../../../domain/services/GearDomainService';
 import { Gear } from '../../../domain/entities/Gear';

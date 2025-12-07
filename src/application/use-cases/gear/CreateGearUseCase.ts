@@ -1,7 +1,6 @@
-import { Gear } from '../domain/entities/Gear';
-import { Rental } from '../domain/entities/Rental';
-import { IGearRepository } from '../domain/ports/repositories';
-import { IGearDomainService } from '../domain/services/GearDomainService';
+import { Gear } from '../../../domain/entities/Gear';
+import { IGearRepository } from '../../../domain/ports/repositories';
+import { IGearDomainService } from '../../../domain/services/GearDomainService';
 
 export interface CreateGearInput {
   title: string;

@@ -87,7 +87,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       where: { paymentIntentId: paymentIntent.id },
       data: { 
         paymentStatus: 'succeeded',
-        status: 'approved' // Auto-approve on successful payment
+        status: 'CONFIRMED' // Auto-confirm on successful payment
       },
     })
   );
@@ -131,7 +131,7 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
       where: { paymentIntentId: paymentIntent.id },
       data: { 
         paymentStatus: 'failed',
-        status: 'rejected' // Auto-reject on failed payment
+        status: 'CANCELLED' // Auto-cancel on failed payment
       },
     })
   );
@@ -167,7 +167,7 @@ async function handlePaymentCancellation(paymentIntent: Stripe.PaymentIntent) {
       where: { paymentIntentId: paymentIntent.id },
       data: { 
         paymentStatus: 'canceled',
-        status: 'canceled'
+        status: 'CANCELLED'
       },
     })
   );

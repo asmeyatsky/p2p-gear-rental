@@ -14,6 +14,25 @@ model User {
   id                String    @id @unique
   email             String    @unique
   full_name         String?
+  bio               String?
+  profileImageUrl   String?
+  phoneNumber       String?
+  phoneVerified     Boolean   @default(false)
+
+  // Trust & Verification
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  identityVerifiedAt DateTime?
+  governmentIdUrl   String?           // Stored securely, reference to verification service
+  trustScore        Float?            // 0-100 calculated score
+
+  // Location
+  city              String?
+  state             String?
+
+  // Stripe Connect for payouts
+  stripeAccountId   String?           // Stripe Connect account for receiving payments
+  stripeAccountStatus String?         // onboarding status
+
   gears             Gear[]
   rentedItems       Rental[]  @relation("RenterRentals")
   ownedRentals      Rental[]  @relation("OwnerRentals")
@@ -25,12 +44,22 @@ model User {
   disputeResponses  DisputeResponse[] @relation("DisputeResponses")
   averageRating     Float?
   totalReviews      Int       @default(0)
+  completedRentals  Int       @default(0)   // Track successful rentals
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   @@index([email])
   @@index([createdAt])
   @@index([averageRating])
+  @@index([verificationStatus])
+  @@index([trustScore])
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
 }
 
 model Gear {
@@ -43,17 +72,28 @@ model Gear {
   images      String[]
   city        String
   state       String
-  category    String? // New field
+  category    String?
   brand       String?
   model       String?
   condition   String?
+
+  // Insurance & Protection
+  replacementValue  Float?            // Full replacement cost if damaged/lost
+  insuranceRequired Boolean @default(false)  // Owner can require renters to have insurance
+  securityDeposit   Float?            // Optional security deposit amount
+
+  // Availability
+  isAvailable       Boolean @default(true)   // Quick toggle for owners to pause listings
+
   userId      String?
   user        User?     @relation(fields: [userId], references: [id])
   rentals     Rental[]
+  damageClaims DamageClaim[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   averageRating     Float?
   totalReviews      Int       @default(0)
+  totalRentals      Int       @default(0)
 
   @@index([category])
   @@index([city, state])
@@ -67,6 +107,7 @@ model Gear {
   @@index([weeklyRate])
   @@index([monthlyRate])
   @@index([averageRating])
+  @@index([isAvailable])
 }
 
 model Rental {
@@ -79,14 +120,37 @@ model Rental {
   owner        User          @relation("OwnerRentals", fields: [ownerId], references: [id])
   startDate    DateTime
   endDate      DateTime
-  status       String        @default("pending") // pending, approved, rejected, completed
-  message      String?       // New field for basic messaging
-  paymentIntentId String?
-  clientSecret String?
-  paymentStatus String?      // e.g., 'requires_payment_method', 'requires_confirmation', 'succeeded', 'failed'
+  status       RentalStatus  @default(PENDING)
+  message      String?
+
+  // Payment
+  totalPrice        Float?
+  paymentIntentId   String?
+  clientSecret      String?
+  paymentStatus     String?
+
+  // Insurance & Protection
+  insuranceType     InsuranceType @default(NONE)
+  insurancePremium  Float?        // Cost of insurance
+  securityDepositPaid Float?      // Amount held as deposit
+  securityDepositRefunded Boolean @default(false)
+
+  // Condition tracking
+  preRentalCondition  String?     // Notes/checklist before rental
+  postRentalCondition String?     // Notes/checklist after rental
+  preRentalPhotos     String[]    // Photo URLs documenting condition before
+  postRentalPhotos    String[]    // Photo URLs documenting condition after
+
+  // Timestamps
+  approvedAt    DateTime?
+  pickedUpAt    DateTime?         // When renter picked up gear
+  returnedAt    DateTime?         // When renter returned gear
+  completedAt   DateTime?
+
   review       Review?
   conversation Conversation?
   dispute      Dispute?
+  damageClaim  DamageClaim?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -97,6 +161,71 @@ model Rental {
   @@index([startDate, endDate])
   @@index([paymentStatus])
   @@index([createdAt])
+}
+
+enum RentalStatus {
+  PENDING           // Request submitted, awaiting owner approval
+  APPROVED          // Owner approved, awaiting payment
+  PAYMENT_PENDING   // Payment initiated
+  CONFIRMED         // Payment received, rental confirmed
+  ACTIVE            // Rental in progress (gear picked up)
+  RETURNED          // Gear returned, awaiting condition check
+  COMPLETED         // Successfully completed
+  CANCELLED         // Cancelled by renter or owner
+  REJECTED          // Owner rejected the request
+  DISPUTED          // Under dispute
+}
+
+enum InsuranceType {
+  NONE              // No insurance
+  BASIC             // Covers up to $500 damage
+  STANDARD          // Covers up to $2000 damage
+  PREMIUM           // Full replacement coverage
+}
+
+model DamageClaim {
+  id          String   @id @default(cuid())
+  rentalId    String   @unique
+  rental      Rental   @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  gearId      String
+  gear        Gear     @relation(fields: [gearId], references: [id])
+
+  claimType   DamageClaimType
+  description String
+  amount      Float             // Claimed amount
+  approvedAmount Float?         // Final approved amount
+  photoUrls   String[]          // Evidence photos
+  status      DamageClaimStatus @default(PENDING)
+
+  // Resolution
+  resolution     String?
+  resolvedAt     DateTime?
+  insurancePaid  Float?        // Amount covered by insurance
+  renterPaid     Float?        // Amount charged to renter
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([gearId])
+  @@index([createdAt])
+}
+
+enum DamageClaimType {
+  MINOR_DAMAGE      // Scratches, scuffs
+  MAJOR_DAMAGE      // Significant damage affecting function
+  LOST_ITEM         // Equipment not returned
+  MISSING_ACCESSORY // Missing parts/accessories
+  THEFT             // Suspected theft
+}
+
+enum DamageClaimStatus {
+  PENDING           // Claim submitted
+  UNDER_REVIEW      // Being reviewed
+  APPROVED          // Claim approved
+  PARTIALLY_APPROVED // Partial amount approved
+  REJECTED          // Claim rejected
+  PAID              // Payment processed
 }
 
 model Review {

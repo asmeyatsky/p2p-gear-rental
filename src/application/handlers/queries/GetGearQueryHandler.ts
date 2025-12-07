@@ -1,6 +1,6 @@
 // src/application/handlers/queries/GetGearQueryHandler.ts
 import { IQueryHandler } from './IQueryHandler';
-import { GetGearQuery } from '../../application/queries/gear/GetGearQuery';
+import { GetGearQuery } from '../../queries/gear/GetGearQuery';
 import { IGearRepository } from '../../../domain/ports/repositories';
 import { Gear } from '../../../domain/entities/Gear';
 
