@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { supabase } from '@/lib/supabase';
 import { withErrorHandler, AuthenticationError, ValidationError } from '@/lib/api-error-handler';

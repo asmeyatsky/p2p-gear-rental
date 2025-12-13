@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
 import { withErrorHandler, AuthenticationError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
@@ -9,7 +9,7 @@ import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
 import { logger } from '@/lib/logger';
 import { searchEngine, SearchOptions } from '@/lib/search-engine';
 import { queryOptimizer } from '@/lib/database/query-optimizer';
-import { executeWithRetry } from '@/lib/database/connection-pool';
+import { executeWithRetry } from '@/lib/database';
 
 export const GET = withErrorHandler(
   withMonitoring(

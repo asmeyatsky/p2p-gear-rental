@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
 import { withErrorHandler, AuthenticationError, NotFoundError, ForbiddenError, ValidationError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';

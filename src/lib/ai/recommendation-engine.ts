@@ -6,7 +6,7 @@
 import { User, Gear } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 
 export interface UserPreferences {
   userId: string;

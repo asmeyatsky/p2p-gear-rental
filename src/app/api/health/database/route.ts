@@ -19,10 +19,7 @@ export const GET = withErrorHandler(
 
         logger.info('Database health check completed', {
           status: health.status,
-          activeConnections: health.connections?.activeConnections || 0,
-          cacheStatus: health.cache?.status || 'unknown',
-          averageResponseTime: health.performance?.averageResponseTime || 0,
-          cacheHitRate: health.performance?.cacheHitRate || 0
+          latency: 'latency' in health ? health.latency : 0
         });
 
         return NextResponse.json(health, { status });

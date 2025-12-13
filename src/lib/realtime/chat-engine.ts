@@ -5,7 +5,7 @@
 
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { fraudDetectionEngine } from '@/lib/ai/fraud-detection';
 
 export interface ChatMessage {

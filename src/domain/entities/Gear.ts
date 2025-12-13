@@ -293,7 +293,7 @@ export class Gear {
     }
 
     for (const rental of this._rentals) {
-      if (rental.status === 'pending' || rental.status === 'approved' || rental.status === 'confirmed') {
+      if (rental.status === 'PENDING' || rental.status === 'APPROVED' || rental.status === 'CONFIRMED') {
         // Check for date overlap
         if (startDate <= rental.endDate && endDate >= rental.startDate) {
           return false;

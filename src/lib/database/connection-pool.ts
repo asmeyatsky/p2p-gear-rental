@@ -1,6 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from '@/lib/logger';
 
+// Check if we're in build mode (Next.js build phase)
+const isBuildTime = process.env.SKIP_DB_DURING_BUILD === 'true' ||
+                    process.env.NEXT_PHASE === 'phase-production-build' ||
+                    (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('localhost'));
+
 // Enhanced Prisma configuration with connection pooling and performance optimization
 
 interface ConnectionPoolConfig {
@@ -181,14 +186,20 @@ class DatabaseConnectionPool {
     }
   }
 
-  // Schedule periodic health checks
+  // Schedule periodic health checks (skip during build time)
   private scheduleHealthCheck(client: PrismaClient, name: string) {
+    // Skip health checks during build time to avoid database connection issues
+    if (isBuildTime) {
+      logger.debug('Skipping health check scheduling during build time');
+      return;
+    }
+
     const healthCheckInterval = setInterval(async () => {
       try {
         await client.$queryRaw`SELECT 1`;
       } catch (error) {
         logger.error(`Health check failed for connection ${name}`, { error: error instanceof Error ? error.message : String(error) });
-        
+
         // Attempt to reconnect
         try {
           await this.reconnectClient(name);
@@ -233,6 +244,22 @@ class DatabaseConnectionPool {
 
   // Get client by name
   getClient(name = 'default'): PrismaClient {
+    // During build time, return a basic client without health checks
+    if (isBuildTime) {
+      if (!this.prismaClients.has(name)) {
+        const client = new PrismaClient({
+          datasources: {
+            db: {
+              url: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db'
+            }
+          },
+          log: ['error']
+        });
+        this.prismaClients.set(name, client);
+      }
+      return this.prismaClients.get(name)!;
+    }
+
     const client = this.prismaClients.get(name);
     if (!client) {
       throw new Error(`Database client '${name}' not found. Create it first with createOptimizedClient()`);
@@ -362,8 +389,35 @@ class DatabaseConnectionPool {
 // Create singleton instance
 export const connectionPool = DatabaseConnectionPool.getInstance();
 
-// Create default optimized client
-export const optimizedPrisma = connectionPool.createOptimizedClient('default');
+// Lazy-initialized client to avoid database connections during build time
+let _optimizedPrisma: PrismaClient | null = null;
+
+export const getOptimizedPrisma = (): PrismaClient => {
+  if (!_optimizedPrisma) {
+    if (isBuildTime) {
+      // During build time, return a basic Prisma client without health checks
+      // This allows imports to work but won't actually connect
+      _optimizedPrisma = new PrismaClient({
+        datasources: {
+          db: {
+            url: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db'
+          }
+        },
+        log: ['error']
+      });
+    } else {
+      _optimizedPrisma = connectionPool.createOptimizedClient('default');
+    }
+  }
+  return _optimizedPrisma;
+};
+
+// For backwards compatibility - use getter to lazy-initialize
+export const optimizedPrisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    return getOptimizedPrisma()[prop as keyof PrismaClient];
+  }
+});
 
 // Export utility functions
 export const executeWithRetry = connectionPool.executeWithRetry.bind(connectionPool);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { monitoring } from '@/lib/monitoring';
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { withErrorHandler } from '@/lib/api-error-handler';
 
 interface HealthCheck {

@@ -6,7 +6,7 @@
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
 import { Rental, User, Gear, Prisma } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 
 const rentalWithGear = Prisma.validator<Prisma.RentalFindManyArgs>()({
   include: { gear: true },
@@ -259,7 +259,7 @@ class FraudDetectionEngine {
 
     const accountAge = Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24));
     const allTransactions = [...user.rentedItems, ...user.ownedRentals];
-    const successfulTransactions = allTransactions.filter(t => t.status === 'completed');
+    const successfulTransactions = allTransactions.filter(t => t.status === 'COMPLETED');
 
     const profile: UserBehaviorProfile = {
       userId,

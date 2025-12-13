@@ -5,7 +5,7 @@
 
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { Prisma, Gear, User } from '@prisma/client';
 
 export interface SemanticSearchQuery {

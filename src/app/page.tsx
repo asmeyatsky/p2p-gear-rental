@@ -257,5 +257,8 @@ export default async function Home() {
   }
 }
 
-// Enable ISR with 1 hour revalidation
+// Force dynamic rendering to avoid build-time database access
+export const dynamic = 'force-dynamic';
+
+// Enable ISR with 1 hour revalidation at runtime
 export const revalidate = 3600;

@@ -7,7 +7,7 @@ import { withMonitoring } from '@/lib/monitoring';
 import { CacheManager } from '@/lib/cache';
 import { logger } from '@/lib/logger';
 import { queryOptimizer } from '@/lib/database/query-optimizer';
-import { executeWithRetry } from '@/lib/database/connection-pool';
+import { executeWithRetry } from '@/lib/database';
 
 export const GET = withErrorHandler(
   withMonitoring(

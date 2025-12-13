@@ -1,6 +1,6 @@
 import Fuse from 'fuse.js';
 import { GearItem } from '@/types';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { CacheManager } from '@/lib/cache';
 import { logger } from '@/lib/logger';
 
@@ -83,7 +83,7 @@ class SearchEngine {
           },
           rentals: {
             where: {
-              status: { in: ['pending', 'approved'] }
+              status: { in: ['PENDING', 'APPROVED'] }
             },
             select: { startDate: true, endDate: true, status: true }
           }
@@ -150,7 +150,7 @@ class SearchEngine {
                 ]
               },
               {
-                status: { in: ['pending', 'approved'] }
+                status: { in: ['PENDING', 'APPROVED'] }
               }
             ]
           }
@@ -176,7 +176,7 @@ class SearchEngine {
         },
         rentals: {
           where: {
-            status: { in: ['pending', 'approved'] }
+            status: { in: ['PENDING', 'APPROVED'] }
           },
           select: { startDate: true, endDate: true, status: true }
         }

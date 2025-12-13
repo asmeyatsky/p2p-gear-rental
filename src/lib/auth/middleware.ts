@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { AuthenticationError, AuthorizationError } from '@/lib/api-error-handler';
 import { logger } from '@/lib/logger';
 

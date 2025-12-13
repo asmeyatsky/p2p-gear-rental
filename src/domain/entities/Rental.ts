@@ -51,7 +51,7 @@ export class Rental {
   }
 
   private validate(): void {
-    if (!['pending', 'approved', 'rejected', 'completed'].includes(this._status)) {
+    if (!['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED'].includes(this._status)) {
       throw new Error('Invalid rental status');
     }
     if (this._startDate >= this._endDate) {
@@ -118,26 +118,26 @@ export class Rental {
 
   // Methods
   approve(): void {
-    if (this._status !== 'pending') {
+    if (this._status !== 'PENDING') {
       throw new Error('Can only approve pending rentals');
     }
-    this._status = 'approved';
+    this._status = 'APPROVED';
     this._updatedAt = new Date();
   }
 
   reject(): void {
-    if (this._status !== 'pending') {
+    if (this._status !== 'PENDING') {
       throw new Error('Can only reject pending rentals');
     }
-    this._status = 'rejected';
+    this._status = 'REJECTED';
     this._updatedAt = new Date();
   }
 
   complete(): void {
-    if (this._status !== 'approved') {
+    if (this._status !== 'APPROVED') {
       throw new Error('Can only complete approved rentals');
     }
-    this._status = 'completed';
+    this._status = 'COMPLETED';
     this._updatedAt = new Date();
   }
 

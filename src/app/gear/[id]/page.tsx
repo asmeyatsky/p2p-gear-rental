@@ -256,21 +256,16 @@ export default async function GearDetailsPage(
   );
 }
 
-// Enable ISR with 1 hour revalidation
+// Force dynamic rendering to avoid build-time database access
+export const dynamic = 'force-dynamic';
+
+// Enable ISR with 1 hour revalidation at runtime
 export const revalidate = 3600;
 
-// Generate static paths for popular gear items
+// Don't generate static paths - use dynamic rendering instead
 export async function generateStaticParams() {
-  try {
-    const { generateGearStaticPaths } = await import('@/lib/ssr');
-    const { paths } = await generateGearStaticPaths(50); // Generate for top 50 gear items
-    
-    return paths.map((path: { params: { id: string } }) => ({
-      id: path.params.id,
-    }));
-  } catch (error) {
-    logger.error('Failed to generate static params for gear:', { error: error instanceof Error ? error.message : String(error) });
-    return [];
-  }
+  // Return empty array to skip static generation during build
+  // Pages will be generated on-demand at runtime
+  return [];
 }
 

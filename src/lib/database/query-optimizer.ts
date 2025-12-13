@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { getCached, setCache } from '@/lib/cache';
 import { logger } from '@/lib/logger';
 
@@ -192,7 +192,7 @@ export class QueryOptimizer {
             select: {
               rentals: {
                 where: {
-                  status: { in: ['pending', 'approved', 'confirmed'] }
+                  status: { in: ['PENDING', 'APPROVED', 'CONFIRMED'] }
                 }
               }
             }
@@ -260,12 +260,12 @@ export class QueryOptimizer {
           prisma.rental.count({
             where: {
               OR: [{ ownerId: userId }, { renterId: userId }],
-              status: { in: ['confirmed', 'approved'] },
+              status: { in: ['CONFIRMED', 'APPROVED'] },
               endDate: { gt: new Date() }
             }
           }),
           prisma.rental.count({
-            where: { ownerId: userId, status: 'pending' }
+            where: { ownerId: userId, status: 'PENDING' }
           })
         ]),
 
@@ -358,7 +358,7 @@ export class QueryOptimizer {
         where: {
           gearId,
           id: excludeRentalId ? { not: excludeRentalId } : undefined,
-          status: { in: ['pending', 'approved', 'confirmed'] },
+          status: { in: ['PENDING', 'APPROVED', 'CONFIRMED'] },
           AND: [
             { startDate: { lte: endDate } },
             { endDate: { gte: startDate } }
@@ -427,7 +427,7 @@ export class QueryOptimizer {
                 ]
               },
               {
-                status: { in: ['pending', 'approved', 'confirmed'] }
+                status: { in: ['PENDING', 'APPROVED', 'CONFIRMED'] }
               }
             ]
           }

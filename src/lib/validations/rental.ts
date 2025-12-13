@@ -37,7 +37,7 @@ export const createRentalSchema = z.object({
 );
 
 export const updateRentalStatusSchema = z.object({
-  status: z.enum(['pending', 'approved', 'rejected', 'completed', 'cancelled']),
+  status: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED']),
   message: z.string()
     .max(500, 'Message must be less than 500 characters')
     .trim()
@@ -45,7 +45,7 @@ export const updateRentalStatusSchema = z.object({
 });
 
 export const rentalQuerySchema = z.object({
-  status: z.enum(['pending', 'approved', 'rejected', 'completed', 'cancelled']).optional(),
+  status: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED']).optional(),
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(50).default(20),
   sortBy: z.enum(['newest', 'oldest', 'start-date', 'end-date']).default('newest'),

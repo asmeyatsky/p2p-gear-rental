@@ -1,6 +1,15 @@
 import { Metadata } from 'next';
-import { prisma } from '@/lib/database';
 import { logger } from './logger';
+import {
+  fetchFeaturedGear,
+  fetchGearById,
+  fetchCategories,
+  GearItem,
+  CategoryCount
+} from './api-internal';
+
+// Check if we're in build mode
+const isBuildTime = process.env.SKIP_DB_DURING_BUILD === 'true';
 
 // Performance measurement utility for SSR
 export function measureSSRPerformance(operation: string) {
@@ -8,86 +17,37 @@ export function measureSSRPerformance(operation: string) {
   return {
     end: () => {
       const duration = Date.now() - start;
-      logger.info(`SSR Performance: ${operation}`, { duration });
+      if (!isBuildTime) {
+        logger.info(`SSR Performance: ${operation}`, { duration });
+      }
       return duration;
     }
   };
 }
 
-// Get gear details for SSR with optimized queries
-export async function getGearDetailSSR(gearId: string) {
+// Get gear details for SSR - uses internal API
+export async function getGearDetailSSR(gearId: string): Promise<GearItem | null> {
+  if (isBuildTime) return null;
+
   try {
-    const gear = await prisma.gear.findUnique({
-      where: { id: gearId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            full_name: true,
-            averageRating: true,
-            totalReviews: true
-          }
-        },
-        rentals: {
-          where: {
-            status: { in: ['approved', 'completed'] }
-          },
-          select: {
-            id: true,
-            startDate: true,
-            endDate: true,
-            status: true
-          }
-        },
-        _count: {
-          select: {
-            rentals: true
-          }
-        }
-      }
-    });
-
-    if (!gear) {
-      return null;
-    }
-
-    return {
-      ...gear,
-      createdAt: gear.createdAt.toISOString(),
-      updatedAt: gear.updatedAt.toISOString(),
-      rentals: gear.rentals.map(rental => ({
-        ...rental,
-        startDate: rental.startDate.toISOString(),
-        endDate: rental.endDate.toISOString()
-      })),
-      user: gear.user ? {
-        ...gear.user,
-        createdAt: undefined,
-        updatedAt: undefined
-      } : null
-    };
+    return await fetchGearById(gearId);
   } catch (error) {
     logger.error('Failed to fetch gear details for SSR:', { gearId, error });
-    throw error;
+    return null;
   }
 }
 
 // Generate metadata for gear pages
 export async function generateGearMetadata(gearId: string): Promise<Metadata> {
+  if (isBuildTime) {
+    return {
+      title: 'Gear Details | P2P Gear Rental',
+      description: 'View details for photography and videography equipment available for rent.'
+    };
+  }
+
   try {
-    const gear = await prisma.gear.findUnique({
-      where: { id: gearId },
-      select: {
-        title: true,
-        description: true,
-        images: true,
-        dailyRate: true,
-        city: true,
-        state: true,
-        category: true
-      }
-    });
+    const gear = await fetchGearById(gearId);
 
     if (!gear) {
       return {
@@ -96,7 +56,7 @@ export async function generateGearMetadata(gearId: string): Promise<Metadata> {
       };
     }
 
-    const truncatedDescription = gear.description.length > 160 
+    const truncatedDescription = gear.description.length > 160
       ? gear.description.slice(0, 157) + '...'
       : gear.description;
 
@@ -134,105 +94,48 @@ export async function generateGearMetadata(gearId: string): Promise<Metadata> {
   }
 }
 
-// Generate static paths for popular gear
-export async function generateGearStaticPaths(limit: number = 50) {
-  try {
-    const popularGear = await prisma.gear.findMany({
-      take: limit,
-      orderBy: [
-        { totalReviews: 'desc' },
-        { createdAt: 'desc' }
-      ],
-      select: { id: true }
-    });
-
-    return {
-      paths: popularGear.map(gear => ({ params: { id: gear.id } }))
-    };
-  } catch (error) {
-    logger.error('Failed to generate static paths for gear:', { error });
-    return { paths: [] };
-  }
+// Generate static paths - always return empty for dynamic rendering
+export async function generateGearStaticPaths(_limit: number = 50) {
+  // Always return empty - we use dynamic rendering
+  return { paths: [] };
 }
 
-// Get featured gear for homepage
-export async function getFeaturedGearSSR(limit: number = 12) {
-  try {
-    const featuredGear = await prisma.gear.findMany({
-      take: limit,
-      orderBy: [
-        { averageRating: 'desc' },
-        { totalReviews: 'desc' },
-        { createdAt: 'desc' }
-      ],
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            full_name: true,
-            averageRating: true,
-            totalReviews: true
-          }
-        },
-        _count: {
-          select: {
-            rentals: true
-          }
-        }
-      }
-    });
+// Get featured gear for homepage - uses internal API
+export async function getFeaturedGearSSR(limit: number = 12): Promise<GearItem[]> {
+  if (isBuildTime) return [];
 
-    return featuredGear.map(gear => ({
-      ...gear,
-      createdAt: gear.createdAt.toISOString(),
-      updatedAt: gear.updatedAt.toISOString(),
-    }));
+  try {
+    return await fetchFeaturedGear(limit);
   } catch (error) {
     logger.error('Failed to fetch featured gear for SSR:', { error });
     return [];
   }
 }
 
-// Get categories for homepage
-export async function getCategoriesSSR() {
-  try {
-    const categories = await prisma.gear.groupBy({
-      by: ['category'],
-      where: {
-        category: { not: null }
-      },
-      _count: {
-        category: true
-      },
-      orderBy: {
-        _count: {
-          category: 'desc'
-        }
-      },
-      take: 8
-    });
+// Get categories for homepage - uses internal API
+export async function getCategoriesSSR(): Promise<CategoryCount[]> {
+  const defaultCategories: CategoryCount[] = [
+    { name: 'cameras', count: 0 },
+    { name: 'lenses', count: 0 },
+    { name: 'lighting', count: 0 },
+    { name: 'audio', count: 0 },
+    { name: 'drones', count: 0 },
+    { name: 'accessories', count: 0 }
+  ];
 
-    return categories.map(cat => ({
-      name: cat.category,
-      count: cat._count.category
-    }));
+  if (isBuildTime) return defaultCategories;
+
+  try {
+    const categories = await fetchCategories();
+    return categories.length > 0 ? categories : defaultCategories;
   } catch (error) {
     logger.error('Failed to fetch categories for SSR:', { error });
-    return [
-      { name: 'cameras', count: 0 },
-      { name: 'lenses', count: 0 },
-      { name: 'lighting', count: 0 },
-      { name: 'audio', count: 0 },
-      { name: 'drones', count: 0 },
-      { name: 'accessories', count: 0 }
-    ];
+    return defaultCategories;
   }
 }
 
 // Cache revalidation utility
 export async function revalidateGearCache(gearId: string) {
-  // In a real implementation, this would trigger ISR revalidation
   logger.info('Revalidating gear cache', { gearId });
   return true;
 }

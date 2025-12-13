@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { withErrorHandler, ValidationError } from '@/lib/api-error-handler';
 import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
 import { logger } from '@/lib/logger';

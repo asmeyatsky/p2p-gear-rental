@@ -70,7 +70,7 @@ export class CreateRentalUseCase {
       ownerId: gear.userId || '',
       startDate,
       endDate,
-      status: 'pending',
+      status: 'PENDING',
       message: input.message,
       paymentIntentId: paymentResult.id,
       clientSecret: paymentResult.clientSecret,
