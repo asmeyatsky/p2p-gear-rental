@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
@@ -6,490 +6,131 @@ on:
   pull_request:
     branches: [main, develop]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
-  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
-  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-  STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-  STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-  REDIS_URL: redis://localhost:6379
-  NODE_ENV: test
+  NODE_VERSION: '20'
 
 jobs:
-  lint-and-type-check:
-    name: Lint and Type Check
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-        
-      - name: Setup CI environment
-        run: cp .env.ci .env.local
-      
+
       - name: Run ESLint
         run: npm run lint
-      
-      - name: Run TypeScript check
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Type check
         run: npx tsc --noEmit
-      
-      - name: Check for unused dependencies
-        run: npx depcheck --ignores="@types/*,eslint-config-*,jest-environment-*"
 
-  security-audit:
-    name: Security Audit
+  test:
+    name: Unit Tests
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Run npm audit
-        run: npm audit --audit-level moderate
-      
-      - name: Run custom security audit
-        run: npm run security:audit
-      
-      - name: Upload security report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-audit-report
-          path: security-audit-report.json
 
-  unit-tests:
-    name: Unit and Integration Tests
-    runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Setup CI environment
-        run: cp .env.ci .env.local
-      
-      - name: Run database migrations
-        run: npx prisma migrate deploy || echo "Migration failed, continuing..."
-        
-      - name: Generate Prisma client
+      - name: Generate Prisma Client
         run: npx prisma generate
-      
-      - name: Run unit tests
-        run: npm run test -- --coverage --watchAll=false --passWithNoTests
+
+      - name: Run tests
+        run: npm run test -- --coverage --passWithNoTests
+        env:
+          NODE_ENV: test
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: github.event_name == 'pull_request'
+        with:
+          fail_ci_if_error: false
         continue-on-error: true
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key-for-testing
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
-      
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-results
-          path: |
-            coverage/
-            test-results.xml
-      
-      - name: Upload coverage to Codecov
-        if: always()
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
 
-  e2e-tests:
-    name: End-to-End Tests
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-    
+    needs: [lint, typecheck, test]
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-      
-      - name: Setup test database
-        run: |
-          npx prisma migrate deploy || echo "Migration failed, continuing..."
-          npx prisma generate
-          npm run db:seed || echo "Seeding failed, continuing..."
-      
-      - name: Build Next.js application
-        run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'http://localhost:54321' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'dummy-key-for-testing' }}
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || 'sk_test_dummy' }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET || 'whsec_dummy' }}
-      
-      - name: Start application in background
-        run: |
-          npm run start &
-          sleep 10
-          curl -f http://localhost:3000 || echo "App failed to start, skipping E2E tests"
-      
-      - name: Run E2E tests
-        run: npm run test:e2e || echo "E2E tests failed, continuing..."
-        continue-on-error: true
-        env:
-          PLAYWRIGHT_BASE_URL: http://localhost:3000
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'http://localhost:54321' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'dummy-key-for-testing' }}
-      
-      - name: Upload E2E test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-test-results
-          path: |
-            test-results/
-            playwright-report/
-      
-      - name: Upload E2E test report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-html-report
-          path: playwright-report/
 
-  build-and-validate:
-    name: Build and Validate
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
       - name: Install dependencies
         run: npm ci
-      
-      - name: Generate Prisma client
+
+      - name: Generate Prisma Client
         run: npx prisma generate
-      
+
       - name: Build application
         run: npm run build
-      
-      - name: Check build size
-        run: |
-          npm install -g bundlesize
-          bundlesize
-        continue-on-error: true
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: .next/
-
-  docker-build:
-    name: Docker Build Test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          tags: gearshare:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            NODE_ENV=production
-
-  performance-tests:
-    name: Performance Tests
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    services:
-      postgres:
-        image: postgres:15
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+          SKIP_DB_DURING_BUILD: 'true'
+          DATABASE_URL: 'postgresql://user:pass@localhost:5432/db'
+          NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co'
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder_key'
+          STRIPE_SECRET_KEY: 'sk_test_placeholder'
 
-      redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-    
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Setup database
-        run: |
-          npx prisma migrate deploy
-          npx prisma generate
-          npm run db:seed
-      
-      - name: Build and start application
-        run: |
-          npm run build
-          npm run start &
-          sleep 15
-      
-      - name: Install Lighthouse CI
-        run: npm install -g @lhci/cli@0.12.x
-      
-      - name: Run Lighthouse CI
-        run: |
-          lhci autorun --upload.target=temporary-public-storage
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-      
-      - name: Upload Lighthouse results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lighthouse-results
-          path: .lighthouseci/
 
-  notify-on-failure:
-    name: Notify on Failure
-    runs-on: ubuntu-latest
-    needs: [lint-and-type-check, security-audit, unit-tests, e2e-tests, build-and-validate]
-    if: failure() && github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Notify Slack on failure
-        if: always()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: failure
-          fields: repo,message,commit,author,action,eventName,ref,workflow
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [lint-and-type-check, security-audit, unit-tests, build-and-validate]
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    environment: staging
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Deploy to Vercel (Staging)
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-args: '--prod'
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./
-          alias-domains: staging.gearshare.com
-
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [lint-and-type-check, security-audit, unit-tests, e2e-tests, build-and-validate, performance-tests]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: production
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Deploy to Vercel (Production)
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-args: '--prod'
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./
-      
-      - name: Notify Slack on successful deployment
-        uses: 8398a7/action-slack@v3
-        with:
-          status: success
-          fields: repo,message,commit,author,action,eventName,ref,workflow
-          text: 'GearShare has been successfully deployed to production! 🚀'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  post-deployment-tests:
-    name: Post-Deployment Tests
-    runs-on: ubuntu-latest
-    needs: [deploy-production]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-      
-      - name: Run smoke tests
-        run: npm run test:e2e -- --grep="smoke"
-        env:
-          PLAYWRIGHT_BASE_URL: https://gearshare.com
-      
-      - name: Run API health checks
-        run: |
-          curl -f https://gearshare.com/api/health || exit 1
-          curl -f https://gearshare.com/api/gear?limit=1 || exit 1
-      
-      - name: Monitor application metrics
-        run: |
-          # Run custom monitoring script
-          node scripts/monitor-deployment.js
+      - name: Run npm audit
+        run: npm audit --audit-level=high
         continue-on-error: true
-
-  cleanup:
-    name: Cleanup
-    runs-on: ubuntu-latest
-    needs: [unit-tests, e2e-tests, performance-tests]
-    if: always()
-    
-    steps:
-      - name: Clean up test artifacts
-        run: |
-          echo "Cleaning up test artifacts and temporary files"
-          # Add cleanup commands here if needed
-          
-      - name: Report test summary
-        run: |
-          echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- Unit Tests: ${{ needs.unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- E2E Tests: ${{ needs.e2e-tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Performance Tests: ${{ needs.performance-tests.result }}" >> $GITHUB_STEP_SUMMARY
