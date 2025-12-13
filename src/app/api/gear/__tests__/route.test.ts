@@ -6,7 +6,7 @@ import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
-import { User, Gear } from '@/lib/prisma';
+import { User, Gear } from '@prisma/client';
 import { Session } from '@supabase/supabase-js';
 
 // Mock dependencies
@@ -15,8 +15,8 @@ jest.mock('@/lib/supabase');
 jest.mock('@/lib/cache');
 jest.mock('@/lib/logger');
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
+const mockPrisma = jest.mocked(prisma);
+const mockSupabase = jest.mocked(supabase);
 
 describe('API /gear', () => {
   beforeEach(() => {
@@ -26,7 +26,7 @@ describe('API /gear', () => {
   describe('GET /api/gear', () => {
     it('should return gear list with pagination', async () => {
       // Mock data
-      const mockGear: (Gear & { user: User })[] = [
+      const mockGear: Partial<Gear & { user: Partial<User> }>[] = [
         {
           id: 'gear-1',
           title: 'Test Camera',
@@ -46,13 +46,6 @@ describe('API /gear', () => {
             totalReviews: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
-            stripeCustomerId: null,
-            lastLogin: null,
-            isOnline: false,
-            bio: null,
-            location: null,
-            website: null,
-            avatarUrl: null,
           },
           category: 'cameras',
           brand: 'Test Brand',
@@ -60,11 +53,15 @@ describe('API /gear', () => {
           condition: 'good',
           createdAt: new Date(),
           updatedAt: new Date(),
+          averageRating: null,
+          totalReviews: 0,
+          totalRentals: 0,
+          isAvailable: true,
         }
       ];
 
-      mockPrisma.gear.findMany.mockResolvedValue(mockGear);
-      mockPrisma.gear.count.mockResolvedValue(1);
+      (mockPrisma.gear.findMany as jest.Mock).mockResolvedValue(mockGear);
+      (mockPrisma.gear.count as jest.Mock).mockResolvedValue(1);
 
       const request = new NextRequest('http://localhost:3000/api/gear?page=1&limit=20');
       const response = await GET(request);
@@ -78,8 +75,8 @@ describe('API /gear', () => {
     });
 
     it('should handle search filters correctly', async () => {
-      mockPrisma.gear.findMany.mockResolvedValue([]);
-      mockPrisma.gear.count.mockResolvedValue(0);
+      (mockPrisma.gear.findMany as jest.Mock).mockResolvedValue([]);
+      (mockPrisma.gear.count as jest.Mock).mockResolvedValue(0);
 
       const request = new NextRequest('http://localhost:3000/api/gear?search=camera&category=cameras&minPrice=25&maxPrice=100');
       const response = await GET(request);
@@ -96,13 +93,13 @@ describe('API /gear', () => {
     });
 
     it('should handle availability date filtering', async () => {
-      mockPrisma.gear.findMany.mockResolvedValue([]);
-      mockPrisma.gear.count.mockResolvedValue(0);
+      (mockPrisma.gear.findMany as jest.Mock).mockResolvedValue([]);
+      (mockPrisma.gear.count as jest.Mock).mockResolvedValue(0);
 
       const startDate = '2024-12-01T00:00:00.000Z';
       const endDate = '2024-12-05T00:00:00.000Z';
       const request = new NextRequest(`http://localhost:3000/api/gear?startDate=${startDate}&endDate=${endDate}`);
-      
+
       await GET(request);
 
       expect(mockPrisma.gear.findMany).toHaveBeenCalledWith(
@@ -119,7 +116,7 @@ describe('API /gear', () => {
                       ]
                     },
                     {
-                      status: { in: ['pending', 'approved'] }
+                      status: { in: ['PENDING', 'APPROVED'] }
                     }
                   ]
                 }
@@ -138,7 +135,7 @@ describe('API /gear', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      mockPrisma.gear.findMany.mockRejectedValue(new Error('Database connection error'));
+      (mockPrisma.gear.findMany as jest.Mock).mockRejectedValue(new Error('Database connection error'));
 
       const request = new NextRequest('http://localhost:3000/api/gear');
       const response = await GET(request);
@@ -163,47 +160,46 @@ describe('API /gear', () => {
       condition: 'like-new'
     };
 
-    const mockUser: User = {
-        id: 'user-1',
-        email: 'test@example.com',
-        full_name: 'Test User',
-        averageRating: 0,
-        totalReviews: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        stripeCustomerId: null,
-        lastLogin: null,
-        isOnline: false,
-        bio: null,
-        location: null,
-        website: null,
-        avatarUrl: null,
+    const mockUser: Partial<User> = {
+      id: 'user-1',
+      email: 'test@example.com',
+      full_name: 'Test User',
+      averageRating: 0,
+      totalReviews: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      stripeAccountId: null,
+      stripeAccountStatus: null,
+      bio: null,
+      city: null,
+      state: null,
+      completedRentals: 0,
     };
 
     const mockSession: Partial<Session> = {
-        user: {
-            id: 'user-1',
-            email: 'test@example.com',
-            user_metadata: { full_name: 'Test User' },
-            app_metadata: {},
-            aud: 'authenticated',
-            created_at: new Date().toISOString(),
-        }
+      user: {
+        id: 'user-1',
+        email: 'test@example.com',
+        user_metadata: { full_name: 'Test User' },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      }
     };
 
     beforeEach(() => {
       // Mock authenticated user
-      mockSupabase.auth.getSession.mockResolvedValue({
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValue({
         data: { session: mockSession as Session },
         error: null
       });
 
       // Mock user upsert
-      mockPrisma.user.upsert.mockResolvedValue(mockUser);
+      (mockPrisma.user.upsert as jest.Mock).mockResolvedValue(mockUser);
     });
 
     it('should create gear with valid data', async () => {
-      const mockCreatedGear: Gear & { user: User } = {
+      const mockCreatedGear: Partial<Gear & { user: Partial<User> }> = {
         id: 'gear-1',
         ...validGearData,
         userId: 'user-1',
@@ -212,9 +208,13 @@ describe('API /gear', () => {
         updatedAt: new Date(),
         weeklyRate: 300,
         monthlyRate: 1000,
+        averageRating: null,
+        totalReviews: 0,
+        totalRentals: 0,
+        isAvailable: true,
       };
 
-      mockPrisma.gear.create.mockResolvedValue(mockCreatedGear);
+      (mockPrisma.gear.create as jest.Mock).mockResolvedValue(mockCreatedGear);
 
       const request = new NextRequest('http://localhost:3000/api/gear', {
         method: 'POST',
@@ -231,7 +231,7 @@ describe('API /gear', () => {
     });
 
     it('should reject requests without authentication', async () => {
-      mockSupabase.auth.getSession.mockResolvedValue({
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValue({
         data: { session: null },
         error: null
       });
@@ -317,7 +317,7 @@ describe('API /gear', () => {
     });
 
     it('should handle database errors during creation', async () => {
-      mockPrisma.gear.create.mockRejectedValue(new Error('Database error'));
+      (mockPrisma.gear.create as jest.Mock).mockRejectedValue(new Error('Database error'));
 
       const request = new NextRequest('http://localhost:3000/api/gear', {
         method: 'POST',
