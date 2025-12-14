@@ -1,78 +1,82 @@
 # Dockerfile for P2P Gear Rental Platform
-# Multi-stage build for optimized production image
+# Optimized for fast builds and small image size
 
-# Dependencies stage
-FROM node:18-alpine AS deps
+# ============================================
+# Stage 1: Install dependencies
+# ============================================
+FROM node:20-alpine AS deps
+WORKDIR /app
+
+# Install dependencies needed for native modules
 RUN apk add --no-cache libc6-compat
 
+# Copy package files first for better caching
+COPY package.json package-lock.json ./
+
+# Install ALL dependencies (dev needed for build)
+RUN npm ci
+
+# ============================================
+# Stage 2: Build the application
+# ============================================
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci && npm cache clean --force
-
-# Builder stage
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-# Copy all source files
-COPY . .
-
-# Copy node_modules from deps stage
+# Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+COPY package.json package-lock.json ./
+
+# Copy source files
+COPY prisma ./prisma
+COPY src ./src
+COPY public ./public
+COPY next.config.ts tsconfig.json tailwind.config.ts postcss.config.js ./
 
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the application
-# Set temporary environment variables for build time
-ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
-ENV NEXT_PUBLIC_SUPABASE_URL="https://fake.supabase.co"
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY="fake_key"
-ENV STRIPE_SECRET_KEY="sk_test_fake"
+# Build environment - skip database operations
+ENV SKIP_DB_DURING_BUILD="true"
+ENV NODE_ENV="production"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Dummy env vars for build validation
+ENV DATABASE_URL="postgresql://x:x@localhost:5432/x"
+ENV NEXT_PUBLIC_SUPABASE_URL="https://x.supabase.co"
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY="x"
+ENV STRIPE_SECRET_KEY="sk_test_x"
+
+# Build Next.js
 RUN npm run build
 
-# Runner stage
-FROM node:18-alpine AS runner
-
+# ============================================
+# Stage 3: Production runner (minimal)
+# ============================================
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Set environment to production
-ENV NODE_ENV production
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
 
-# Copy built application
+# Copy only production artifacts
 COPY --from=builder /app/public ./public
-
-# Automatically leverage output traces to reduce image size
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma files for migrations
+# Copy Prisma runtime
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/package.json ./package.json
 
-# Create uploads directory for file storage
-RUN mkdir -p ./uploads && chown nextjs:nodejs ./uploads
-
-# Switch to non-root user
 USER nextjs
-
-# Expose port
 EXPOSE 3000
 
-# Set port environment variable
-ENV PORT 3000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health/liveness || exit 1
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node ./healthcheck.js || exit 1
-
-# Start the application
 CMD ["node", "server.js"]
