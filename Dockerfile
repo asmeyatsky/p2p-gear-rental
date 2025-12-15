@@ -30,6 +30,7 @@ COPY package.json package-lock.json ./
 COPY prisma ./prisma
 COPY src ./src
 COPY public ./public
+COPY config ./config
 COPY next.config.ts tsconfig.json postcss.config.mjs ./
 
 # Generate Prisma client
