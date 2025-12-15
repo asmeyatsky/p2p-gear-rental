@@ -9,14 +9,14 @@ export interface LogContext {
   level: 'debug' | 'info' | 'warn' | 'error';
   component: string;
   operation?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ILogger {
-  debug(message: string, context?: Record<string, any>, component?: string): void;
-  info(message: string, context?: Record<string, any>, component?: string): void;
-  warn(message: string, context?: Record<string, any>, component?: string): void;
-  error(message: string | Error, context?: Record<string, any>, component?: string): void;
+  debug(message: string, context?: Record<string, unknown>, component?: string): void;
+  info(message: string, context?: Record<string, unknown>, component?: string): void;
+  warn(message: string, context?: Record<string, unknown>, component?: string): void;
+  error(message: string | Error, context?: Record<string, unknown>, component?: string): void;
 }
 
 // Simple correlation ID storage for environments without AsyncLocalStorage
@@ -78,7 +78,7 @@ export class CorrelationLogger implements ILogger {
     }
   }
 
-  debug(message: string, context?: Record<string, any>, component: string = 'APP'): void {
+  debug(message: string, context?: Record<string, unknown>, component: string = 'APP'): void {
     const logContext: LogContext = {
       correlationId: CorrelationLogger.getCurrentCorrelationId() || CorrelationLogger.generateCorrelationId(),
       timestamp: new Date(),
@@ -90,7 +90,7 @@ export class CorrelationLogger implements ILogger {
     this.log(logContext);
   }
 
-  info(message: string, context?: Record<string, any>, component: string = 'APP'): void {
+  info(message: string, context?: Record<string, unknown>, component: string = 'APP'): void {
     const logContext: LogContext = {
       correlationId: CorrelationLogger.getCurrentCorrelationId() || CorrelationLogger.generateCorrelationId(),
       timestamp: new Date(),
@@ -102,7 +102,7 @@ export class CorrelationLogger implements ILogger {
     this.log(logContext);
   }
 
-  warn(message: string, context?: Record<string, any>, component: string = 'APP'): void {
+  warn(message: string, context?: Record<string, unknown>, component: string = 'APP'): void {
     const logContext: LogContext = {
       correlationId: CorrelationLogger.getCurrentCorrelationId() || CorrelationLogger.generateCorrelationId(),
       timestamp: new Date(),
@@ -114,7 +114,7 @@ export class CorrelationLogger implements ILogger {
     this.log(logContext);
   }
 
-  error(message: string | Error, context?: Record<string, any>, component: string = 'APP'): void {
+  error(message: string | Error, context?: Record<string, unknown>, component: string = 'APP'): void {
     const logContext: LogContext = {
       correlationId: CorrelationLogger.getCurrentCorrelationId() || CorrelationLogger.generateCorrelationId(),
       timestamp: new Date(),
@@ -132,10 +132,10 @@ export class CorrelationLogger implements ILogger {
 
   createScopedLogger(component: string): ILogger {
     return {
-      debug: (message: string, context?: Record<string, any>) => this.debug(message, context, component),
-      info: (message: string, context?: Record<string, any>) => this.info(message, context, component),
-      warn: (message: string, context?: Record<string, any>) => this.warn(message, context, component),
-      error: (message: string | Error, context?: Record<string, any>) => this.error(message, context, component)
+      debug: (message: string, context?: Record<string, unknown>) => this.debug(message, context, component),
+      info: (message: string, context?: Record<string, unknown>) => this.info(message, context, component),
+      warn: (message: string, context?: Record<string, unknown>) => this.warn(message, context, component),
+      error: (message: string | Error, context?: Record<string, unknown>) => this.error(message, context, component)
     };
   }
 }

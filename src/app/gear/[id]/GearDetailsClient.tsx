@@ -329,7 +329,7 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
               </Button>
 
               <p className="text-xs text-gray-500 text-center">
-                You won't be charged until the owner accepts your request
+                You won&apos;t be charged until the owner accepts your request
               </p>
             </div>
           </div>

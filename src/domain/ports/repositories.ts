@@ -9,6 +9,7 @@ export interface IGearRepository {
   delete(id: string): Promise<void>;
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface IUserRepository {
   findById(id: string): Promise<any | null>; // Using any for now until User entity is fully integrated
   findByEmail(email: string): Promise<any | null>;
@@ -23,3 +24,4 @@ export interface IRentalRepository {
   create(rental: any): Promise<any>;
   update(rental: any): Promise<any>;
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */

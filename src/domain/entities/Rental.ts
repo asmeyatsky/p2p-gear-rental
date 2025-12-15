@@ -1,6 +1,7 @@
 export interface RentalProps {
   id: string;
   gearId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   gear?: any; // Will be updated with actual Gear type once created
   renterId: string;
   ownerId: string;
@@ -18,6 +19,7 @@ export interface RentalProps {
 export class Rental {
   private readonly _id: string;
   private _gearId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _gear?: any;
   private _renterId: string;
   private _ownerId: string;
@@ -68,6 +70,7 @@ export class Rental {
     return this._gearId;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get gear(): any {
     return this._gear;
   }

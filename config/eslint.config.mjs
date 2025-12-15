@@ -11,6 +11,22 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    // Downgrade no-explicit-any to warning for infrastructure/lib code
+    // These files often need any for dynamic typing patterns
+    files: [
+      "**/infrastructure/**/*.ts",
+      "**/lib/**/*.ts",
+      "**/domain/**/*.ts",
+      "**/presentation/**/*.ts",
+      "**/__tests__/**/*.ts",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+    },
+  },
 ];
 
 export default eslintConfig;

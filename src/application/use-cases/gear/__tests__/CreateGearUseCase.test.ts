@@ -38,15 +38,16 @@ class MockGearRepository implements IGearRepository {
 }
 
 class MockGearDomainService implements IGearDomainService {
-  checkAvailability(gear: Gear, startDate: Date, endDate: Date): boolean {
+  checkAvailability(_gear: Gear, _startDate: Date, _endDate: Date): boolean {
     return true; // Always available for testing
   }
 
-  calculateRentalPrice(gear: Gear, startDate: Date, endDate: Date): number {
+  calculateRentalPrice(_gear: Gear, _startDate: Date, _endDate: Date): number {
     return 100; // Fixed price for testing
   }
 
-  validateForRental(gear: Gear, renter: any, startDate: Date, endDate: Date): boolean {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  validateForRental(_gear: Gear, _renter: any, _startDate: Date, _endDate: Date): boolean {
     return true; // Always valid for testing
   }
 }

@@ -6,7 +6,7 @@ import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
-import { User, Rental, Gear } from '@/lib/prisma';
+import type { User, Rental, Gear } from '@prisma/client';
 import { Session } from '@supabase/supabase-js';
 
 // Mock dependencies
@@ -70,7 +70,7 @@ describe('API /rentals', () => {
           ownerId: 'user-2',
           startDate: new Date('2024-12-01'),
           endDate: new Date('2024-12-05'),
-          status: 'pending',
+          status: 'PENDING',
           message: null,
           paymentIntentId: null,
           clientSecret: null,
@@ -143,7 +143,7 @@ describe('API /rentals', () => {
                   { ownerId: 'user-1' }
                 ]
               }),
-              { status: 'approved' }
+              { status: 'APPROVED' }
             ]
           })
         })
@@ -209,7 +209,7 @@ describe('API /rentals', () => {
         ownerId: 'user-2',
         startDate: new Date(validRentalData.startDate),
         endDate: new Date(validRentalData.endDate),
-        status: 'pending',
+        status: 'PENDING',
         message: validRentalData.message,
         paymentIntentId: null,
         clientSecret: null,
@@ -296,7 +296,7 @@ describe('API /rentals', () => {
         id: 'existing-rental',
         startDate: new Date('2024-12-02'),
         endDate: new Date('2024-12-04'),
-        status: 'approved',
+        status: 'APPROVED',
         gearId: 'gear-1',
         renterId: 'user-3',
         ownerId: 'user-2',

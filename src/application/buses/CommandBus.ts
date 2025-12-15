@@ -7,9 +7,12 @@ export interface ICommandBus {
   execute<TCommand extends ICommand<any>, TResult>(command: TCommand): Promise<TResult>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CommandConstructor = new (...args: any[]) => ICommand<any>;
+
 export class CommandBus implements ICommandBus {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private handlers: Map<Function, ICommandHandler<any, any>> = new Map();
+  private handlers: Map<CommandConstructor, ICommandHandler<any, any>> = new Map();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   register<TCommand extends ICommand<any>, TResult>(

@@ -30,7 +30,7 @@ COPY package.json package-lock.json ./
 COPY prisma ./prisma
 COPY src ./src
 COPY public ./public
-COPY next.config.ts tsconfig.json tailwind.config.ts postcss.config.js ./
+COPY next.config.ts tsconfig.json postcss.config.mjs ./
 
 # Generate Prisma client
 RUN npx prisma generate

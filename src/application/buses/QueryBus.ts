@@ -7,9 +7,12 @@ export interface IQueryBus {
   execute<TQuery extends IQuery<any>, TResult>(query: TQuery): Promise<TResult>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type QueryConstructor = new (...args: any[]) => IQuery<any>;
+
 export class QueryBus implements IQueryBus {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private handlers: Map<Function, IQueryHandler<any, any>> = new Map();
+  private handlers: Map<QueryConstructor, IQueryHandler<any, any>> = new Map();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   register<TQuery extends IQuery<any>, TResult>(
