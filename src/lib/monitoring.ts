@@ -257,8 +257,8 @@ export class AlertSystem {
   }
 }
 
-// Run periodic alert checks
-if (process.env.NODE_ENV === 'production') {
+// Run periodic alert checks (skip during build to prevent hanging)
+if (process.env.NODE_ENV === 'production' && process.env.SKIP_DB_DURING_BUILD !== 'true') {
   setInterval(() => {
     AlertSystem.checkAndSendAlerts();
   }, 60 * 1000); // Check every minute
