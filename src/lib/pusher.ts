@@ -1,14 +1,21 @@
-import Pusher from 'pusher';
-import PusherClient from 'pusher-js';
+import type Pusher from 'pusher';
+import type PusherClient from 'pusher-js';
 
 // Skip during build time to prevent hanging on static page generation
 const SKIP_DURING_BUILD = process.env.SKIP_DB_DURING_BUILD === 'true';
 
-// Server-side Pusher instance (lazy initialization)
+// Lazy-loaded Pusher instances
 let _pusher: Pusher | null = null;
-export const pusher = SKIP_DURING_BUILD ? null : (() => {
+let _pusherClient: PusherClient | null = null;
+
+// Server-side Pusher instance - getter function for lazy initialization
+export function getPusher(): Pusher | null {
+  if (SKIP_DURING_BUILD) return null;
+
   if (!_pusher && process.env.PUSHER_APP_ID) {
-    _pusher = new Pusher({
+    // Dynamic import to avoid loading the library during build
+    const PusherLib = require('pusher');
+    _pusher = new PusherLib({
       appId: process.env.PUSHER_APP_ID!,
       key: process.env.PUSHER_KEY!,
       secret: process.env.PUSHER_SECRET!,
@@ -17,18 +24,26 @@ export const pusher = SKIP_DURING_BUILD ? null : (() => {
     });
   }
   return _pusher;
-})();
+}
 
-// Client-side Pusher instance (lazy initialization)
-let _pusherClient: PusherClient | null = null;
-export const pusherClient = SKIP_DURING_BUILD ? null : (() => {
+// Client-side Pusher instance - getter function for lazy initialization
+export function getPusherClient(): PusherClient | null {
+  if (SKIP_DURING_BUILD) return null;
+  if (typeof window === 'undefined') return null; // Only initialize on client
+
   if (!_pusherClient && process.env.NEXT_PUBLIC_PUSHER_KEY) {
-    _pusherClient = new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+    // Dynamic import to avoid loading the library during build
+    const PusherClientLib = require('pusher-js');
+    _pusherClient = new PusherClientLib(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
     });
   }
   return _pusherClient;
-})();
+}
+
+// Legacy exports for backwards compatibility (deprecated - use getPusher/getPusherClient)
+export const pusher = null as Pusher | null; // Lazy - use getPusher()
+export const pusherClient = null as PusherClient | null; // Lazy - use getPusherClient()
 
 // Channel naming conventions
 export const channels = {

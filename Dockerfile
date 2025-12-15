@@ -7,8 +7,8 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
-# Install dependencies needed for native modules
-RUN apk add --no-cache libc6-compat
+# Install glibc compatibility for native modules (gcompat replaces libc6-compat in Alpine 3.17+)
+RUN apk add --no-cache gcompat || true
 
 # Copy package files first for better caching
 COPY package.json package-lock.json ./
