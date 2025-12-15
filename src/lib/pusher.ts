@@ -13,7 +13,8 @@ export function getPusher(): Pusher | null {
   if (SKIP_DURING_BUILD) return null;
 
   if (!_pusher && process.env.PUSHER_APP_ID) {
-    // Dynamic import to avoid loading the library during build
+    // Dynamic require to avoid loading the library during build
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const PusherLib = require('pusher');
     _pusher = new PusherLib({
       appId: process.env.PUSHER_APP_ID!,
@@ -32,7 +33,8 @@ export function getPusherClient(): PusherClient | null {
   if (typeof window === 'undefined') return null; // Only initialize on client
 
   if (!_pusherClient && process.env.NEXT_PUBLIC_PUSHER_KEY) {
-    // Dynamic import to avoid loading the library during build
+    // Dynamic require to avoid loading the library during build
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const PusherClientLib = require('pusher-js');
     _pusherClient = new PusherClientLib(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
