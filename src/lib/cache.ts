@@ -1,9 +1,17 @@
 import Redis from 'ioredis';
 
+// Skip Redis during build time (static page generation)
+const SKIP_REDIS_DURING_BUILD = process.env.SKIP_DB_DURING_BUILD === 'true';
+
 // Create Redis client with configuration
 const createRedisClient = () => {
+  // Skip during build time to prevent hanging on static page generation
+  if (SKIP_REDIS_DURING_BUILD) {
+    return null;
+  }
+
   const redisUrl = process.env.REDIS_URL;
-  
+
   if (!redisUrl && process.env.NODE_ENV === 'production') {
     console.warn('Redis URL not configured in production');
     return null;
