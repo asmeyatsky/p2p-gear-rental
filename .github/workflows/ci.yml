@@ -94,6 +94,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: [lint, typecheck, test]
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -112,6 +113,7 @@ jobs:
 
       - name: Build application
         run: npm run build
+        timeout-minutes: 8
         env:
           SKIP_DB_DURING_BUILD: 'true'
           DATABASE_URL: 'postgresql://user:pass@localhost:5432/db'
