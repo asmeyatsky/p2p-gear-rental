@@ -69,7 +69,7 @@ model Gear {
   dailyRate   Float
   weeklyRate  Float?
   monthlyRate Float?
-  images      String @default("[]")
+  images      Json @default("[]")
   city        String
   state       String
   category    String?
