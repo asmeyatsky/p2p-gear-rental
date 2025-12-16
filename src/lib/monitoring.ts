@@ -257,11 +257,19 @@ export class AlertSystem {
   }
 }
 
-// Run periodic alert checks (skip during build to prevent hanging)
-if (process.env.NODE_ENV === 'production' && process.env.SKIP_DB_DURING_BUILD !== 'true') {
+// Alert monitoring is now opt-in - call startAlertMonitoring() explicitly
+// This prevents setInterval from keeping the build process alive
+let alertMonitoringStarted = false;
+
+export function startAlertMonitoring(): void {
+  if (alertMonitoringStarted) return;
+  if (process.env.SKIP_DB_DURING_BUILD === 'true') return;
+  if (process.env.NODE_ENV !== 'production') return;
+
   setInterval(() => {
     AlertSystem.checkAndSendAlerts();
   }, 60 * 1000); // Check every minute
+  alertMonitoringStarted = true;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

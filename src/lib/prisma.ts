@@ -39,10 +39,12 @@ const cleanup = async () => {
   await prisma.$disconnect();
 };
 
-// Handle different shutdown signals
-process.on('SIGINT', cleanup);
-process.on('SIGTERM', cleanup);
-process.on('beforeExit', cleanup);
+// Handle different shutdown signals (skip during build to prevent interference)
+if (process.env.SKIP_DB_DURING_BUILD !== 'true') {
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
+  process.on('beforeExit', cleanup);
+}
 
 // Helper function to test database connection
 export async function testDatabaseConnection(): Promise<boolean> {
