@@ -32,10 +32,10 @@ async function main() {
       dailyRate: 60.00,
       weeklyRate: 350.00,
       monthlyRate: 1200.00,
-      images: [
+      images: JSON.stringify([
         'https://picsum.photos/seed/sonya7siii_1/800/600',
         'https://picsum.photos/seed/sonya7siii_2/800/600',
-      ],
+      ]),
       city: 'Los Angeles',
       state: 'CA',
       brand: 'Sony',
@@ -48,10 +48,10 @@ async function main() {
       dailyRate: 75.00,
       weeklyRate: 450.00,
       monthlyRate: 1500.00,
-      images: [
+      images: JSON.stringify([
         'https://picsum.photos/seed/djimavic3pro_1/800/600',
         'https://picsum.photos/seed/djimavic3pro_2/800/600',
-      ],
+      ]),
       city: 'Miami',
       state: 'FL',
       brand: 'DJI',
@@ -64,10 +64,10 @@ async function main() {
       dailyRate: 30.00,
       weeklyRate: 180.00,
       monthlyRate: 600.00,
-      images: [
+      images: JSON.stringify([
         'https://picsum.photos/seed/godoxvl150_1/800/600',
         'https://picsum.photos/seed/godoxvl150_2/800/600',
-      ],
+      ]),
       city: 'Chicago',
       state: 'IL',
       brand: 'Godox',

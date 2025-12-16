@@ -2,84 +2,22 @@
  * Internal API Client for SSR
  *
  * This client is used by server-side rendering functions to fetch data.
- * It abstracts the data source, allowing easy migration from direct DB calls
- * to API functions (Cloud Functions) without changing SSR code.
+ * Uses direct database calls to avoid self-request deadlocks in development.
  */
 
 import { logger } from './logger';
-
-// API base URL - can be internal Next.js routes or external Cloud Functions
-const getApiBase = () => {
-  // In production, this would be the Cloud Functions URL
-  if (process.env.API_FUNCTIONS_URL) {
-    return process.env.API_FUNCTIONS_URL;
-  }
-  // For local development and initial deployment, use internal routes
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  return `${baseUrl}/api`;
-};
+import { prisma } from './prisma';
 
 // Check if we're in build mode
 const isBuildTime = process.env.SKIP_DB_DURING_BUILD === 'true';
 
-interface FetchOptions {
-  timeout?: number;
-  cache?: RequestCache;
-  revalidate?: number;
-}
-
-async function internalFetch<T>(
-  endpoint: string,
-  options: FetchOptions = {}
-): Promise<T | null> {
-  if (isBuildTime) {
-    logger.debug(`Skipping API call during build: ${endpoint}`);
-    return null;
-  }
-
-  const { timeout = 10000, cache = 'no-store', revalidate } = options;
-  const url = `${getApiBase()}${endpoint}`;
-
+// Helper to parse images from JSON string
+function parseImages(images: string | string[]): string[] {
+  if (Array.isArray(images)) return images;
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    const fetchOptions: RequestInit & { next?: { revalidate: number } } = {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Internal-Request': 'true', // Mark as internal request
-      },
-      signal: controller.signal,
-      cache,
-    };
-
-    // Add Next.js revalidation if specified
-    if (revalidate !== undefined) {
-      fetchOptions.next = { revalidate };
-    }
-
-    const response = await fetch(url, fetchOptions);
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      logger.error(`Internal API error: ${response.status}`, {
-        endpoint,
-        status: response.status
-      });
-      return null;
-    }
-
-    return await response.json();
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      logger.error(`Internal API timeout: ${endpoint}`, { timeout });
-    } else {
-      logger.error(`Internal API fetch failed: ${endpoint}`, {
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-    return null;
+    return JSON.parse(images);
+  } catch {
+    return [];
   }
 }
 
@@ -143,62 +81,157 @@ export interface CategoryCount {
   count: number;
 }
 
-// API Functions
+// API Functions - Direct database calls for SSR
 
 /**
  * Fetch featured gear for homepage
  */
 export async function fetchFeaturedGear(limit: number = 12): Promise<GearItem[]> {
-  const response = await internalFetch<GearListResponse>(
-    `/gear?limit=${limit}&sortBy=rating`,
-    { revalidate: 300 } // Cache for 5 minutes
-  );
-  return response?.data || [];
+  if (isBuildTime) return [];
+
+  try {
+    const gear = await prisma.gear.findMany({
+      where: { isAvailable: true },
+      orderBy: [
+        { averageRating: 'desc' },
+        { createdAt: 'desc' }
+      ],
+      take: limit,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            full_name: true,
+            averageRating: true,
+            totalReviews: true,
+          }
+        }
+      }
+    });
+
+    return gear.map(g => ({
+      id: g.id,
+      title: g.title,
+      description: g.description,
+      category: g.category,
+      condition: g.condition,
+      brand: g.brand,
+      model: g.model,
+      dailyRate: g.dailyRate,
+      weeklyRate: g.weeklyRate,
+      monthlyRate: g.monthlyRate,
+      images: parseImages(g.images),
+      city: g.city,
+      state: g.state,
+      latitude: null,
+      longitude: null,
+      userId: g.userId || '',
+      averageRating: g.averageRating || 0,
+      totalReviews: g.totalReviews,
+      createdAt: g.createdAt.toISOString(),
+      updatedAt: g.updatedAt.toISOString(),
+      user: g.user ? {
+        id: g.user.id,
+        email: g.user.email,
+        full_name: g.user.full_name,
+        averageRating: g.user.averageRating || 0,
+        totalReviews: g.user.totalReviews,
+      } : null,
+    }));
+  } catch (error) {
+    logger.error('Failed to fetch featured gear:', { error: error instanceof Error ? error.message : String(error) });
+    return [];
+  }
 }
 
 /**
  * Fetch gear details by ID
  */
 export async function fetchGearById(gearId: string): Promise<GearItem | null> {
-  const response = await internalFetch<GearItem>(
-    `/gear/${gearId}`,
-    { revalidate: 60 } // Cache for 1 minute
-  );
-  return response;
+  if (isBuildTime) return null;
+
+  try {
+    const gear = await prisma.gear.findUnique({
+      where: { id: gearId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            full_name: true,
+            averageRating: true,
+            totalReviews: true,
+          }
+        }
+      }
+    });
+
+    if (!gear) return null;
+
+    return {
+      id: gear.id,
+      title: gear.title,
+      description: gear.description,
+      category: gear.category,
+      condition: gear.condition,
+      brand: gear.brand,
+      model: gear.model,
+      dailyRate: gear.dailyRate,
+      weeklyRate: gear.weeklyRate,
+      monthlyRate: gear.monthlyRate,
+      images: parseImages(gear.images),
+      city: gear.city,
+      state: gear.state,
+      latitude: null,
+      longitude: null,
+      userId: gear.userId || '',
+      averageRating: gear.averageRating || 0,
+      totalReviews: gear.totalReviews,
+      createdAt: gear.createdAt.toISOString(),
+      updatedAt: gear.updatedAt.toISOString(),
+      user: gear.user ? {
+        id: gear.user.id,
+        email: gear.user.email,
+        full_name: gear.user.full_name,
+        averageRating: gear.user.averageRating || 0,
+        totalReviews: gear.user.totalReviews,
+      } : null,
+    };
+  } catch (error) {
+    logger.error('Failed to fetch gear by ID:', { gearId, error: error instanceof Error ? error.message : String(error) });
+    return null;
+  }
 }
 
 /**
  * Fetch categories with counts
  */
 export async function fetchCategories(): Promise<CategoryCount[]> {
-  // For now, this calls the gear endpoint and aggregates
-  // In the future, this could be a dedicated endpoint
-  const response = await internalFetch<GearListResponse>(
-    `/gear?limit=1000`,
-    { revalidate: 600 } // Cache for 10 minutes
-  );
+  if (isBuildTime) return getDefaultCategories();
 
-  if (!response?.data) {
+  try {
+    const categories = await prisma.gear.groupBy({
+      by: ['category'],
+      _count: { category: true },
+      where: {
+        isAvailable: true,
+        category: { not: null }
+      },
+      orderBy: { _count: { category: 'desc' } },
+      take: 8,
+    });
+
+    const result = categories.map(c => ({
+      name: c.category,
+      count: c._count.category,
+    }));
+
+    return result.length > 0 ? result : getDefaultCategories();
+  } catch (error) {
+    logger.error('Failed to fetch categories:', { error: error instanceof Error ? error.message : String(error) });
     return getDefaultCategories();
   }
-
-  // Aggregate categories from gear data
-  const categoryMap = new Map<string, number>();
-  for (const gear of response.data) {
-    if (gear.category) {
-      categoryMap.set(
-        gear.category,
-        (categoryMap.get(gear.category) || 0) + 1
-      );
-    }
-  }
-
-  const categories: CategoryCount[] = Array.from(categoryMap.entries())
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 8);
-
-  return categories.length > 0 ? categories : getDefaultCategories();
 }
 
 /**
@@ -216,28 +249,83 @@ export async function searchGear(params: {
   limit?: number;
   sortBy?: string;
 }): Promise<GearListResponse> {
-  const searchParams = new URLSearchParams();
+  if (isBuildTime) {
+    return { data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } };
+  }
 
-  if (params.search) searchParams.set('search', params.search);
-  if (params.category) searchParams.set('category', params.category);
-  if (params.condition) searchParams.set('condition', params.condition);
-  if (params.minPrice) searchParams.set('minPrice', params.minPrice.toString());
-  if (params.maxPrice) searchParams.set('maxPrice', params.maxPrice.toString());
-  if (params.city) searchParams.set('city', params.city);
-  if (params.state) searchParams.set('state', params.state);
-  if (params.page) searchParams.set('page', params.page.toString());
-  if (params.limit) searchParams.set('limit', params.limit.toString());
-  if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+  try {
+    const page = params.page || 1;
+    const limit = Math.min(params.limit || 20, 50);
+    const skip = (page - 1) * limit;
 
-  const response = await internalFetch<GearListResponse>(
-    `/gear?${searchParams.toString()}`,
-    { cache: 'no-store' } // Don't cache search results
-  );
+    const where: Record<string, unknown> = { isAvailable: true };
 
-  return response || {
-    data: [],
-    pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
-  };
+    if (params.category) where.category = params.category;
+    if (params.condition) where.condition = params.condition;
+    if (params.city) where.city = params.city;
+    if (params.state) where.state = params.state;
+    if (params.minPrice || params.maxPrice) {
+      where.dailyRate = {};
+      if (params.minPrice) (where.dailyRate as Record<string, number>).gte = params.minPrice;
+      if (params.maxPrice) (where.dailyRate as Record<string, number>).lte = params.maxPrice;
+    }
+    if (params.search) {
+      where.OR = [
+        { title: { contains: params.search, mode: 'insensitive' } },
+        { description: { contains: params.search, mode: 'insensitive' } },
+        { brand: { contains: params.search, mode: 'insensitive' } },
+        { model: { contains: params.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [gear, total] = await Promise.all([
+      prisma.gear.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: params.sortBy === 'price'
+          ? { dailyRate: 'asc' }
+          : params.sortBy === 'rating'
+          ? { averageRating: 'desc' }
+          : { createdAt: 'desc' },
+      }),
+      prisma.gear.count({ where }),
+    ]);
+
+    return {
+      data: gear.map(g => ({
+        id: g.id,
+        title: g.title,
+        description: g.description,
+        category: g.category,
+        condition: g.condition,
+        brand: g.brand,
+        model: g.model,
+        dailyRate: g.dailyRate,
+        weeklyRate: g.weeklyRate,
+        monthlyRate: g.monthlyRate,
+        images: parseImages(g.images),
+        city: g.city,
+        state: g.state,
+        latitude: null,
+        longitude: null,
+        userId: g.userId || '',
+        averageRating: g.averageRating || 0,
+        totalReviews: g.totalReviews,
+        createdAt: g.createdAt.toISOString(),
+        updatedAt: g.updatedAt.toISOString(),
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    logger.error('Failed to search gear:', { error: error instanceof Error ? error.message : String(error) });
+    return { data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } };
+  }
 }
 
 // Default categories for fallback
