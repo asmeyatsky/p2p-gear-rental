@@ -92,7 +92,7 @@ jobs:
         run: |
           echo "Waiting for service to be ready..."
           sleep 10
-          curl -f "${{ steps.deploy.outputs.url }}/api/health/liveness" || exit 1
+          curl -f "${{ steps.deploy.outputs.url }}/api/health" || exit 1
           echo "Health check passed!"
 
   # Run database migrations after deployment
