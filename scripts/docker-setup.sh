@@ -77,17 +77,17 @@ cd "$PROJECT_DIR"
 
 # Pull images
 echo "📦 Pulling base images..."
-docker-compose -f "$COMPOSE_FILE" pull
+docker compose -f "$COMPOSE_FILE" pull
 
 # Build application (if production)
 if [ "$COMPOSE_FILE" = "docker-compose.yml" ]; then
     echo "🔨 Building application image..."
-    docker-compose -f "$COMPOSE_FILE" build app
+    docker compose -f "$COMPOSE_FILE" build app
 fi
 
 # Start services
 echo "🚀 Starting services..."
-docker-compose -f "$COMPOSE_FILE" up -d
+docker compose -f "$COMPOSE_FILE" up -d
 
 # Wait for services to be healthy
 echo "⏳ Waiting for services to be healthy..."
@@ -95,7 +95,7 @@ sleep 10
 
 # Check database connection
 echo "🗄️  Checking database connection..."
-if docker-compose -f "$COMPOSE_FILE" exec -T db pg_isready; then
+if docker compose -f "$COMPOSE_FILE" exec -T db pg_isready; then
     echo "✅ Database is ready"
 else
     echo "❌ Database is not ready"
@@ -104,12 +104,12 @@ fi
 # Run database migrations (if production)
 if [ "$COMPOSE_FILE" = "docker-compose.yml" ]; then
     echo "🗄️  Running database migrations..."
-    docker-compose -f "$COMPOSE_FILE" exec app npm run migrate
+    docker compose -f "$COMPOSE_FILE" exec app npm run migrate
 fi
 
 # Check Redis connection
 echo "📦 Checking Redis connection..."
-if docker-compose -f "$COMPOSE_FILE" exec -T redis redis-cli ping > /dev/null; then
+if docker compose -f "$COMPOSE_FILE" exec -T redis redis-cli ping > /dev/null; then
     echo "✅ Redis is ready"
 else
     echo "❌ Redis is not ready"
@@ -119,7 +119,7 @@ fi
 echo ""
 echo "📊 Service Status:"
 echo "=================="
-docker-compose -f "$COMPOSE_FILE" ps
+docker compose -f "$COMPOSE_FILE" ps
 
 # Show useful URLs
 echo ""
@@ -139,11 +139,11 @@ fi
 echo ""
 echo "📝 Useful commands:"
 echo "==================="
-echo "View logs: docker-compose -f $COMPOSE_FILE logs -f"
-echo "Stop services: docker-compose -f $COMPOSE_FILE down"
-echo "Restart app: docker-compose -f $COMPOSE_FILE restart app"
-echo "Database shell: docker-compose -f $COMPOSE_FILE exec db psql -U postgres -d gearshare"
-echo "Redis shell: docker-compose -f $COMPOSE_FILE exec redis redis-cli"
+echo "View logs: docker compose -f $COMPOSE_FILE logs -f"
+echo "Stop services: docker compose -f $COMPOSE_FILE down"
+echo "Restart app: docker compose -f $COMPOSE_FILE restart app"
+echo "Database shell: docker compose -f $COMPOSE_FILE exec db psql -U postgres -d gearshare"
+echo "Redis shell: docker compose -f $COMPOSE_FILE exec redis redis-cli"
 
 echo ""
 echo "🎉 Setup complete! Your application should be running."
