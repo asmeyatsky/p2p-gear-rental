@@ -93,6 +93,7 @@ class SearchEngine {
       // Convert to GearItem format
       allGear = dbGear.map(gear => ({
         ...gear,
+        images: gear.images ? JSON.parse(gear.images as string) : [],
         createdAt: gear.createdAt.toISOString(),
         updatedAt: gear.updatedAt.toISOString(),
         averageRating: gear.averageRating || null,
@@ -185,6 +186,7 @@ class SearchEngine {
 
     return gear.map(g => ({
       ...g,
+      images: g.images ? JSON.parse(g.images as string) : [],
       createdAt: g.createdAt.toISOString(),
       updatedAt: g.updatedAt.toISOString(),
       averageRating: g.averageRating || null,

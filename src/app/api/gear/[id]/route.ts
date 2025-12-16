@@ -89,6 +89,7 @@ export const PUT = withErrorHandler(
               where: { id: gearId },
               data: {
                 ...validatedData,
+                images: validatedData.images ? JSON.stringify(validatedData.images) : undefined,
                 updatedAt: new Date(),
               },
               include: {
@@ -114,13 +115,19 @@ export const PUT = withErrorHandler(
           validatedData.category ? CacheManager.del(CacheManager.keys.gear.category(validatedData.category)) : Promise.resolve(),
         ]);
 
-        logger.info('Gear updated successfully', { 
-          gearId, 
+        logger.info('Gear updated successfully', {
+          gearId,
           userId: authContext.userId,
           title: updatedGear.title
         }, 'API');
 
-        const response = NextResponse.json(updatedGear);
+        // Transform images from JSON string back to array for API response
+        const transformedGear = {
+          ...updatedGear,
+          images: updatedGear.images ? JSON.parse(updatedGear.images as string) : [],
+        };
+
+        const response = NextResponse.json(transformedGear);
         return addSecurityHeaders(response);
       }
     )

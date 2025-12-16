@@ -173,6 +173,7 @@ export const POST = withErrorHandler(
           prisma.gear.create({
             data: {
               ...validatedData,
+              images: validatedData.images ? JSON.stringify(validatedData.images) : '[]',
               userId: user.id, // Associate the gear with the user
             },
             include: {
@@ -194,14 +195,20 @@ export const POST = withErrorHandler(
         CacheManager.del(CacheManager.keys.gear.user(user.id)),
       ]);
 
-      logger.info('Gear created successfully', { 
+      logger.info('Gear created successfully', {
         gearId: newGear.id,
         userId: user.id,
         category: validatedData.category,
         title: validatedData.title
       }, 'API');
 
-      return NextResponse.json(newGear, { status: 201 });
+      // Transform images from JSON string back to array for API response
+      const transformedGear = {
+        ...newGear,
+        images: newGear.images ? JSON.parse(newGear.images as string) : [],
+      };
+
+      return NextResponse.json(transformedGear, { status: 201 });
       }
     )
   )

@@ -452,11 +452,11 @@ class SemanticSearchEngine {
     const whereClause: Prisma.GearWhereInput = {};
 
     if (filters.category) {
-      whereClause.category = { contains: filters.category, mode: 'insensitive' };
+      whereClause.category = { contains: filters.category };
     }
 
     if (filters.brand) {
-      whereClause.brand = { contains: filters.brand, mode: 'insensitive' };
+      whereClause.brand = { contains: filters.brand };
     }
 
     if (filters.condition) {
@@ -471,8 +471,8 @@ class SemanticSearchEngine {
     }
 
     if (filters.location) {
-      whereClause.city = { contains: filters.location.city, mode: 'insensitive' };
-      whereClause.state = { contains: filters.location.state, mode: 'insensitive' };
+      whereClause.city = { contains: filters.location.city };
+      whereClause.state = { contains: filters.location.state };
     }
 
     const results = await prisma.gear.findMany({

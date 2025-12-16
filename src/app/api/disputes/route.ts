@@ -131,8 +131,14 @@ export const GET = withErrorHandler(
           )
         ]);
 
+        // Transform evidence from JSON string back to array for API response
+        const transformedDisputes = disputes.map(dispute => ({
+          ...dispute,
+          evidence: dispute.evidence ? JSON.parse(dispute.evidence as string) : [],
+        }));
+
         const responseData = {
-          data: disputes,
+          data: transformedDisputes,
           pagination: {
             page,
             limit,
@@ -220,7 +226,7 @@ export const POST = withErrorHandler(
               category: validatedData.category,
               subject: validatedData.subject,
               description: validatedData.description,
-              evidence: validatedData.evidence || [],
+              evidence: JSON.stringify(validatedData.evidence || []),
             },
             include: {
               rental: {
@@ -254,7 +260,13 @@ export const POST = withErrorHandler(
           rentalId: validatedData.rentalId 
         }, 'API');
 
-        return NextResponse.json(dispute, { status: 201 });
+        // Transform evidence from JSON string back to array for API response
+        const transformedDispute = {
+          ...dispute,
+          evidence: dispute.evidence ? JSON.parse(dispute.evidence as string) : [],
+        };
+
+        return NextResponse.json(transformedDispute, { status: 201 });
       }
     )
   )

@@ -631,7 +631,7 @@ class IntelligentRecommendationEngine {
       brand: item.brand || 'unknown',
       model: item.model || 'unknown',
       dailyRate: item.dailyRate,
-      images: item.images,
+      images: item.images ? JSON.parse(item.images as string) : [],
       owner: {
         id: item.user?.id || '',
         name: item.user?.full_name || 'Unknown',
@@ -690,7 +690,7 @@ class IntelligentRecommendationEngine {
       brand: gear.brand || 'unknown',
       model: gear.model || 'unknown',
       dailyRate: gear.dailyRate,
-      images: gear.images,
+      images: gear.images ? JSON.parse(gear.images as string) : [],
       owner: {
         id: gear.user?.id || '',
         name: gear.user?.full_name || 'Unknown',
@@ -776,7 +776,7 @@ class IntelligentRecommendationEngine {
       brand: gear.brand || 'unknown',
       model: gear.model || 'unknown',
       dailyRate: gear.dailyRate,
-      images: gear.images,
+      images: gear.images ? JSON.parse(gear.images as string) : [],
       owner: {
         id: gear.user?.id || '',
         name: gear.user?.full_name || 'Unknown',
