@@ -13,9 +13,9 @@ const nextConfig: NextConfig = {
   
   // Experimental features for better performance
   experimental: {
+    // Don't optimize @/lib imports as they need lazy loading during build
     optimizePackageImports: [
       '@/components',
-      '@/lib',
       'lucide-react',
       '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu'
