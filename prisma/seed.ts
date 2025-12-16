@@ -16,10 +16,10 @@ async function main() {
       dailyRate: 50.00,
       weeklyRate: 300.00,
       monthlyRate: 1000.00,
-      images: [
+      images: JSON.stringify([
         'https://picsum.photos/seed/canonr5_1/800/600',
         'https://picsum.photos/seed/canonr5_2/800/600',
-      ],
+      ]),
       city: 'New York',
       state: 'NY',
       brand: 'Canon',
