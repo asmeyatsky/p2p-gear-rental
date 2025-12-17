@@ -55,25 +55,25 @@ export default function Header() {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <Container>
-        <div className="h-16 flex items-center justify-between">
+        <div className="h-10 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link 
-              href="/" 
-              className="flex items-center space-x-2 text-2xl font-bold text-gray-900 hover:text-primary-600 transition-colors"
+            <Link
+              href="/"
+              className="flex items-center space-x-1 text-base font-bold text-gray-900 hover:text-primary-600 transition-colors"
             >
-              <span className="text-primary-600">⚙️</span>
+              <span className="text-primary-600 text-sm">⚙️</span>
               <span>GearShare</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                className="text-xs text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
                 {link.label}
               </Link>
@@ -81,12 +81,12 @@ export default function Header() {
           </nav>
 
           {/* Desktop Auth/User Menu */}
-          <div className="hidden lg:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-2">
             {user ? (
               <div className="relative">
                 <button
                   onClick={toggleUserMenu}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
                   aria-expanded={isUserMenuOpen}
                   aria-haspopup="true"
                 >
@@ -97,13 +97,13 @@ export default function Header() {
 
                 {/* User Dropdown Menu */}
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="absolute right-0 mt-1 w-40 bg-white rounded shadow-lg border border-gray-200 py-1 z-50">
                     {userLinks.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                        className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       >
                         {link.label}
                       </Link>
@@ -114,7 +114,7 @@ export default function Header() {
                         signOut();
                         setIsUserMenuOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700"
+                      className="block w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
                     >
                       Sign Out
                     </button>
@@ -122,18 +122,15 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 <Link
                   href="/auth/login"
-                  className="text-gray-600 hover:text-gray-900 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="text-xs text-gray-600 hover:text-gray-900 font-medium px-2 py-1 rounded hover:bg-gray-100 transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link href="/auth/signup">
-                  <Button
-                    size="sm"
-                    variant="primary"
-                  >
+                  <Button size="sm" variant="primary" className="text-xs px-2 py-1">
                     Get Started
                   </Button>
                 </Link>

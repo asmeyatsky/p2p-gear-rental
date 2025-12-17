@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 
 interface SearchFilters {
   query: string;
@@ -117,30 +116,27 @@ export default function SearchFiltersClient({
     onFiltersChange?.(clearedFilters);
   };
 
-  useEffect(() => {
-    onFiltersChange?.(filters);
-  }, [filters, onFiltersChange]);
-
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div className="bg-white rounded shadow-sm border border-gray-200 p-2">
       {/* Search Bar */}
-      <div className="flex gap-4 mb-4">
+      <div className="flex gap-2">
         <div className="flex-1">
-          <Input
+          <input
             type="text"
-            placeholder="Search for cameras, lenses, lighting..."
+            placeholder="Search cameras, lenses..."
             value={filters.query}
             onChange={(e) => handleFilterChange('query', e.target.value)}
-            className="w-full"
+            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
-        <Button onClick={handleSearch} className="px-6">
+        <Button onClick={handleSearch} size="sm" className="text-xs px-3 py-1">
           Search
         </Button>
         <Button
           variant="outline"
+          size="sm"
           onClick={() => setShowFilters(!showFilters)}
-          className="px-4"
+          className="text-xs px-2 py-1"
         >
           Filters
         </Button>
@@ -148,19 +144,17 @@ export default function SearchFiltersClient({
 
       {/* Advanced Filters */}
       {showFilters && (
-        <div className="border-t pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="border-t mt-2 pt-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-2">
             {/* Category */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
+              <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Category</label>
               <select
                 value={filters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                <option value="">All Categories</option>
+                <option value="">All</option>
                 {categories.map((category) => (
                   <option key={category} value={category}>
                     {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -171,15 +165,13 @@ export default function SearchFiltersClient({
 
             {/* Condition */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Condition
-              </label>
+              <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Condition</label>
               <select
                 value={filters.condition}
                 onChange={(e) => handleFilterChange('condition', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                <option value="">Any Condition</option>
+                <option value="">Any</option>
                 {conditions.map((condition) => (
                   <option key={condition} value={condition}>
                     {condition.charAt(0).toUpperCase() + condition.slice(1).replace('-', ' ')}
@@ -188,70 +180,64 @@ export default function SearchFiltersClient({
               </select>
             </div>
 
-            {/* Price Range */}
+            {/* Min Price */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Min Price
-              </label>
-              <Input
+              <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Min $</label>
+              <input
                 type="number"
-                placeholder="$0"
+                placeholder="0"
                 value={filters.minPrice}
                 onChange={(e) => handleFilterChange('minPrice', e.target.value)}
                 min="0"
+                className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
+            {/* Max Price */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Max Price
-              </label>
-              <Input
+              <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Max $</label>
+              <input
                 type="number"
-                placeholder="$1000"
+                placeholder="1000"
                 value={filters.maxPrice}
                 onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
                 min="0"
+                className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            {/* Location */}
+            {/* City */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                City
-              </label>
-              <Input
+              <label className="block text-[10px] font-medium text-gray-600 mb-0.5">City</label>
+              <input
                 type="text"
-                placeholder="San Francisco"
+                placeholder="City"
                 value={filters.city}
                 onChange={(e) => handleFilterChange('city', e.target.value)}
+                className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
+            {/* State */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                State
-              </label>
-              <Input
+              <label className="block text-[10px] font-medium text-gray-600 mb-0.5">State</label>
+              <input
                 type="text"
                 placeholder="CA"
                 value={filters.state}
                 onChange={(e) => handleFilterChange('state', e.target.value)}
                 maxLength={2}
+                className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
             {/* Sort By */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sort By
-              </label>
+              <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Sort</label>
               <select
                 value={filters.sortBy}
                 onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -263,12 +249,12 @@ export default function SearchFiltersClient({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button onClick={handleSearch}>
-              Apply Filters
+          <div className="flex gap-2">
+            <Button onClick={handleSearch} size="sm" className="text-xs px-2 py-1">
+              Apply
             </Button>
-            <Button variant="outline" onClick={clearFilters}>
-              Clear All
+            <Button variant="outline" size="sm" onClick={clearFilters} className="text-xs px-2 py-1">
+              Clear
             </Button>
           </div>
         </div>

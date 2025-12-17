@@ -97,7 +97,7 @@ export const rateLimitConfig = {
   auth: { limiter: authRateLimit, limit: 5 }, // 5 attempts per 15 minutes
   
   // Search endpoints (more permissive)
-  search: { limiter: searchRateLimit, limit: 200 }, // 200 requests per minute
+  search: { limiter: searchRateLimit, limit: 1000 }, // 1000 requests per minute
   
   // File upload endpoints (very restrictive)
   upload: { limiter: strictRateLimit, limit: 10 }, // 10 uploads per minute

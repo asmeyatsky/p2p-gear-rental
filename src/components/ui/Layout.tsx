@@ -27,10 +27,10 @@ export default function Layout({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden text-sm">
       {showHeader && <Header />}
       <main className={`flex-1 overflow-auto ${className}`}>
-        <div className={`mx-auto px-4 sm:px-6 lg:px-8 py-8 ${maxWidthStyles[maxWidth]}`}>
+        <div className={`mx-auto px-3 sm:px-4 lg:px-6 py-3 ${maxWidthStyles[maxWidth]}`}>
           {children}
         </div>
       </main>

@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.13.0",
     "@stripe/react-stripe-js": "^3.9.0",
     "@stripe/stripe-js": "^7.8.0",
@@ -47,6 +48,7 @@
     "@types/ioredis": "^4.28.10",
     "@types/react-map-gl": "^6.1.7",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.23.26",
     "fuse.js": "^7.1.0",
     "ioredis": "^5.7.0",
     "lru-cache": "^11.2.1",
