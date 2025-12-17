@@ -39,12 +39,12 @@ const categories = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-purple-100 to-slate-100 overflow-hidden">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '4s' }} />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '4s' }} />
       </div>
 
       {/* Header */}
@@ -56,20 +56,20 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-1">
             <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <CameraIcon className="w-4 h-4 text-white" />
+              <CameraIcon className="w-4 h-4 text-gray-50" />
             </div>
-            <span className="text-lg font-bold text-white">GearShare</span>
+            <span className="text-lg font-bold text-gray-800">GearShare</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/browse" className="text-xs text-gray-300 hover:text-white transition-colors">
+            <Link href="/browse" className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
               Browse
             </Link>
-            <Link href="/auth/login" className="text-xs text-gray-300 hover:text-white transition-colors">
+            <Link href="/auth/login" className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
               Sign In
             </Link>
             <Link
               href="/auth/signup"
-              className="text-xs bg-white/10 backdrop-blur-sm text-white px-3 py-1.5 rounded-full hover:bg-white/20 transition-all border border-white/20"
+              className="text-xs bg-gray-100/70 backdrop-blur-sm text-gray-800 px-3 py-1.5 rounded-full hover:bg-gray-200/70 transition-all border border-gray-300"
             >
               Get Started
             </Link>
@@ -196,7 +196,7 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="relative z-10 px-4 py-10 bg-black/20">
+      <section className="relative z-10 px-4 py-10 bg-white/20">
         <div className="max-w-6xl mx-auto">
           <motion.h2
             initial={{ opacity: 0 }}
@@ -213,7 +213,7 @@ export default function Home() {
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-xl p-4 border border-blue-500/20"
+              className="bg-gradient-to-br from-blue-100/50 to-purple-100/50 backdrop-blur-sm rounded-xl p-4 border border-blue-200/30"
             >
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -251,7 +251,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm rounded-xl p-4 border border-green-500/20"
+              className="bg-gradient-to-br from-green-100/50 to-emerald-100/50 backdrop-blur-sm rounded-xl p-4 border border-green-200/30"
             >
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
@@ -288,15 +288,15 @@ export default function Home() {
       </section>
 
       {/* Trust Section */}
-      <section className="relative z-10 px-4 py-10">
+      <section className="relative z-10 px-4 py-10 bg-white/20">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/10"
+            className="bg-gradient-to-r from-white/70 to-white/80 backdrop-blur-sm rounded-xl p-5 border border-gray-200/30"
           >
-            <h2 className="text-center text-lg font-bold text-white mb-6">
+            <h2 className="text-center text-lg font-bold text-gray-800 mb-6">
               Why Choose GearShare?
             </h2>
             <div className="grid md:grid-cols-3 gap-4">
@@ -329,8 +329,8 @@ export default function Home() {
                   className="text-center"
                 >
                   <item.icon className={`w-8 h-8 ${item.color} mx-auto mb-2.5`} />
-                  <h3 className="text-white font-semibold text-sm mb-0.5">{item.title}</h3>
-                  <p className="text-xs text-gray-400">{item.desc}</p>
+                  <h3 className="text-gray-800 font-semibold text-sm mb-0.5">{item.title}</h3>
+                  <p className="text-xs text-gray-600">{item.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -339,17 +339,17 @@ export default function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="relative z-10 px-4 py-10">
+      <section className="relative z-10 px-4 py-10 bg-white/20">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-3">
             Ready to Get Started?
           </h2>
-          <p className="text-sm text-gray-400 mb-6">
+          <p className="text-sm text-gray-600 mb-6">
             Join thousands of creators who rent and share gear on GearShare
           </p>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -365,18 +365,18 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 px-4 py-4 border-t border-white/10">
+      <footer className="relative z-10 px-4 py-4 border-t border-gray-200">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <CameraIcon className="w-3 h-3 text-white" />
             </div>
-            <span className="text-xs text-gray-400">© 2024 GearShare</span>
+            <span className="text-xs text-gray-600">© 2024 GearShare</span>
           </div>
-          <div className="flex items-center gap-4 text-xs text-gray-400">
-            <Link href="/about" className="hover:text-white transition-colors">About</Link>
-            <Link href="/terms-of-service" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy</Link>
+          <div className="flex items-center gap-4 text-xs text-gray-600">
+            <Link href="/about" className="hover:text-gray-900 transition-colors">About</Link>
+            <Link href="/terms-of-service" className="hover:text-gray-900 transition-colors">Terms</Link>
+            <Link href="/privacy-policy" className="hover:text-gray-900 transition-colors">Privacy</Link>
           </div>
         </div>
       </footer>
