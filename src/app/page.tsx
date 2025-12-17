@@ -378,7 +378,6 @@ export default function Home() {
             <Link href="/terms-of-service" className="hover:text-gray-300 transition-colors">Terms</Link>
             <Link href="/privacy-policy" className="hover:text-gray-300 transition-colors">Privacy</Link>
           </div>
-          </div>
         </div>
       </footer>
     </div>
