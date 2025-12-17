@@ -57,7 +57,7 @@ export default function GearCard({ gear, priority = false, index = 0 }: GearCard
             {/* Category Badge */}
             {gear.category && (
               <div className="absolute top-1 left-1">
-                <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-[9px] font-semibold px-1.5 py-0.5 rounded-full shadow-sm">
+                <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full shadow-sm">
                   {gear.category}
                 </span>
               </div>
@@ -86,13 +86,13 @@ export default function GearCard({ gear, priority = false, index = 0 }: GearCard
           {/* Content Section */}
           <div className="p-2">
             {/* Title */}
-            <h3 className="text-xs font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-0.5 line-clamp-1">
+            <h3 className="text-xs font-semibold text-gray-800 group-hover:text-blue-600 transition-colors mb-0.5 line-clamp-1">
               {gear.title}
             </h3>
 
             {/* Brand/Model */}
             {(gear.brand || gear.model) && (
-              <p className="text-[10px] text-gray-500 mb-1 truncate">
+              <p className="text-[10px] text-gray-600 mb-1 truncate">
                 {gear.brand && gear.model
                   ? `${gear.brand} ${gear.model}`
                   : gear.brand || gear.model
@@ -106,7 +106,7 @@ export default function GearCard({ gear, priority = false, index = 0 }: GearCard
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${gear.city}, ${gear.state}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-0.5 text-gray-500 hover:text-blue-600 transition-colors"
+                className="flex items-center gap-0.5 text-gray-600 hover:text-blue-600 transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MapPinIcon className="w-2.5 h-2.5" />
@@ -122,7 +122,7 @@ export default function GearCard({ gear, priority = false, index = 0 }: GearCard
             <div className="flex items-center justify-between mt-1 pt-1 border-t border-gray-100">
               <div>
                 <span className="text-base font-bold text-gray-900">${gear.dailyRate}</span>
-                <span className="text-[9px] text-gray-500">/day</span>
+                <span className="text-[9px] text-gray-600">/day</span>
               </div>
               <div className="flex items-center gap-0.5">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />

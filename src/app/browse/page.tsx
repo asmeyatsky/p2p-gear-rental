@@ -220,7 +220,7 @@ export default function BrowsePage() {
                 placeholder="Search cameras, lenses..."
                 value={filters.query}
                 onChange={(e) => handleFilterChange('query', e.target.value)}
-                className="w-full pl-10 pr-3 py-2 rounded-full text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg"
+                className="w-full pl-10 pr-3 py-2 rounded-full text-sm text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg"
               />
             </div>
           </div>
@@ -237,7 +237,7 @@ export default function BrowsePage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0 ${
                 showFilters || activeFilterCount > 0
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
               }`}
             >
               <AdjustmentsHorizontalIcon className="w-3 h-3" />
@@ -257,7 +257,7 @@ export default function BrowsePage() {
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0 ${
                   filters.category === cat.value
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                 }`}
               >
                 <span className="text-sm">{cat.icon}</span>
@@ -285,7 +285,7 @@ export default function BrowsePage() {
                     <select
                       value={filters.condition}
                       onChange={(e) => handleFilterChange('condition', e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs text-gray-700 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
                       {conditions.map((c) => (
                         <option key={c.value} value={c.value}>{c.label}</option>
@@ -301,7 +301,7 @@ export default function BrowsePage() {
                       placeholder="$0"
                       value={filters.minPrice}
                       onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs text-gray-700 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
@@ -313,7 +313,7 @@ export default function BrowsePage() {
                       placeholder="$500"
                       value={filters.maxPrice}
                       onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs text-gray-700 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
@@ -325,7 +325,7 @@ export default function BrowsePage() {
                       placeholder="Any city"
                       value={filters.city}
                       onChange={(e) => handleFilterChange('city', e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs text-gray-700 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
@@ -335,7 +335,7 @@ export default function BrowsePage() {
                     <select
                       value={filters.sortBy}
                       onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs text-gray-700 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
                       {sortOptions.map((s) => (
                         <option key={s.value} value={s.value}>{s.label}</option>
@@ -364,12 +364,12 @@ export default function BrowsePage() {
       <div className="max-w-7xl mx-auto px-2 py-2">
         {/* Results Header */}
         <div className="flex items-center justify-between mb-2">
-          <div className="text-xs text-gray-600">
+          <div className="text-xs text-gray-700">
             {loading ? 'Loading...' : `${gear.length} items found`}
           </div>
           {filters.query && (
-            <div className="text-xs text-gray-500">
-              Results for "<span className="font-medium text-gray-900">{filters.query}</span>"
+            <div className="text-xs text-gray-600">
+              Results for "<span className="font-medium text-gray-800">{filters.query}</span>"
             </div>
           )}
         </div>
@@ -425,8 +425,8 @@ export default function BrowsePage() {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
               <CameraIcon className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-base font-semibold text-gray-900 mb-1">No gear found</h3>
-            <p className="text-sm text-gray-500 mb-3">Try adjusting your filters or search query</p>
+            <h3 className="text-base font-semibold text-gray-800 mb-1">No gear found</h3>
+            <p className="text-sm text-gray-600 mb-3">Try adjusting your filters or search query</p>
             <button
               onClick={clearFilters}
               className="px-4 py-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors text-sm"
