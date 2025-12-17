@@ -26,7 +26,8 @@ interface RentalDetails {
 }
 
 export default function ConfirmPaymentPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id;
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [rental, setRental] = useState<RentalDetails | null>(null);

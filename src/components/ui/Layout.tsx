@@ -27,9 +27,9 @@ export default function Layout({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       {showHeader && <Header />}
-      <main className={`flex-1 ${className}`}>
+      <main className={`flex-1 overflow-auto ${className}`}>
         <div className={`mx-auto px-4 sm:px-6 lg:px-8 py-8 ${maxWidthStyles[maxWidth]}`}>
           {children}
         </div>
@@ -95,17 +95,30 @@ export function PageLayout({
   );
 }
 
-// Container component for legacy compatibility
-export function Container({ 
-  children, 
+// Container component - simple wrapper for content sections (does NOT include Header/Footer)
+export function Container({
+  children,
   size = 'xl',
-  className = '' 
-}: { 
-  children: React.ReactNode; 
+  className = ''
+}: {
+  children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   className?: string;
 }) {
-  return <Layout maxWidth={size} className={className}>{children}</Layout>;
+  const maxWidthStyles = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-7xl',
+    '2xl': 'max-w-2xl',
+    full: 'max-w-full',
+  };
+
+  return (
+    <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${maxWidthStyles[size]} ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 // Grid component for layout

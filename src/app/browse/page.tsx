@@ -54,15 +54,30 @@ export default function BrowsePage() {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<SearchFilters>({
-    query: searchParams.get('query') || '',
-    category: searchParams.get('category') || '',
-    condition: searchParams.get('condition') || '',
-    minPrice: searchParams.get('minPrice') || '',
-    maxPrice: searchParams.get('maxPrice') || '',
-    city: searchParams.get('city') || '',
-    state: searchParams.get('state') || '',
-    sortBy: searchParams.get('sortBy') || 'newest',
+    query: '',
+    category: '',
+    condition: '',
+    minPrice: '',
+    maxPrice: '',
+    city: '',
+    state: '',
+    sortBy: 'newest',
   });
+
+  useEffect(() => {
+    if (searchParams) {
+      setFilters({
+        query: searchParams.get('query') || '',
+        category: searchParams.get('category') || '',
+        condition: searchParams.get('condition') || '',
+        minPrice: searchParams.get('minPrice') || '',
+        maxPrice: searchParams.get('maxPrice') || '',
+        city: searchParams.get('city') || '',
+        state: searchParams.get('state') || '',
+        sortBy: searchParams.get('sortBy') || 'newest',
+      });
+    }
+  }, [searchParams]);
 
   const fetchGear = useCallback(async (pageNum: number = 1, newFilters?: SearchFilters, reset: boolean = false) => {
     try {

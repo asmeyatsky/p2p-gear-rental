@@ -192,8 +192,8 @@ export class CacheManager {
   } as const;
 }
 
-// Convenience functions
-export const getCached = CacheManager.get;
-export const setCache = CacheManager.set;
-export const deleteCache = CacheManager.del;
-export const invalidateCache = CacheManager.invalidatePattern;
+// Convenience functions (wrapped to preserve static method context)
+export const getCached = <T>(key: string) => CacheManager.get<T>(key);
+export const setCache = (key: string, value: unknown, ttlSeconds?: number) => CacheManager.set(key, value, ttlSeconds);
+export const deleteCache = (key: string) => CacheManager.del(key);
+export const invalidateCache = (pattern: string) => CacheManager.invalidatePattern(pattern);

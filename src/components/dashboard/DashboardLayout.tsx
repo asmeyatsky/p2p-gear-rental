@@ -136,7 +136,7 @@ export default function DashboardLayout({ children, userRole = 'both' }: Dashboa
           <nav className="flex-1 px-4 py-6 space-y-2">
             {filteredNavigation.map((item) => {
               const isActive = pathname === item.href || 
-                (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                (item.href !== '/dashboard' && pathname?.startsWith(item.href));
 
               return (
                 <Link

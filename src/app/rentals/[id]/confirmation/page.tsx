@@ -23,7 +23,8 @@ interface RentalDetails {
 }
 
 export default function PaymentConfirmationPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id;
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -42,7 +43,7 @@ export default function PaymentConfirmationPage() {
         setLoading(true);
 
         // Get payment intent status from URL params
-        const redirectStatus = searchParams.get('redirect_status');
+        const redirectStatus = searchParams?.get('redirect_status');
 
         if (redirectStatus === 'succeeded') {
           setPaymentStatus('success');

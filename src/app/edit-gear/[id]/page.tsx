@@ -8,7 +8,8 @@ import ImageUpload from '@/components/ImageUpload';
 import toast from 'react-hot-toast';
 
 export default function EditGearPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id;
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [gear, setGear] = useState<GearItem | null>(null);

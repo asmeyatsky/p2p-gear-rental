@@ -97,17 +97,6 @@ export async function fetchFeaturedGear(limit: number = 12): Promise<GearItem[]>
         { createdAt: 'desc' }
       ],
       take: limit,
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            full_name: true,
-            averageRating: true,
-            totalReviews: true,
-          }
-        }
-      }
     });
 
     return gear.map(g => ({
@@ -131,13 +120,7 @@ export async function fetchFeaturedGear(limit: number = 12): Promise<GearItem[]>
       totalReviews: g.totalReviews,
       createdAt: g.createdAt.toISOString(),
       updatedAt: g.updatedAt.toISOString(),
-      user: g.user ? {
-        id: g.user.id,
-        email: g.user.email,
-        full_name: g.user.full_name,
-        averageRating: g.user.averageRating || 0,
-        totalReviews: g.user.totalReviews,
-      } : null,
+      user: null,
     }));
   } catch (error) {
     logger.error('Failed to fetch featured gear:', { error: error instanceof Error ? error.message : String(error) });
