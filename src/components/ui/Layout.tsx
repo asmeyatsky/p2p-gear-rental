@@ -27,7 +27,7 @@ export default function Layout({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden text-xs">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden text-xs">
       {showHeader && <Header />}
       <main className={`flex-1 overflow-auto ${className}`}>
         <div className={`mx-auto px-1 sm:px-1.5 lg:px-2 py-1 ${maxWidthStyles[maxWidth]}`}>
@@ -57,23 +57,23 @@ export function PageLayout({
   return (
     <Layout>
       {(title || subtitle || actions || breadcrumbs) && (
-        <div className="mb-4">
+        <div className="mb-2">
           {breadcrumbs && (
-            <nav className="flex mb-2" aria-label="Breadcrumb">
-              <ol className="flex items-center space-x-2">
+            <nav className="flex mb-1" aria-label="Breadcrumb">
+              <ol className="flex items-center space-x-1">
                 {breadcrumbs.map((crumb, index) => (
                   <li key={index} className="flex">
                     {index > 0 && (
-                      <svg className="flex-shrink-0 h-3 w-3 text-gray-400 mx-2" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="flex-shrink-0 h-2.5 w-2.5 text-gray-500 mx-1" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
                     {crumb.href ? (
-                      <a href={crumb.href} className="text-xs font-medium text-gray-600 hover:text-gray-800">
+                      <a href={crumb.href} className="text-[10px] font-medium text-gray-400 hover:text-gray-300">
                         {crumb.label}
                       </a>
                     ) : (
-                      <span className="text-xs font-medium text-gray-900">{crumb.label}</span>
+                      <span className="text-[10px] font-medium text-gray-200">{crumb.label}</span>
                     )}
                   </li>
                 ))}
@@ -83,8 +83,8 @@ export function PageLayout({
 
           <div className="flex items-center justify-between">
             <div>
-              {title && <h1 className="text-xl font-bold text-gray-900">{title}</h1>}
-              {subtitle && <p className="mt-0.5 text-xs text-gray-700">{subtitle}</p>}
+              {title && <h1 className="text-lg font-bold text-white">{title}</h1>}
+              {subtitle && <p className="mt-0.5 text-[10px] text-gray-500">{subtitle}</p>}
             </div>
             {actions && <div>{actions}</div>}
           </div>

@@ -64,151 +64,160 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
     }
     
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image Gallery */}
-          <div className="space-y-4">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-gray-100">
-              {gear.images && gear.images.length > 0 ? (
-                <Image
-                  src={gear.images[0]}
-                  alt={gear.title}
-                  fill
-                  className="object-cover transition-opacity duration-300"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
-                  priority
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-400">
-                  <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-2 bg-gray-200 rounded-lg"></div>
-                    <p>No image available</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '4s' }} />
+        </div>
+
+        <div className="relative z-10 px-1 py-1 min-h-screen">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 max-w-7xl mx-auto">
+            {/* Image Gallery */}
+            <div className="space-y-1">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-gray-100">
+                {gear.images && gear.images.length > 0 ? (
+                  <Image
+                    src={gear.images[0]}
+                    alt={gear.title}
+                    fill
+                    className="object-cover transition-opacity duration-300"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
+                    priority
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-2 bg-gray-200 rounded-lg"></div>
+                      <p className="text-xs">No image available</p>
+                    </div>
                   </div>
+                )}
+              </div>
+
+              {/* Thumbnail images */}
+              {gear.images && gear.images.length > 1 && (
+                <div className="grid grid-cols-4 gap-1">
+                  {gear.images.slice(1, 5).map((image: string, index: number) => (
+                    <div key={index} className="relative aspect-square overflow-hidden rounded bg-gray-100">
+                      <Image
+                        src={image}
+                        alt={`${gear.title} - View ${index + 2}`}
+                        fill
+                        className="object-cover"
+                        sizes="150px"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            
-            {/* Thumbnail images */}
-            {gear.images && gear.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {gear.images.slice(1, 5).map((image: string, index: number) => (
-                  <div key={index} className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
-                    <Image
-                      src={image}
-                      alt={`${gear.title} - View ${index + 2}`}
-                      fill
-                      className="object-cover"
-                      sizes="150px"
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          {/* Gear Information */}
-          <div className="space-y-6">
-            {/* Header */}
-            <div>
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                {gear.category && (
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium capitalize">
-                    {gear.category}
-                  </span>
-                )}
-                {gear.condition && (
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium capitalize">
-                    {gear.condition}
-                  </span>
-                )}
-              </div>
-              
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{gear.title}</h1>
-              
-              {(gear.brand || gear.model) && (
-                <p className="text-lg text-gray-600 mb-4">
-                  {[gear.brand, gear.model].filter(Boolean).join(' ')}
-                </p>
-              )}
-              
-              {/* Pricing */}
-              <div className="space-y-2">
-                <div className="text-3xl font-bold text-gray-900">
-                  ${gear.dailyRate.toFixed(2)}
-                  <span className="text-lg font-normal text-gray-600 ml-1">/ day</span>
-                </div>
-                
-                {(gear.weeklyRate || gear.monthlyRate) && (
-                  <div className="flex gap-4 text-sm text-gray-600">
-                    {gear.weeklyRate && (
-                      <span>Weekly: ${gear.weeklyRate.toFixed(2)}</span>
-                    )}
-                    {gear.monthlyRate && (
-                      <span>Monthly: ${gear.monthlyRate.toFixed(2)}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Description */}
-            {gear.description && (
+
+            {/* Gear Information */}
+            <div className="space-y-3">
+              {/* Header */}
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Description</h2>
-                <p className="text-gray-700 leading-relaxed">{gear.description}</p>
-              </div>
-            )}
-            
-            {/* Location */}
-            {(gear.city || gear.state) && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Location</h2>
-                <p className="text-gray-700">
-                  {[gear.city, gear.state].filter(Boolean).join(', ')}
-                </p>
-              </div>
-            )}
-            
-            {/* Owner Information */}
-            {gear.user && (
-              <div className="border-t pt-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Owner</h2>
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold text-lg">
-                      {gear.user.full_name?.charAt(0) || 'U'}
+                <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+                  {gear.category && (
+                    <span className="bg-white/20 backdrop-blur-sm text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full capitalize">
+                      {gear.category}
                     </span>
+                  )}
+                  {gear.condition && (
+                    <span className="bg-white/20 backdrop-blur-sm text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full capitalize">
+                      {gear.condition}
+                    </span>
+                  )}
+                </div>
+
+                <h1 className="text-xl font-bold text-white mb-1">{gear.title}</h1>
+
+                {(gear.brand || gear.model) && (
+                  <p className="text-xs text-gray-400 mb-2">
+                    {[gear.brand, gear.model].filter(Boolean).join(' ')}
+                  </p>
+                )}
+
+                {/* Pricing */}
+                <div className="space-y-1">
+                  <div className="text-xl font-bold text-white">
+                    ${gear.dailyRate.toFixed(2)}
+                    <span className="text-xs font-normal text-gray-400 ml-1">/ day</span>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{gear.user.full_name || 'Gear Owner'}</p>
-                    {gear.user.averageRating && (
-                      <div className="flex items-center space-x-1 text-sm text-gray-600">
-                        <span className="text-yellow-400">★</span>
-                        <span>{gear.user.averageRating.toFixed(1)}</span>
-                        {gear.user.totalReviews && (
-                          <span>({gear.user.totalReviews} reviews)</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
+
+                  {(gear.weeklyRate || gear.monthlyRate) && (
+                    <div className="flex gap-2 text-[10px] text-gray-400">
+                      {gear.weeklyRate && (
+                        <span>Weekly: ${gear.weeklyRate.toFixed(2)}</span>
+                      )}
+                      {gear.monthlyRate && (
+                        <span>Monthly: ${gear.monthlyRate.toFixed(2)}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-            
-            {/* Reviews Section */}
-            <div className="border-t pt-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Reviews</h2>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-gray-600">Reviews will be displayed here after rentals are completed.</p>
+
+              {/* Description */}
+              {gear.description && (
+                <div>
+                  <h2 className="text-sm font-semibold text-white mb-2">Description</h2>
+                  <p className="text-xs text-gray-300 leading-relaxed">{gear.description}</p>
+                </div>
+              )}
+
+              {/* Location */}
+              {(gear.city || gear.state) && (
+                <div>
+                  <h2 className="text-sm font-semibold text-white mb-2">Location</h2>
+                  <p className="text-xs text-gray-300">
+                    {[gear.city, gear.state].filter(Boolean).join(', ')}
+                  </p>
+                </div>
+              )}
+
+              {/* Owner Information */}
+              {gear.user && (
+                <div className="border-t border-white/10 pt-2">
+                  <h2 className="text-sm font-semibold text-white mb-2">Owner</h2>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
+                        {gear.user.full_name?.charAt(0) || 'U'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-white">{gear.user.full_name || 'Gear Owner'}</p>
+                      {gear.user.averageRating && (
+                        <div className="flex items-center space-x-1 text-[10px] text-gray-400">
+                          <span className="text-yellow-400 text-xs">★</span>
+                          <span>{gear.user.averageRating.toFixed(1)}</span>
+                          {gear.user.totalReviews && (
+                            <span>({gear.user.totalReviews} reviews)</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Reviews Section */}
+              <div className="border-t border-white/10 pt-2">
+                <h2 className="text-sm font-semibold text-white mb-2">Reviews</h2>
+                <div className="bg-white/5 backdrop-blur-sm p-2 rounded-lg border border-white/10">
+                  <p className="text-xs text-gray-400">Reviews will be displayed here after rentals are completed.</p>
+                </div>
               </div>
-            </div>
-            
-            {/* Client-side interactive components */}
-            <div className="border-t pt-6">
-              <GearDetailsClient gear={gear} currentUserId={currentUserId} />
+
+              {/* Client-side interactive components */}
+              <div className="border-t border-white/10 pt-2">
+                <GearDetailsClient gear={gear} currentUserId={currentUserId} />
+              </div>
             </div>
           </div>
         </div>

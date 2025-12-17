@@ -140,11 +140,11 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
     : 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Image Gallery */}
       {gear.images.length > 0 && (
         <>
-          <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+          <div className="aspect-video rounded overflow-hidden bg-gray-100">
             <img
               src={gear.images[selectedImageIndex]}
               alt={`${gear.title} - Main Image`}
@@ -152,15 +152,15 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
             />
           </div>
           {gear.images.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-1">
               {gear.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
-                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                  className={`aspect-square rounded overflow-hidden border transition-colors ${
                     index === selectedImageIndex
-                      ? 'border-blue-500'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-white'
+                      : 'border-white/20 hover:border-white/40'
                   }`}
                 >
                   <img
@@ -176,75 +176,75 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
       )}
 
       {/* Gear Info */}
-      <div className="space-y-6">
+      <div className="space-y-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{gear.title}</h1>
-          <p className="text-gray-600 mt-2">{gear.description}</p>
+          <h1 className="text-base font-bold text-white">{gear.title}</h1>
+          <p className="text-xs text-gray-400 mt-1">{gear.description}</p>
         </div>
 
-        <div className="flex flex-wrap gap-4">
-          <div className="bg-blue-50 px-3 py-1 rounded-full text-blue-700 font-medium">
+        <div className="flex flex-wrap gap-2">
+          <div className="bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded-full text-white text-[10px] font-medium border border-white/20">
             ${gear.dailyRate}/day
           </div>
           {gear.weeklyRate && (
-            <div className="bg-green-50 px-3 py-1 rounded-full text-green-700 font-medium">
+            <div className="bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded-full text-white text-[10px] font-medium border border-white/20">
               ${gear.weeklyRate}/week
             </div>
           )}
           {gear.monthlyRate && (
-            <div className="bg-purple-50 px-3 py-1 rounded-full text-purple-700 font-medium">
+            <div className="bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded-full text-white text-[10px] font-medium border border-white/20">
               ${gear.monthlyRate}/month
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-2 gap-2 text-xs">
           <div>
-            <span className="font-semibold">Location:</span> {gear.city}, {gear.state}
+            <span className="font-semibold text-gray-400">Location:</span> <span className="text-gray-300">{gear.city}, {gear.state}</span>
           </div>
           {gear.category && (
             <div>
-              <span className="font-semibold">Category:</span> {gear.category}
+              <span className="font-semibold text-gray-400">Category:</span> <span className="text-gray-300">{gear.category}</span>
             </div>
           )}
           {gear.brand && (
             <div>
-              <span className="font-semibold">Brand:</span> {gear.brand}
+              <span className="font-semibold text-gray-400">Brand:</span> <span className="text-gray-300">{gear.brand}</span>
             </div>
           )}
           {gear.condition && (
             <div>
-              <span className="font-semibold">Condition:</span> {gear.condition}
+              <span className="font-semibold text-gray-400">Condition:</span> <span className="text-gray-300">{gear.condition}</span>
             </div>
           )}
         </div>
 
         {gear.user && (
-          <div className="border-t pt-4">
-            <h3 className="font-semibold mb-2">Owner</h3>
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+          <div className="border-t border-white/10 pt-2">
+            <h3 className="font-semibold text-xs text-gray-400 mb-1">Owner</h3>
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs">
                 {gear.user.full_name?.charAt(0) || gear.user.email.charAt(0).toUpperCase()}
               </div>
               <div>
-                <p className="font-medium">{gear.user.full_name || gear.user.email}</p>
+                <p className="text-xs font-medium text-white">{gear.user.full_name || gear.user.email}</p>
                 {gear.user.averageRating && gear.user.totalReviews > 0 ? (
-                  <p className="text-sm text-gray-600">
-                    <span className="text-yellow-500">★</span> {gear.user.averageRating.toFixed(1)} ({gear.user.totalReviews} reviews)
+                  <p className="text-[10px] text-gray-400">
+                    <span className="text-yellow-500 text-xs">★</span> {gear.user.averageRating.toFixed(1)} ({gear.user.totalReviews} reviews)
                   </p>
                 ) : (
-                  <p className="text-sm text-gray-500">New owner</p>
+                  <p className="text-[10px] text-gray-500">New owner</p>
                 )}
               </div>
             </div>
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {isOwnGear ? (
             <Button
               onClick={() => router.push(`/gear/${gear.id}/edit`)}
-              className="w-full"
+              className="w-full text-xs py-1.5"
             >
               Edit Listing
             </Button>
@@ -252,14 +252,14 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
             <>
               <Button
                 onClick={handleRequestRental}
-                className="w-full"
+                className="w-full text-xs py-1.5"
               >
                 Request Rental
               </Button>
               <Button
                 variant="outline"
                 onClick={handleMessageOwner}
-                className="w-full"
+                className="w-full text-xs py-1.5"
               >
                 Message Owner
               </Button>
@@ -270,24 +270,24 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
 
       {/* Rental Request Modal */}
       {showRentalModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-2">
+          <div className="bg-gray-800 rounded-lg max-w-md w-full p-3 space-y-2 border border-white/20">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">Request Rental</h2>
+              <h2 className="text-sm font-bold text-white">Request Rental</h2>
               <button
                 onClick={() => setShowRentalModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-400 hover:text-white"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-2">
               {/* Availability Calendar */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-300 mb-1">
                   Select Dates
                 </label>
                 <AvailabilityCalendar
@@ -302,20 +302,20 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
               </div>
 
               {rentalDays > 0 && (
-                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">{rentalDays} day{rentalDays !== 1 ? 's' : ''}</span>
-                    <span>${gear.dailyRate}/day</span>
+                <div className="bg-white/5 backdrop-blur-sm p-2 rounded border border-white/10 space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-400">{rentalDays} day{rentalDays !== 1 ? 's' : ''}</span>
+                    <span className="text-gray-300">${gear.dailyRate}/day</span>
                   </div>
-                  <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                    <span>Total</span>
-                    <span>${totalPrice.toFixed(2)}</span>
+                  <div className="flex justify-between font-semibold text-sm border-t border-white/10 pt-1">
+                    <span className="text-gray-300">Total</span>
+                    <span className="text-white">${totalPrice.toFixed(2)}</span>
                   </div>
                 </div>
               )}
 
               {error && (
-                <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-red-900/50 text-red-300 px-2 py-1.5 rounded text-xs">
                   {error}
                 </div>
               )}
@@ -323,12 +323,12 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
               <Button
                 onClick={handleSubmitRental}
                 disabled={isSubmitting || !startDate || !endDate}
-                className="w-full"
+                className="w-full text-xs py-1.5"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Request'}
               </Button>
 
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-[9px] text-gray-500 text-center">
                 You won&apos;t be charged until the owner accepts your request
               </p>
             </div>
