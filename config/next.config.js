@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  
+
+  // Enable Turbopack (Next.js 16 default)
+  turbopack: {},
+
   // Performance optimizations
   compress: true,
   poweredByHeader: false,

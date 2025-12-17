@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Layout from '@/components/ui/Layout';
 import SearchFiltersClient from '@/components/gear/SearchFiltersClient';
@@ -63,35 +63,18 @@ export default function BrowsePage() {
     state: '',
     sortBy: 'newest',
   });
+  const initialFetchDone = useRef(false);
 
-  useEffect(() => {
-    if (searchParams) {
-      setFilters({
-        query: searchParams.get('query') || '',
-        category: searchParams.get('category') || '',
-        condition: searchParams.get('condition') || '',
-        minPrice: searchParams.get('minPrice') || '',
-        maxPrice: searchParams.get('maxPrice') || '',
-        city: searchParams.get('city') || '',
-        state: searchParams.get('state') || '',
-        sortBy: searchParams.get('sortBy') || 'newest',
-      });
-    }
-  }, [searchParams]);
-
-  const fetchGear = useCallback(async (pageNum: number = 1, newFilters?: SearchFilters, reset: boolean = false) => {
+  // Fetch gear function - not wrapped in useCallback to avoid dependency issues
+  const fetchGear = async (pageNum: number = 1, currentFilters: SearchFilters, reset: boolean = false) => {
     try {
       setLoading(true);
       setError(null);
 
-      const currentFilters = newFilters || filters;
       const params = new URLSearchParams();
-      
-      // Add pagination
       params.set('page', pageNum.toString());
       params.set('limit', '20');
-      
-      // Add filters
+
       Object.entries(currentFilters).forEach(([key, value]) => {
         if (value && value.trim()) {
           params.set(key, value);
@@ -99,19 +82,19 @@ export default function BrowsePage() {
       });
 
       const response = await fetch(`/api/gear?${params.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch gear');
       }
 
       const data = await response.json();
-      
+
       if (reset || pageNum === 1) {
         setGear(data.data || []);
       } else {
         setGear(prev => [...prev, ...(data.data || [])]);
       }
-      
+
       setHasMore(data.pagination?.hasNext || false);
       setPage(pageNum);
     } catch (err) {
@@ -120,7 +103,27 @@ export default function BrowsePage() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  };
+
+  // Initialize filters from URL params and fetch on mount
+  useEffect(() => {
+    if (initialFetchDone.current) return;
+    initialFetchDone.current = true;
+
+    const initialFilters: SearchFilters = {
+      query: searchParams?.get('query') || '',
+      category: searchParams?.get('category') || '',
+      condition: searchParams?.get('condition') || '',
+      minPrice: searchParams?.get('minPrice') || '',
+      maxPrice: searchParams?.get('maxPrice') || '',
+      city: searchParams?.get('city') || '',
+      state: searchParams?.get('state') || '',
+      sortBy: searchParams?.get('sortBy') || 'newest',
+    };
+
+    setFilters(initialFilters);
+    fetchGear(1, initialFilters, true);
+  }, [searchParams]);
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
@@ -129,13 +132,9 @@ export default function BrowsePage() {
 
   const loadMore = () => {
     if (!loading && hasMore) {
-      fetchGear(page + 1);
+      fetchGear(page + 1, filters, false);
     }
   };
-
-  useEffect(() => {
-    fetchGear(1, filters, true);
-  }, [fetchGear, filters]);
 
   if (loading && gear.length === 0) {
     return (
@@ -170,7 +169,7 @@ export default function BrowsePage() {
         {error ? (
           <div className="text-center py-12">
             <div className="text-red-600 mb-4">{error}</div>
-            <Button onClick={() => fetchGear(1, filters, true)}>
+            <Button onClick={() => { initialFetchDone.current = false; fetchGear(1, filters, true); }}>
               Try Again
             </Button>
           </div>
