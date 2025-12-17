@@ -102,16 +102,16 @@ export default function GearCard({ gear, priority = false, index = 0 }: GearCard
 
             {/* Location & Rating Row */}
             <div className="flex items-center justify-between text-[9px]">
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${gear.city}, ${gear.state}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-0.25 text-gray-700 hover:text-blue-600 transition-colors"
-                onClick={(e) => e.stopPropagation()}
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${gear.city}, ${gear.state}`)}`, '_blank', 'noopener,noreferrer');
+                }}
+                className="flex items-center gap-0.25 text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
               >
                 <MapPinIcon className="w-2 h-2" />
                 <span className="truncate">{gear.city},{gear.state}</span>
-              </a>
+              </span>
               <div className="flex items-center gap-0.25 text-amber-500">
                 <StarIcon className="w-2 h-2 fill-current" />
                 <span className="font-medium">{rating.toFixed(1)}</span>
