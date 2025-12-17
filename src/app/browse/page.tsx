@@ -3,7 +3,6 @@
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import GearCard from '@/components/gear/GearCard';
 import {
   MagnifyingGlassIcon,
@@ -11,6 +10,7 @@ import {
   XMarkIcon,
   CameraIcon,
 } from '@heroicons/react/24/outline';
+import Header from '@/components/Header';
 
 interface GearItem {
   id: string;
@@ -193,36 +193,20 @@ function BrowsePageContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
-        <div className="max-w-7xl mx-auto px-1 py-1.5">
-          {/* Navigation */}
-          <div className="flex items-center justify-between mb-1.5">
-            <Link href="/" className="flex items-center gap-1 text-white">
-              <div className="w-5 h-5 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                <CameraIcon className="w-3 h-3" />
-              </div>
-              <span className="font-bold text-xs">GearShare</span>
-            </Link>
-            <Link
-              href="/add-gear"
-              className="text-[10px] bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full hover:bg-white/30 transition-all border border-white/30"
-            >
-              List
-            </Link>
-          </div>
+      <Header />
 
-          {/* Search Bar */}
-          <div className="max-w-3xl mx-auto">
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={filters.query}
-                onChange={(e) => handleFilterChange('query', e.target.value)}
-                className="w-full pl-8 pr-2 py-1.5 rounded-full text-xs text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg"
-              />
-            </div>
+      {/* Search Bar */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 py-4">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search gear..."
+              value={filters.query}
+              onChange={(e) => handleFilterChange('query', e.target.value)}
+              className="w-full pl-12 pr-4 py-3 rounded-full text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg"
+            />
           </div>
         </div>
       </div>
