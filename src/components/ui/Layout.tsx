@@ -30,7 +30,7 @@ export default function Layout({
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden text-sm">
       {showHeader && <Header />}
       <main className={`flex-1 overflow-auto ${className}`}>
-        <div className={`mx-auto px-3 sm:px-4 lg:px-6 py-3 ${maxWidthStyles[maxWidth]}`}>
+        <div className={`mx-auto px-2 sm:px-3 lg:px-4 py-2 ${maxWidthStyles[maxWidth]}`}>
           {children}
         </div>
       </main>
@@ -115,7 +115,7 @@ export function Container({
   };
 
   return (
-    <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${maxWidthStyles[size]} ${className}`}>
+    <div className={`mx-auto px-2 sm:px-3 lg:px-4 ${maxWidthStyles[size]} ${className}`}>
       {children}
     </div>
   );

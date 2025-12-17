@@ -51,25 +51,25 @@ export default function Home() {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 px-6 py-4"
+        className="relative z-10 px-4 py-2"
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <CameraIcon className="w-5 h-5 text-white" />
+          <Link href="/" className="flex items-center gap-1">
+            <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <CameraIcon className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">GearShare</span>
+            <span className="text-lg font-bold text-white">GearShare</span>
           </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/browse" className="text-sm text-gray-300 hover:text-white transition-colors">
+          <div className="flex items-center gap-3">
+            <Link href="/browse" className="text-xs text-gray-300 hover:text-white transition-colors">
               Browse
             </Link>
-            <Link href="/auth/login" className="text-sm text-gray-300 hover:text-white transition-colors">
+            <Link href="/auth/login" className="text-xs text-gray-300 hover:text-white transition-colors">
               Sign In
             </Link>
             <Link
               href="/auth/signup"
-              className="text-sm bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-white/20 transition-all border border-white/20"
+              className="text-xs bg-white/10 backdrop-blur-sm text-white px-3 py-1.5 rounded-full hover:bg-white/20 transition-all border border-white/20"
             >
               Get Started
             </Link>
@@ -78,25 +78,25 @@ export default function Home() {
       </motion.header>
 
       {/* Hero Section */}
-      <section className="relative z-10 px-6 pt-12 pb-20">
+      <section className="relative z-10 px-4 pt-6 pb-12">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20"
+              className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full mb-4 border border-white/20"
             >
-              <SparklesIcon className="w-4 h-4 text-yellow-400" />
-              <span className="text-sm text-gray-200">The #1 Gear Rental Platform</span>
+              <SparklesIcon className="w-3.5 h-3.5 text-yellow-400" />
+              <span className="text-xs text-gray-200">The #1 Gear Rental Platform</span>
             </motion.div>
 
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">
               Rent Pro Gear
               <br />
               <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -104,32 +104,32 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10">
+            <p className="text-sm text-gray-400 max-w-xl mx-auto mb-6">
               Access professional cameras, lenses, and equipment from local owners.
               Save money, reduce waste, and create stunning content.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
                   href="/browse"
-                  className="group flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all"
+                  className="group flex items-center gap-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold text-sm shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all"
                 >
-                  <CameraIcon className="w-5 h-5" />
+                  <CameraIcon className="w-4 h-4" />
                   Rent Gear
-                  <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRightIcon className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </motion.div>
 
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
                   href="/add-gear"
-                  className="group flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-full font-semibold text-lg border border-white/20 hover:bg-white/20 transition-all"
+                  className="group flex items-center gap-1.5 bg-white/10 backdrop-blur-sm text-white px-6 py-3 rounded-full font-semibold text-sm border border-white/20 hover:bg-white/20 transition-all"
                 >
-                  <CurrencyDollarIcon className="w-5 h-5" />
-                  List Your Gear
-                  <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <CurrencyDollarIcon className="w-4 h-4" />
+                  List Gear
+                  <ArrowRightIcon className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </motion.div>
             </div>
@@ -140,7 +140,7 @@ export default function Home() {
             variants={staggerContainer}
             initial="initial"
             animate="animate"
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-16"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto mb-12"
           >
             {[
               { value: '10K+', label: 'Gear Items', icon: CameraIcon },
@@ -151,11 +151,11 @@ export default function Home() {
               <motion.div
                 key={stat.label}
                 variants={fadeInUp}
-                className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 text-center"
+                className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 text-center"
               >
-                <stat.icon className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-white">{stat.value}</div>
-                <div className="text-xs text-gray-400">{stat.label}</div>
+                <stat.icon className="w-5 h-5 text-purple-400 mx-auto mb-1.5" />
+                <div className="text-lg font-bold text-white">{stat.value}</div>
+                <div className="text-[10px] text-gray-400">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
@@ -165,28 +165,28 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="mb-16"
+            className="mb-10"
           >
-            <h2 className="text-center text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">
+            <h2 className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
               Browse by Category
             </h2>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3 max-w-4xl mx-auto">
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-2 max-w-4xl mx-auto">
               {categories.map((cat, i) => (
                 <motion.div
                   key={cat.name}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 + i * 0.1 }}
-                  whileHover={{ scale: 1.05, y: -5 }}
+                  whileHover={{ scale: 1.05, y: -3 }}
                 >
                   <Link
                     href={cat.href}
-                    className="block bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/30 transition-all text-center group"
+                    className="block bg-white/5 backdrop-blur-sm rounded-lg p-2.5 border border-white/10 hover:border-white/30 transition-all text-center group"
                   >
-                    <div className={`text-3xl mb-2 group-hover:scale-110 transition-transform`}>
+                    <div className={`text-xl mb-1 group-hover:scale-110 transition-transform`}>
                       {cat.icon}
                     </div>
-                    <div className="text-xs text-gray-300 font-medium">{cat.name}</div>
+                    <div className="text-[10px] text-gray-300 font-medium">{cat.name}</div>
                   </Link>
                 </motion.div>
               ))}
@@ -196,50 +196,50 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="relative z-10 px-6 py-16 bg-black/20">
+      <section className="relative z-10 px-4 py-10 bg-black/20">
         <div className="max-w-6xl mx-auto">
           <motion.h2
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center text-3xl font-bold text-white mb-12"
+            className="text-center text-xl font-bold text-white mb-8"
           >
             How It Works
           </motion.h2>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-6">
             {/* For Renters */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-2xl p-6 border border-blue-500/20"
+              className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-xl p-4 border border-blue-500/20"
             >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
-                  <CameraIcon className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <CameraIcon className="w-4 h-4 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white">For Renters</h3>
+                <h3 className="text-lg font-bold text-white">For Renters</h3>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {[
                   'Browse thousands of items near you',
                   'Book instantly with secure payments',
                   'Pick up gear and start creating',
                   'Return and leave a review'
                 ].map((step, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-blue-400">{i + 1}</span>
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-bold text-blue-400">{i + 1}</span>
                     </div>
-                    <span className="text-sm text-gray-300">{step}</span>
+                    <span className="text-xs text-gray-300">{step}</span>
                   </div>
                 ))}
               </div>
-              <motion.div whileHover={{ scale: 1.02 }} className="mt-6">
+              <motion.div whileHover={{ scale: 1.02 }} className="mt-4">
                 <Link
                   href="/browse"
-                  className="block text-center bg-blue-500 text-white py-3 rounded-xl font-semibold hover:bg-blue-600 transition-colors"
+                  className="block text-center bg-blue-500 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-600 transition-colors text-sm"
                 >
                   Start Browsing
                 </Link>
@@ -251,33 +251,33 @@ export default function Home() {
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm rounded-2xl p-6 border border-green-500/20"
+              className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm rounded-xl p-4 border border-green-500/20"
             >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
-                  <CurrencyDollarIcon className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                  <CurrencyDollarIcon className="w-4 h-4 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white">For Owners</h3>
+                <h3 className="text-lg font-bold text-white">For Owners</h3>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {[
                   'List your gear in minutes',
                   'Set your own prices and availability',
                   'Approve rental requests',
                   'Earn money from your equipment'
                 ].map((step, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-green-400">{i + 1}</span>
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-bold text-green-400">{i + 1}</span>
                     </div>
-                    <span className="text-sm text-gray-300">{step}</span>
+                    <span className="text-xs text-gray-300">{step}</span>
                   </div>
                 ))}
               </div>
-              <motion.div whileHover={{ scale: 1.02 }} className="mt-6">
+              <motion.div whileHover={{ scale: 1.02 }} className="mt-4">
                 <Link
                   href="/add-gear"
-                  className="block text-center bg-green-500 text-white py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors"
+                  className="block text-center bg-green-500 text-white py-2.5 rounded-lg font-semibold hover:bg-green-600 transition-colors text-sm"
                 >
                   List Your Gear
                 </Link>
@@ -288,18 +288,18 @@ export default function Home() {
       </section>
 
       {/* Trust Section */}
-      <section className="relative z-10 px-6 py-16">
+      <section className="relative z-10 px-4 py-10">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/10"
+            className="bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/10"
           >
-            <h2 className="text-center text-2xl font-bold text-white mb-8">
+            <h2 className="text-center text-lg font-bold text-white mb-6">
               Why Choose GearShare?
             </h2>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-4">
               {[
                 {
                   icon: ShieldCheckIcon,
@@ -328,9 +328,9 @@ export default function Home() {
                   transition={{ delay: i * 0.1 }}
                   className="text-center"
                 >
-                  <item.icon className={`w-10 h-10 ${item.color} mx-auto mb-3`} />
-                  <h3 className="text-white font-semibold mb-1">{item.title}</h3>
-                  <p className="text-sm text-gray-400">{item.desc}</p>
+                  <item.icon className={`w-8 h-8 ${item.color} mx-auto mb-2.5`} />
+                  <h3 className="text-white font-semibold text-sm mb-0.5">{item.title}</h3>
+                  <p className="text-xs text-gray-400">{item.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -339,41 +339,41 @@ export default function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="relative z-10 px-6 py-16">
+      <section className="relative z-10 px-4 py-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
             Ready to Get Started?
           </h2>
-          <p className="text-gray-400 mb-8">
+          <p className="text-sm text-gray-400 mb-6">
             Join thousands of creators who rent and share gear on GearShare
           </p>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Link
               href="/auth/signup"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-10 py-4 rounded-full font-bold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all"
+              className="inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-7 py-3 rounded-full font-bold text-sm shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all"
             >
               Create Free Account
-              <ArrowRightIcon className="w-5 h-5" />
+              <ArrowRightIcon className="w-4 h-4" />
             </Link>
           </motion.div>
         </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-8 border-t border-white/10">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <CameraIcon className="w-4 h-4 text-white" />
+      <footer className="relative z-10 px-4 py-4 border-t border-white/10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <CameraIcon className="w-3 h-3 text-white" />
             </div>
-            <span className="text-sm text-gray-400">© 2024 GearShare</span>
+            <span className="text-xs text-gray-400">© 2024 GearShare</span>
           </div>
-          <div className="flex items-center gap-6 text-sm text-gray-400">
+          <div className="flex items-center gap-4 text-xs text-gray-400">
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
             <Link href="/terms-of-service" className="hover:text-white transition-colors">Terms</Link>
             <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy</Link>

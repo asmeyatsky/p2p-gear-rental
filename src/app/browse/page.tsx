@@ -194,33 +194,33 @@ export default function BrowsePage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-7xl mx-auto px-2 py-3">
           {/* Navigation */}
-          <div className="flex items-center justify-between mb-6">
-            <Link href="/" className="flex items-center gap-2 text-white">
-              <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                <CameraIcon className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-3">
+            <Link href="/" className="flex items-center gap-1 text-white">
+              <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                <CameraIcon className="w-4 h-4" />
               </div>
-              <span className="font-bold text-lg">GearShare</span>
+              <span className="font-bold text-sm">GearShare</span>
             </Link>
             <Link
               href="/add-gear"
-              className="text-sm bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-white/30 transition-all border border-white/30"
+              className="text-xs bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full hover:bg-white/30 transition-all border border-white/30"
             >
-              List Your Gear
+              List Gear
             </Link>
           </div>
 
           {/* Search Bar */}
           <div className="max-w-3xl mx-auto">
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search cameras, lenses, lighting..."
+                placeholder="Search cameras, lenses..."
                 value={filters.query}
                 onChange={(e) => handleFilterChange('query', e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg"
+                className="w-full pl-10 pr-3 py-2 rounded-full text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg"
               />
             </div>
           </div>
@@ -229,21 +229,21 @@ export default function BrowsePage() {
 
       {/* Filters Bar */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="max-w-7xl mx-auto px-2 py-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all flex-shrink-0 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0 ${
                 showFilters || activeFilterCount > 0
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              <AdjustmentsHorizontalIcon className="w-4 h-4" />
-              Filters
+              <AdjustmentsHorizontalIcon className="w-3 h-3" />
+              <span>Filters</span>
               {activeFilterCount > 0 && (
-                <span className="bg-white text-blue-600 text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                <span className="bg-white text-blue-600 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                   {activeFilterCount}
                 </span>
               )}
@@ -254,13 +254,13 @@ export default function BrowsePage() {
               <button
                 key={cat.value}
                 onClick={() => handleFilterChange('category', cat.value)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all flex-shrink-0 ${
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0 ${
                   filters.category === cat.value
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                <span>{cat.icon}</span>
+                <span className="text-sm">{cat.icon}</span>
                 <span>{cat.label}</span>
               </button>
             ))}
@@ -277,15 +277,15 @@ export default function BrowsePage() {
               transition={{ duration: 0.2 }}
               className="overflow-hidden border-t border-gray-100"
             >
-              <div className="max-w-7xl mx-auto px-4 py-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="max-w-7xl mx-auto px-2 py-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
                   {/* Condition */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Condition</label>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-0.5">Condition</label>
                     <select
                       value={filters.condition}
                       onChange={(e) => handleFilterChange('condition', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
                       {conditions.map((c) => (
                         <option key={c.value} value={c.value}>{c.label}</option>
@@ -295,47 +295,47 @@ export default function BrowsePage() {
 
                   {/* Min Price */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Min Price</label>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-0.5">Min Price</label>
                     <input
                       type="number"
                       placeholder="$0"
                       value={filters.minPrice}
                       onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
                   {/* Max Price */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Max Price</label>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-0.5">Max Price</label>
                     <input
                       type="number"
                       placeholder="$500"
                       value={filters.maxPrice}
                       onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
                   {/* City */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">City</label>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-0.5">City</label>
                     <input
                       type="text"
                       placeholder="Any city"
                       value={filters.city}
                       onChange={(e) => handleFilterChange('city', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
                   {/* Sort By */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Sort By</label>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-0.5">Sort By</label>
                     <select
                       value={filters.sortBy}
                       onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
                       {sortOptions.map((s) => (
                         <option key={s.value} value={s.value}>{s.label}</option>
@@ -347,10 +347,10 @@ export default function BrowsePage() {
                   <div className="flex items-end">
                     <button
                       onClick={clearFilters}
-                      className="w-full px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-1"
+                      className="w-full px-2 py-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors flex items-center justify-center gap-0.5"
                     >
-                      <XMarkIcon className="w-4 h-4" />
-                      Clear All
+                      <XMarkIcon className="w-3 h-3" />
+                      <span>Clear</span>
                     </button>
                   </div>
                 </div>
@@ -361,14 +361,14 @@ export default function BrowsePage() {
       </div>
 
       {/* Results */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-2 py-2">
         {/* Results Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-gray-600">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-xs text-gray-600">
             {loading ? 'Loading...' : `${gear.length} items found`}
           </div>
           {filters.query && (
-            <div className="text-sm text-gray-500">
+            <div className="text-xs text-gray-500">
               Results for "<span className="font-medium text-gray-900">{filters.query}</span>"
             </div>
           )}
@@ -389,14 +389,14 @@ export default function BrowsePage() {
 
         {/* Loading State */}
         {loading && gear.length === 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {[...Array(10)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl overflow-hidden shadow-sm animate-pulse">
-                <div className="h-36 bg-gray-200" />
-                <div className="p-3 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 rounded w-1/2" />
-                  <div className="h-6 bg-gray-200 rounded w-1/3 mt-2" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg overflow-hidden shadow-sm animate-pulse">
+                <div className="h-28 bg-gray-200" />
+                <div className="p-2 space-y-1">
+                  <div className="h-3 bg-gray-200 rounded w-3/4" />
+                  <div className="h-2.5 bg-gray-200 rounded w-1/2" />
+                  <div className="h-5 bg-gray-200 rounded w-1/3 mt-1" />
                 </div>
               </div>
             ))}
@@ -407,7 +407,7 @@ export default function BrowsePage() {
         {!error && gear.length > 0 && (
           <motion.div
             layout
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2"
           >
             {gear.map((item, index) => (
               <GearCard key={item.id} gear={item} index={index} />
@@ -420,16 +420,16 @@ export default function BrowsePage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-16"
+            className="text-center py-8"
           >
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CameraIcon className="w-10 h-10 text-gray-400" />
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
+              <CameraIcon className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No gear found</h3>
-            <p className="text-gray-500 mb-6">Try adjusting your filters or search query</p>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">No gear found</h3>
+            <p className="text-sm text-gray-500 mb-3">Try adjusting your filters or search query</p>
             <button
               onClick={clearFilters}
-              className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+              className="px-4 py-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors text-sm"
             >
               Clear Filters
             </button>
@@ -438,13 +438,13 @@ export default function BrowsePage() {
 
         {/* Load More */}
         {hasMore && gear.length > 0 && (
-          <div className="text-center py-8">
+          <div className="text-center py-4">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={loadMore}
               disabled={loading}
-              className="px-8 py-3 bg-white border border-gray-200 text-gray-700 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50 font-medium shadow-sm"
+              className="px-6 py-2 bg-white border border-gray-200 text-gray-700 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50 font-medium shadow-sm text-sm"
             >
               {loading ? 'Loading...' : 'Load More'}
             </motion.button>
