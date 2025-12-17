@@ -27,10 +27,10 @@ export default function Layout({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden text-xs">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden text-sm">
       {showHeader && <Header />}
       <main className={`flex-1 overflow-auto ${className}`}>
-        <div className={`mx-auto px-1 sm:px-1.5 lg:px-2 py-1 ${maxWidthStyles[maxWidth]}`}>
+        <div className={`mx-auto px-2 sm:px-4 lg:px-6 py-4 ${maxWidthStyles[maxWidth]}`}>
           {children}
         </div>
       </main>
@@ -69,11 +69,11 @@ export function PageLayout({
                       </svg>
                     )}
                     {crumb.href ? (
-                      <a href={crumb.href} className="text-[10px] font-medium text-gray-400 hover:text-gray-300">
+                      <a href={crumb.href} className="text-sm font-medium text-gray-500 hover:text-gray-700">
                         {crumb.label}
                       </a>
                     ) : (
-                      <span className="text-[10px] font-medium text-gray-200">{crumb.label}</span>
+                      <span className="text-sm font-medium text-gray-900">{crumb.label}</span>
                     )}
                   </li>
                 ))}
@@ -83,8 +83,8 @@ export function PageLayout({
 
           <div className="flex items-center justify-between">
             <div>
-              {title && <h1 className="text-lg font-bold text-white">{title}</h1>}
-              {subtitle && <p className="mt-0.5 text-[10px] text-gray-500">{subtitle}</p>}
+              {title && <h1 className="text-2xl font-bold text-gray-900">{title}</h1>}
+              {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
             </div>
             {actions && <div>{actions}</div>}
           </div>

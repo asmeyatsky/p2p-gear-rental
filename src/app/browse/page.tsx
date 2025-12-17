@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -77,7 +77,7 @@ const sortOptions = [
   { value: 'rating', label: 'Highest Rated' },
 ];
 
-export default function BrowsePage() {
+function BrowsePageContent() {
   const searchParams = useSearchParams();
   const [gear, setGear] = useState<GearItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -452,5 +452,40 @@ export default function BrowsePage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function BrowsePageLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
+        <div className="max-w-7xl mx-auto px-1 py-1.5">
+          <div className="h-8 animate-pulse" />
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto px-1 py-4">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1">
+          {[...Array(12)].map((_, i) => (
+            <div key={i} className="bg-white rounded-lg overflow-hidden shadow-sm animate-pulse">
+              <div className="h-28 bg-gray-200" />
+              <div className="p-2 space-y-1">
+                <div className="h-3 bg-gray-200 rounded w-3/4" />
+                <div className="h-2.5 bg-gray-200 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function BrowsePage() {
+  return (
+    <Suspense fallback={<BrowsePageLoading />}>
+      <BrowsePageContent />
+    </Suspense>
   );
 }

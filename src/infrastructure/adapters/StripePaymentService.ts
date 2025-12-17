@@ -10,7 +10,7 @@ export class StripePaymentService implements IPaymentService {
       throw new Error('Missing Stripe secret key');
     }
     this.stripe = new Stripe(stripeKey, {
-      apiVersion: '2025-07-30.basil',
+      apiVersion: '2025-08-27.basil',
     });
   }
 

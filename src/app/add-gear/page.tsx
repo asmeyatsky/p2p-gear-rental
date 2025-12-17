@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../components/auth/AuthProvider';
@@ -13,7 +13,7 @@ import Card from '../../components/ui/Card';
 import Layout from '../../components/ui/Layout';
 
 export default function AddGearPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const [title, setTitle] = useState('');
@@ -30,9 +30,20 @@ export default function AddGearPage() {
   const [condition, setCondition] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (!user) {
-    router.push('/auth/login');
-    return null;
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading || !user) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        </div>
+      </Layout>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,28 +94,28 @@ export default function AddGearPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '4s' }} />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '4s' }} />
       </div>
 
-      <div className="relative z-10 px-1 py-1 min-h-screen">
+      <div className="relative z-10 px-4 py-8 min-h-screen">
         <div className="max-w-3xl mx-auto">
-          <div className="mb-2">
-            <h1 className="text-xl font-bold text-white">List Your Gear</h1>
-            <p className="mt-0.5 text-xs text-gray-400">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">List Your Gear</h1>
+            <p className="mt-2 text-gray-600">
               Share your photography and videography equipment with the community
             </p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 p-2">
-            <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Information */}
               <div>
-                <h2 className="text-sm font-semibold text-white mb-2">Basic Information</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
                 <div className="space-y-3">
                   <Input
                     label="Gear Title"
@@ -119,7 +130,7 @@ export default function AddGearPage() {
                   />
 
                   <div>
-                    <label htmlFor="description" className="block text-xs font-medium text-gray-300 mb-0.5">
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                       Description
                     </label>
                     <textarea
@@ -127,25 +138,25 @@ export default function AddGearPage() {
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       required
-                      rows={3}
-                      className="block w-full rounded border border-white/20 bg-white/10 text-xs text-white placeholder:text-gray-500 focus:ring-1 focus:ring-white/50 focus:border-white/50 w-full"
+                      rows={4}
+                      className="block w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-3"
                       placeholder="Describe your gear, its condition, what's included, and any special features..."
                     />
-                    <p className="mt-0.5 text-[10px] text-gray-500">
+                    <p className="mt-1 text-sm text-gray-500">
                       Include details about condition, accessories, and usage guidelines
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="category" className="block text-xs font-medium text-gray-300 mb-0.5">
+                      <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
                         Category
                       </label>
                       <select
                         id="category"
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="block w-full rounded border border-white/20 bg-white/10 text-xs text-white placeholder:text-gray-500 focus:ring-1 focus:ring-white/50 focus:border-white/50 w-full"
+                        className="block w-full rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-3"
                       >
                         <option value="">Select a category</option>
                         <option value="cameras">📷 Cameras</option>
@@ -160,14 +171,14 @@ export default function AddGearPage() {
                     </div>
 
                     <div>
-                      <label htmlFor="condition" className="block text-xs font-medium text-gray-300 mb-0.5">
+                      <label htmlFor="condition" className="block text-sm font-medium text-gray-700 mb-1">
                         Condition
                       </label>
                       <select
                         id="condition"
                         value={condition}
                         onChange={(e) => setCondition(e.target.value)}
-                        className="block w-full rounded border border-white/20 bg-white/10 text-xs text-white placeholder:text-gray-500 focus:ring-1 focus:ring-white/50 focus:border-white/50 w-full"
+                        className="block w-full rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-3"
                       >
                         <option value="">Select condition</option>
                         <option value="new">✨ New - Never used</option>
@@ -204,8 +215,8 @@ export default function AddGearPage() {
               </div>
 
               {/* Pricing */}
-              <div className="border-t border-white/10 pt-2">
-                <h2 className="text-sm font-semibold text-white mb-2">Pricing</h2>
+              <div className="border-t border-gray-200 pt-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Pricing</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Input
                     label="Daily Rate"
@@ -250,8 +261,8 @@ export default function AddGearPage() {
               </div>
 
               {/* Location */}
-              <div className="border-t border-white/10 pt-2">
-                <h2 className="text-sm font-semibold text-white mb-2">Location</h2>
+              <div className="border-t border-gray-200 pt-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Location</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Input
                     label="City"
@@ -286,9 +297,9 @@ export default function AddGearPage() {
               </div>
 
               {/* Images */}
-              <div className="border-t border-white/10 pt-2">
-                <h2 className="text-sm font-semibold text-white mb-2">Photos</h2>
-                <p className="text-xs text-gray-400 mb-2">
+              <div className="border-t border-gray-200 pt-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Photos</h2>
+                <p className="text-sm text-gray-600 mb-4">
                   Add high-quality photos to showcase your gear. The first image will be the main thumbnail.
                 </p>
                 <ImageUpload
@@ -300,11 +311,11 @@ export default function AddGearPage() {
               </div>
 
               {/* Submit Button */}
-              <div className="border-t border-white/10 pt-2">
+              <div className="border-t border-gray-200 pt-6">
                 <div className="flex items-center justify-between">
-                  <div className="text-[10px] text-gray-500">
+                  <div className="text-sm text-gray-500">
                     By listing your gear, you agree to our{' '}
-                    <Link href="/terms-of-service" className="text-blue-400 hover:text-blue-300">
+                    <Link href="/terms-of-service" className="text-purple-600 hover:text-purple-700">
                       Terms of Service
                     </Link>
                   </div>
@@ -312,9 +323,9 @@ export default function AddGearPage() {
                     type="submit"
                     loading={loading}
                     disabled={!title || !description || !dailyRate || !city || !state || images.length === 0}
-                    className="text-xs py-1.5 px-3"
+                    className="px-6 py-3"
                   >
-                    {loading ? 'Publishing...' : 'Publish'}
+                    {loading ? 'Publishing...' : 'Publish Listing'}
                   </Button>
                 </div>
               </div>

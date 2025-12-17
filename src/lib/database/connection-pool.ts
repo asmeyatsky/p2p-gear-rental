@@ -115,35 +115,10 @@ class DatabaseConnectionPool {
   }
 
   // Setup query performance monitoring
-  private setupQueryMonitoring(client: PrismaClient) {
-    if (process.env.NODE_ENV !== 'production') {
-      client.$use(async (params, next) => {
-        const start = Date.now();
-        const result = await next(params);
-        const duration = Date.now() - start;
-
-        // Log slow queries
-        if (duration > 1000) {
-          logger.warn('Slow database query detected', {
-            model: params.model,
-            action: params.action,
-            duration,
-            args: this.sanitizeQueryArgs(params.args)
-          });
-        }
-
-        // Log all queries in development
-        if (process.env.NODE_ENV === 'development' && duration > 100) {
-          logger.debug('Database query', {
-            model: params.model,
-            action: params.action,
-            duration
-          });
-        }
-
-        return result;
-      });
-    }
+  // Note: $use middleware was deprecated in Prisma 5+
+  // Query monitoring is now handled via Prisma Client extensions or external monitoring
+  private setupQueryMonitoring(_client: PrismaClient) {
+    // Monitoring handled elsewhere - keeping method for interface compatibility
   }
 
   // Sanitize query arguments for logging (remove sensitive data)

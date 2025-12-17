@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from './auth/AuthProvider';
-import Button from './ui/Button';
 import { Container } from './ui/Layout';
+import { CameraIcon } from '@heroicons/react/24/outline';
 
 // Menu icons
 const MenuIcon = () => (
@@ -41,12 +41,12 @@ export default function Header() {
 
   const navLinks = [
     { href: '/browse', label: 'Browse Gear' },
-    { href: '/about', label: 'About' },
+    { href: '/add-gear', label: 'List Your Gear' },
+    { href: '/about', label: 'How It Works' },
     { href: '/contact', label: 'Contact' }
   ];
 
   const userLinks = user ? [
-    { href: '/add-gear', label: 'List Your Gear' },
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/my-rentals', label: 'My Rentals' },
     { href: '/profile', label: 'Profile' }
@@ -55,25 +55,27 @@ export default function Header() {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <Container>
-        <div className="h-8 flex items-center justify-between">
+        <div className="h-14 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
             <Link
               href="/"
-              className="flex items-center space-x-1 text-sm font-bold text-gray-900 hover:text-primary-600 transition-colors"
+              className="flex items-center space-x-2 text-xl font-bold text-gray-900 hover:text-purple-600 transition-colors"
             >
-              <span className="text-primary-600 text-xs">⚙️</span>
-              <span className="text-xs">GearShare</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <CameraIcon className="w-6 h-6 text-white" />
+              </div>
+              <span>GearShare</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-4">
+          <nav className="hidden lg:flex items-center space-x-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-[10px] text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
                 {link.label}
               </Link>
@@ -81,40 +83,40 @@ export default function Header() {
           </nav>
 
           {/* Desktop Auth/User Menu */}
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden lg:flex items-center space-x-3">
             {user ? (
               <div className="relative">
                 <button
                   onClick={toggleUserMenu}
-                  className="flex items-center space-x-0.5 text-[10px] text-gray-600 hover:text-gray-900 px-1.5 py-0.5 rounded hover:bg-gray-100 transition-colors"
+                  className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                   aria-expanded={isUserMenuOpen}
                   aria-haspopup="true"
                 >
                   <UserIcon />
-                  <span className="font-medium text-[9px]">{user.email?.split('@')[0] || 'User'}</span>
+                  <span className="font-medium">{user.email?.split('@')[0] || 'User'}</span>
                   <ChevronDownIcon />
                 </button>
 
                 {/* User Dropdown Menu */}
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-0.5 w-32 bg-white rounded shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     {userLinks.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="block px-2 py-1 text-[10px] text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       >
                         {link.label}
                       </Link>
                     ))}
-                    <hr className="my-0.5 border-gray-200" />
+                    <hr className="my-2 border-gray-200" />
                     <button
                       onClick={() => {
                         signOut();
                         setIsUserMenuOpen(false);
                       }}
-                      className="block w-full text-left px-2 py-1 text-[10px] text-red-600 hover:bg-red-50 hover:text-red-700"
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700"
                     >
                       Sign Out
                     </button>
@@ -122,17 +124,18 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-3">
                 <Link
                   href="/auth/login"
-                  className="text-[10px] text-gray-600 hover:text-gray-900 font-medium px-1.5 py-0.5 rounded hover:bg-gray-100 transition-colors"
+                  className="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   Sign In
                 </Link>
-                <Link href="/auth/signup">
-                  <Button size="sm" variant="primary" className="text-[10px] px-1.5 py-0.5">
-                    Join
-                  </Button>
+                <Link
+                  href="/auth/signup"
+                  className="inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500 px-4 py-2 text-sm"
+                >
+                  Get Started
                 </Link>
               </div>
             )}
