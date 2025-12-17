@@ -27,10 +27,10 @@ export default function Layout({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden text-sm">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden text-xs">
       {showHeader && <Header />}
       <main className={`flex-1 overflow-auto ${className}`}>
-        <div className={`mx-auto px-2 sm:px-3 lg:px-4 py-2 ${maxWidthStyles[maxWidth]}`}>
+        <div className={`mx-auto px-1 sm:px-1.5 lg:px-2 py-1 ${maxWidthStyles[maxWidth]}`}>
           {children}
         </div>
       </main>
@@ -57,34 +57,34 @@ export function PageLayout({
   return (
     <Layout>
       {(title || subtitle || actions || breadcrumbs) && (
-        <div className="mb-8">
+        <div className="mb-4">
           {breadcrumbs && (
-            <nav className="flex mb-4" aria-label="Breadcrumb">
-              <ol className="flex items-center space-x-4">
+            <nav className="flex mb-2" aria-label="Breadcrumb">
+              <ol className="flex items-center space-x-2">
                 {breadcrumbs.map((crumb, index) => (
                   <li key={index} className="flex">
                     {index > 0 && (
-                      <svg className="flex-shrink-0 h-4 w-4 text-gray-400 mx-4" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="flex-shrink-0 h-3 w-3 text-gray-400 mx-2" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
                     {crumb.href ? (
-                      <a href={crumb.href} className="text-sm font-medium text-gray-500 hover:text-gray-700">
+                      <a href={crumb.href} className="text-xs font-medium text-gray-600 hover:text-gray-800">
                         {crumb.label}
                       </a>
                     ) : (
-                      <span className="text-sm font-medium text-gray-900">{crumb.label}</span>
+                      <span className="text-xs font-medium text-gray-900">{crumb.label}</span>
                     )}
                   </li>
                 ))}
               </ol>
             </nav>
           )}
-          
+
           <div className="flex items-center justify-between">
             <div>
-              {title && <h1 className="text-3xl font-bold text-gray-900">{title}</h1>}
-              {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
+              {title && <h1 className="text-xl font-bold text-gray-900">{title}</h1>}
+              {subtitle && <p className="mt-0.5 text-xs text-gray-700">{subtitle}</p>}
             </div>
             {actions && <div>{actions}</div>}
           </div>
@@ -115,7 +115,7 @@ export function Container({
   };
 
   return (
-    <div className={`mx-auto px-2 sm:px-3 lg:px-4 ${maxWidthStyles[size]} ${className}`}>
+    <div className={`mx-auto px-1 sm:px-1.5 lg:px-2 ${maxWidthStyles[size]} ${className}`}>
       {children}
     </div>
   );
