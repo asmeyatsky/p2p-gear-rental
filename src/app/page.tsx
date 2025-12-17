@@ -61,10 +61,10 @@ export default function Home() {
             <span className="text-lg font-bold text-white">GearShare</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/browse" className="text-xs text-gray-300 hover:text-white transition-colors">
+            <Link href="/browse" className="text-xs text-white hover:text-gray-300 transition-colors">
               Browse
             </Link>
-            <Link href="/auth/login" className="text-xs text-gray-300 hover:text-white transition-colors">
+            <Link href="/auth/login" className="text-xs text-white hover:text-gray-300 transition-colors">
               Sign In
             </Link>
             <Link
@@ -93,7 +93,7 @@ export default function Home() {
               className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-sm px-2 py-1 rounded-full mb-2 border border-white/20"
             >
               <SparklesIcon className="w-3.5 h-3.5 text-yellow-400" />
-              <span className="text-xs text-gray-200">The #1 Gear Rental Platform</span>
+              <span className="text-xs text-white">The #1 Gear Rental Platform</span>
             </motion.div>
 
             <h1 className="text-2xl md:text-4xl font-bold text-white mb-2 leading-tight">
@@ -104,7 +104,7 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="text-xs text-gray-400 max-w-md mx-auto mb-3">
+            <p className="text-xs text-white max-w-md mx-auto mb-3">
               Access professional cameras, lenses, and equipment from local owners.
               Save money, reduce waste, and create stunning content.
             </p>
@@ -155,7 +155,7 @@ export default function Home() {
               >
                 <stat.icon className="w-4 h-4 text-purple-400 mx-auto mb-1" />
                 <div className="text-sm font-bold text-white">{stat.value}</div>
-                <div className="text-[9px] text-gray-400">{stat.label}</div>
+                <div className="text-[9px] text-white">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
@@ -167,7 +167,7 @@ export default function Home() {
             transition={{ delay: 0.5 }}
             className="mb-6"
           >
-            <h2 className="text-center text-[9px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+            <h2 className="text-center text-[9px] font-semibold text-white uppercase tracking-wider mb-2">
               Browse by Category
             </h2>
             <div className="grid grid-cols-3 md:grid-cols-6 gap-1 max-w-4xl mx-auto">
@@ -186,7 +186,7 @@ export default function Home() {
                     <div className={`text-lg mb-0.5 group-hover:scale-110 transition-transform`}>
                       {cat.icon}
                     </div>
-                    <div className="text-[9px] text-gray-300 font-medium">{cat.name}</div>
+                    <div className="text-[9px] text-white font-medium">{cat.name}</div>
                   </Link>
                 </motion.div>
               ))}
@@ -232,7 +232,7 @@ export default function Home() {
                     <div className="w-5 h-5 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-[10px] font-bold text-blue-400">{i + 1}</span>
                     </div>
-                    <span className="text-xs text-gray-300">{step}</span>
+                    <span className="text-xs text-white">{step}</span>
                   </div>
                 ))}
               </div>
@@ -270,7 +270,7 @@ export default function Home() {
                     <div className="w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-[10px] font-bold text-green-400">{i + 1}</span>
                     </div>
-                    <span className="text-xs text-gray-300">{step}</span>
+                    <span className="text-xs text-white">{step}</span>
                   </div>
                 ))}
               </div>
@@ -330,7 +330,7 @@ export default function Home() {
                 >
                   <item.icon className={`w-8 h-8 ${item.color} mx-auto mb-2.5`} />
                   <h3 className="text-white font-semibold text-sm mb-0.5">{item.title}</h3>
-                  <p className="text-xs text-gray-400">{item.desc}</p>
+                  <p className="text-xs text-white">{item.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -349,7 +349,7 @@ export default function Home() {
           <h2 className="text-lg md:text-xl font-bold text-white mb-2">
             Ready to Get Started?
           </h2>
-          <p className="text-xs text-gray-400 mb-4">
+          <p className="text-xs text-white mb-4">
             Join thousands of creators who rent and share gear on GearShare
           </p>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -371,12 +371,13 @@ export default function Home() {
             <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <CameraIcon className="w-3 h-3 text-white" />
             </div>
-            <span className="text-xs text-gray-400">© 2024 GearShare</span>
+            <span className="text-xs text-white">© 2024 GearShare</span>
           </div>
-          <div className="flex items-center gap-4 text-xs text-gray-400">
-            <Link href="/about" className="hover:text-white transition-colors">About</Link>
-            <Link href="/terms-of-service" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy</Link>
+          <div className="flex items-center gap-4 text-xs text-white">
+            <Link href="/about" className="hover:text-gray-300 transition-colors">About</Link>
+            <Link href="/terms-of-service" className="hover:text-gray-300 transition-colors">Terms</Link>
+            <Link href="/privacy-policy" className="hover:text-gray-300 transition-colors">Privacy</Link>
+          </div>
           </div>
         </div>
       </footer>
