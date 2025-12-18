@@ -7,6 +7,9 @@ import { compressImage, validateImageFile } from '@/lib/image-utils';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 
+// Use local storage in development, Supabase in production
+const USE_LOCAL_STORAGE = process.env.NODE_ENV === 'development';
+
 interface ImageUploadProps {
   onImagesChange: (imageUrls: string[]) => void;
   existingImages?: string[];
@@ -66,7 +69,25 @@ export default function ImageUpload({
     }
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
+  const uploadImageLocal = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Upload failed');
+    }
+
+    const data = await response.json();
+    return data.url;
+  };
+
+  const uploadImageSupabase = async (file: File): Promise<string> => {
     const uploadId = uuidv4();
     const fileExt = file.name.split('.').pop();
     const fileName = `${uploadId}.${fileExt}`;
@@ -89,6 +110,13 @@ export default function ImageUpload({
       .getPublicUrl(filePath);
 
     return publicUrl;
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    if (USE_LOCAL_STORAGE) {
+      return uploadImageLocal(file);
+    }
+    return uploadImageSupabase(file);
   };
 
   const handleFileSelect = async (files: FileList | null) => {
@@ -178,21 +206,47 @@ export default function ImageUpload({
     }
   };
 
+  const removeImageLocal = async (imageUrl: string) => {
+    // Extract filename from URL (e.g., /uploads/gear-images/uuid.jpg)
+    const urlParts = imageUrl.split('/');
+    const fileName = urlParts[urlParts.length - 1];
+
+    const response = await fetch(`/api/upload?fileName=${encodeURIComponent(fileName)}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Delete failed');
+    }
+  };
+
+  const removeImageSupabase = async (imageUrl: string) => {
+    // Extract file path from URL to delete from storage
+    const urlParts = imageUrl.split('/');
+    const fileName = urlParts[urlParts.length - 1];
+    const filePath = `gear-images/${fileName}`;
+
+    await supabase.storage
+      .from('images')
+      .remove([filePath]);
+  };
+
   const removeImage = async (imageUrl: string) => {
     try {
-      // Extract file path from URL to delete from storage
-      const urlParts = imageUrl.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      const filePath = `gear-images/${fileName}`;
+      // Check if it's a local URL or Supabase URL
+      const isLocalUrl = imageUrl.startsWith('/uploads/');
 
-      await supabase.storage
-        .from('images')
-        .remove([filePath]);
+      if (isLocalUrl) {
+        await removeImageLocal(imageUrl);
+      } else {
+        await removeImageSupabase(imageUrl);
+      }
 
       const newImages = images.filter(url => url !== imageUrl);
       setImages(newImages);
       onImagesChange(newImages);
-      
+
       toast.success('Image removed successfully');
     } catch (error) {
       toast.error((error as Error)?.message || 'Failed to remove image');
@@ -304,11 +358,12 @@ export default function ImageUpload({
           <h4 className="text-sm font-medium text-gray-700">Uploaded Images</h4>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {images.map((imageUrl, index) => (
-              <div key={index} className="relative group">
+              <div key={index} className="relative group aspect-square">
                 <Image
                   src={imageUrl}
                   alt={`Gear image ${index + 1}`}
                   fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-cover rounded-lg border border-gray-200"
                 />
                 <button

@@ -42,4 +42,6 @@ next-env.d.ts
 
 /src/generated/prisma
 
-/src/generated/prisma
+# Local uploads (keep .gitkeep but ignore actual uploads)
+/public/uploads/gear-images/*
+!/public/uploads/gear-images/.gitkeep

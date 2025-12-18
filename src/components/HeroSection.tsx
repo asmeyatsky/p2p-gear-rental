@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -12,25 +11,7 @@ import {
   StarIcon,
   ArrowRightIcon,
   CheckCircleIcon,
-  UserIcon,
-  HomeIcon,
-  AcademicCapIcon,
-  PhoneIcon,
 } from '@heroicons/react/24/outline';
-
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5 }
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
 
 export default function HeroSection() {
   const categories = [
@@ -104,24 +85,46 @@ export default function HeroSection() {
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
-            {[
-              { value: '10K+', label: 'Gear Items', icon: CameraIcon },
-              { value: '5K+', label: 'Happy Renters', icon: StarIcon },
-              { value: '2K+', label: 'Owners Earning', icon: CurrencyDollarIcon },
-              { value: '100+', label: 'Cities', icon: MapPinIcon },
-            ].map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center hover:shadow-md transition-shadow"
-              >
-                {React.createElement(stat.icon, { className: "w-6 h-6 text-purple-500 mx-auto mb-2" })}
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                <div className="text-sm text-gray-500">{stat.label}</div>
-              </motion.div>
-            ))}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0 }}
+              className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center hover:shadow-md transition-shadow"
+            >
+              <CameraIcon className="w-6 h-6 text-purple-500 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-900">10K+</div>
+              <div className="text-sm text-gray-500">Gear Items</div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center hover:shadow-md transition-shadow"
+            >
+              <StarIcon className="w-6 h-6 text-purple-500 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-900">5K+</div>
+              <div className="text-sm text-gray-500">Happy Renters</div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center hover:shadow-md transition-shadow"
+            >
+              <CurrencyDollarIcon className="w-6 h-6 text-purple-500 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-900">2K+</div>
+              <div className="text-sm text-gray-500">Owners Earning</div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center hover:shadow-md transition-shadow"
+            >
+              <MapPinIcon className="w-6 h-6 text-purple-500 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-900">100+</div>
+              <div className="text-sm text-gray-500">Cities</div>
+            </motion.div>
           </div>
 
           {/* Categories */}
@@ -264,44 +267,45 @@ export default function HeroSection() {
               Why Choose GearShare?
             </h2>
             <div className="grid md:grid-cols-3 gap-6">
-              {[
-                {
-                  icon: ShieldCheckIcon,
-                  title: 'Fully Insured',
-                  desc: 'Every rental is protected with comprehensive coverage',
-                  color: 'text-blue-500',
-                  bg: 'bg-blue-100'
-                },
-                {
-                  icon: CheckCircleIcon,
-                  title: 'Verified Users',
-                  desc: 'All owners and renters are identity verified',
-                  color: 'text-green-500',
-                  bg: 'bg-green-100'
-                },
-                {
-                  icon: StarIcon,
-                  title: 'Trusted Reviews',
-                  desc: 'Real reviews from real rentals',
-                  color: 'text-yellow-500',
-                  bg: 'bg-yellow-100'
-                },
-              ].map((item, i) => (
-                <motion.div
-                  key={item.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="text-center"
-                >
-                  <div className={`w-14 h-14 ${item.bg} rounded-xl flex items-center justify-center mx-auto mb-4`}>
-                    {React.createElement(item.icon, { className: `w-7 h-7 ${item.color}` })}
-                  </div>
-                  <h3 className="text-gray-900 font-semibold text-lg mb-2">{item.title}</h3>
-                  <p className="text-gray-600">{item.desc}</p>
-                </motion.div>
-              ))}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0 }}
+                className="text-center"
+              >
+                <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <ShieldCheckIcon className="w-7 h-7 text-blue-500" />
+                </div>
+                <h3 className="text-gray-900 font-semibold text-lg mb-2">Fully Insured</h3>
+                <p className="text-gray-600">Every rental is protected with comprehensive coverage</p>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-center"
+              >
+                <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <CheckCircleIcon className="w-7 h-7 text-green-500" />
+                </div>
+                <h3 className="text-gray-900 font-semibold text-lg mb-2">Verified Users</h3>
+                <p className="text-gray-600">All owners and renters are identity verified</p>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="text-center"
+              >
+                <div className="w-14 h-14 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <StarIcon className="w-7 h-7 text-yellow-500" />
+                </div>
+                <h3 className="text-gray-900 font-semibold text-lg mb-2">Trusted Reviews</h3>
+                <p className="text-gray-600">Real reviews from real rentals</p>
+              </motion.div>
             </div>
           </motion.div>
         </div>
