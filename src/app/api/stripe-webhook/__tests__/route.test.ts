@@ -3,19 +3,23 @@
  */
 
 import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { Rental, Payment, Dispute } from '@/lib/prisma';
+import type { Rental, Payment, Dispute } from '@prisma/client';
+
+// Store for the mock implementation that tests can modify
+let mockConstructEventImpl: jest.Mock = jest.fn();
 
 // Mock all dependencies with factory functions
 jest.mock('stripe', () => {
   return jest.fn().mockImplementation(() => ({
     webhooks: {
-      constructEvent: jest.fn(),
+      get constructEvent() {
+        return mockConstructEventImpl;
+      }
     }
   }));
 });
 
-jest.mock('@/lib/prisma', () => ({
+jest.mock('@/lib/db', () => ({
   prisma: {
     rental: {
       findFirst: jest.fn(),
@@ -32,29 +36,58 @@ jest.mock('@/lib/logger', () => ({
   }
 }));
 
-// Mock middlewares to bypass the complex middleware chain
-jest.mock('@/lib/api-error-handler', () => ({
-  withErrorHandler: (fn) => fn,
-  ValidationError: class ValidationError extends Error {}
+// Mock cache
+jest.mock('@/lib/cache', () => ({
+  CacheManager: {
+    del: jest.fn().mockResolvedValue(true),
+    keys: {
+      rental: {
+        user: (id: string) => `rental:user:${id}`,
+      }
+    }
+  }
 }));
 
+// Mock middlewares - withErrorHandler needs to catch errors and return proper responses
+jest.mock('@/lib/api-error-handler', () => {
+  class ValidationError extends Error {
+    statusCode = 400;
+    constructor(message: string) {
+      super(message);
+      this.name = 'ValidationError';
+    }
+  }
+
+  return {
+    withErrorHandler: (fn: Function) => async (req: any) => {
+      try {
+        return await fn(req);
+      } catch (error: any) {
+        const status = error.statusCode || 500;
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { status, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    },
+    ValidationError
+  };
+});
+
 jest.mock('@/lib/monitoring', () => ({
-  withMonitoring: (fn) => fn,
-  trackDatabaseQuery: jest.fn().mockImplementation((_, queryFn) => queryFn())
+  withMonitoring: (fn: Function) => fn,
+  trackDatabaseQuery: jest.fn().mockImplementation((_: string, queryFn: Function) => queryFn())
 }));
 
 // Import after mocking
 import { POST } from '../route';
 
-const mockPrisma = require('@/lib/prisma').prisma;
-const mockStripe = require('stripe');
-
-// Mock Stripe instance that will be returned by the constructor
-let mockStripeInstance;
+const mockPrisma = require('@/lib/db').prisma;
 
 describe('API /stripe-webhook', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockConstructEventImpl = jest.fn();
 
     // Mock environment variables
     process.env.STRIPE_SECRET_KEY = 'sk_test_123';
@@ -63,9 +96,10 @@ describe('API /stripe-webhook', () => {
 
   describe('POST /api/stripe-webhook', () => {
     const mockSignature = 'mock_signature';
-    
+
     it('should handle successful payment intent', async () => {
       const mockEvent = {
+        id: 'evt_test123',
         type: 'payment_intent.succeeded',
         data: {
           object: {
@@ -82,32 +116,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      const mockRental: Partial<Rental> = {
-        id: 'rental-1',
-        renterId: 'user-1',
-        ownerId: 'user-2',
-        status: 'approved',
-        totalAmount: 250.00
-      };
-
-      const mockUpdatedRental: Partial<Rental & { payments: Partial<Payment>[] }> = {
-        ...mockRental,
-        status: 'confirmed',
-        payments: [
-          {
-            id: 'payment-1',
-            amount: 250.00,
-            status: 'completed',
-            stripePaymentIntentId: 'pi_test123'
-          }
-        ]
-      };
-
-      mockStripe.mockImplementation(() => ({
-        webhooks: {
-          constructEvent: jest.fn().mockReturnValue(mockEvent),
-        }
-      }));
+      mockConstructEventImpl.mockReturnValue(mockEvent);
       mockPrisma.rental.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.rental.findFirst.mockResolvedValue({ renterId: 'user-1', ownerId: 'user-2' });
 
@@ -135,6 +144,7 @@ describe('API /stripe-webhook', () => {
 
     it('should handle failed payment intent', async () => {
       const mockEvent = {
+        id: 'evt_test123',
         type: 'payment_intent.payment_failed',
         data: {
           object: {
@@ -152,11 +162,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripe.mockImplementation(() => ({
-        webhooks: {
-          constructEvent: jest.fn().mockReturnValue(mockEvent),
-        }
-      }));
+      mockConstructEventImpl.mockReturnValue(mockEvent);
       mockPrisma.rental.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.rental.findFirst.mockResolvedValue({ renterId: 'user-1', ownerId: 'user-2' });
 
@@ -184,6 +190,7 @@ describe('API /stripe-webhook', () => {
 
     it('should handle refund events', async () => {
       const mockEvent = {
+        id: 'evt_test123',
         type: 'payment_intent.canceled',
         data: {
           object: {
@@ -198,11 +205,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripe.mockImplementation(() => ({
-        webhooks: {
-          constructEvent: jest.fn().mockReturnValue(mockEvent),
-        }
-      }));
+      mockConstructEventImpl.mockReturnValue(mockEvent);
       mockPrisma.rental.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.rental.findFirst.mockResolvedValue({ renterId: 'user-1', ownerId: 'user-2' });
 
@@ -229,13 +232,9 @@ describe('API /stripe-webhook', () => {
     });
 
     it('should reject requests without valid signature', async () => {
-      mockStripe.mockImplementation(() => ({
-        webhooks: {
-          constructEvent: jest.fn().mockImplementation(() => {
-            throw new Error('Invalid signature');
-          }),
-        }
-      }));
+      mockConstructEventImpl.mockImplementation(() => {
+        throw new Error('Invalid signature');
+      });
 
       const request = new NextRequest('http://localhost:3000/api/stripe-webhook', {
         method: 'POST',
@@ -253,6 +252,7 @@ describe('API /stripe-webhook', () => {
 
     it('should handle unhandled event types gracefully', async () => {
       const mockEvent = {
+        id: 'evt_test123',
         type: 'customer.created',
         data: {
           object: {
@@ -261,13 +261,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripe.mockImplementation(() => ({
-        webhooks: {
-          constructEvent: jest.fn().mockReturnValue(mockEvent),
-        }
-      }));
-      mockPrisma.rental.updateMany.mockResolvedValue({ count: 1 });
-      mockPrisma.rental.findFirst.mockResolvedValue({ renterId: 'user-1', ownerId: 'user-2' });
+      mockConstructEventImpl.mockReturnValue(mockEvent);
 
       const rawBody = JSON.stringify(mockEvent);
       const request = new NextRequest('http://localhost:3000/api/stripe-webhook', {
@@ -286,6 +280,7 @@ describe('API /stripe-webhook', () => {
 
     it('should handle missing rental metadata', async () => {
       const mockEvent = {
+        id: 'evt_test123',
         type: 'payment_intent.succeeded',
         data: {
           object: {
@@ -298,11 +293,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripe.mockImplementation(() => ({
-        webhooks: {
-          constructEvent: jest.fn().mockReturnValue(mockEvent),
-        }
-      }));
+      mockConstructEventImpl.mockReturnValue(mockEvent);
       mockPrisma.rental.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.rental.findFirst.mockResolvedValue({ renterId: 'user-1', ownerId: 'user-2' });
 
@@ -331,6 +322,7 @@ describe('API /stripe-webhook', () => {
 
     it('should handle database errors gracefully', async () => {
       const mockEvent = {
+        id: 'evt_test123',
         type: 'payment_intent.succeeded',
         data: {
           object: {
@@ -345,11 +337,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripe.mockImplementation(() => ({
-        webhooks: {
-          constructEvent: jest.fn().mockReturnValue(mockEvent),
-        }
-      }));
+      mockConstructEventImpl.mockReturnValue(mockEvent);
       mockPrisma.rental.updateMany.mockRejectedValue(new Error('Database error'));
 
       const rawBody = JSON.stringify(mockEvent);
@@ -369,6 +357,7 @@ describe('API /stripe-webhook', () => {
 
     it('should handle non-existent rental', async () => {
       const mockEvent = {
+        id: 'evt_test123',
         type: 'payment_intent.succeeded',
         data: {
           object: {
@@ -383,11 +372,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripe.mockImplementation(() => ({
-        webhooks: {
-          constructEvent: jest.fn().mockReturnValue(mockEvent),
-        }
-      }));
+      mockConstructEventImpl.mockReturnValue(mockEvent);
       mockPrisma.rental.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.rental.findFirst.mockResolvedValue({ renterId: 'user-1', ownerId: 'user-2' });
 
@@ -409,6 +394,7 @@ describe('API /stripe-webhook', () => {
 
     it('should handle payment intent with proper event processing', async () => {
       const mockEvent = {
+        id: 'evt_test123',
         type: 'payment_intent.succeeded',
         data: {
           object: {
@@ -423,11 +409,7 @@ describe('API /stripe-webhook', () => {
         }
       };
 
-      mockStripe.mockImplementation(() => ({
-        webhooks: {
-          constructEvent: jest.fn().mockReturnValue(mockEvent),
-        }
-      }));
+      mockConstructEventImpl.mockReturnValue(mockEvent);
       mockPrisma.rental.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.rental.findFirst.mockResolvedValue({ renterId: 'user-1', ownerId: 'user-2' });
 

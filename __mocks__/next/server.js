@@ -44,7 +44,7 @@ class MockHeaders {
   }
 }
 
-export class NextResponse {
+class NextResponse {
   constructor(body = null, init = {}) {
     this.body = body;
     this.status = init.status || 200;
@@ -104,7 +104,7 @@ export class NextResponse {
   }
 }
 
-export class NextRequest {
+class NextRequest {
   constructor(url, init = {}) {
     this.url = url;
     this.method = init.method || 'GET';
@@ -158,3 +158,8 @@ export class NextRequest {
     });
   }
 }
+
+// Export for both CommonJS and ES modules
+module.exports = { NextRequest, NextResponse };
+module.exports.NextRequest = NextRequest;
+module.exports.NextResponse = NextResponse;

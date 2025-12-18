@@ -2,8 +2,58 @@
  * @jest-environment node
  */
 
+// Mock next/server with inline class definitions
+jest.mock('next/server', () => {
+  class MockHeaders {
+    private _headers: Map<string, string>;
+    constructor(init: Record<string, string> = {}) {
+      this._headers = new Map();
+      for (const [key, value] of Object.entries(init || {})) {
+        this._headers.set(key.toLowerCase(), value);
+      }
+    }
+    get(name: string) { return this._headers.get(name.toLowerCase()) || null; }
+    set(name: string, value: string) { this._headers.set(name.toLowerCase(), value); }
+    has(name: string) { return this._headers.has(name.toLowerCase()); }
+    entries() { return this._headers.entries(); }
+  }
+
+  class MockNextResponse {
+    body: string | null;
+    status: number;
+    headers: MockHeaders;
+    ok: boolean;
+    _jsonBody?: unknown;
+
+    constructor(body: string | null = null, init: { status?: number; headers?: Record<string, string> } = {}) {
+      this.body = body;
+      this.status = init.status || 200;
+      this.headers = new MockHeaders(init.headers || {});
+      this.ok = this.status >= 200 && this.status < 300;
+    }
+
+    static json(body: unknown, init: { status?: number; headers?: Record<string, string> } = {}) {
+      const response = new MockNextResponse(JSON.stringify(body), {
+        ...init,
+        headers: { 'content-type': 'application/json', ...init.headers }
+      });
+      response._jsonBody = body;
+      return response;
+    }
+
+    async json() {
+      if (this._jsonBody !== undefined) return this._jsonBody;
+      try { return JSON.parse(this.body || '{}'); } catch { return {}; }
+    }
+  }
+
+  return {
+    NextRequest: jest.requireActual('next/server').NextRequest,
+    NextResponse: MockNextResponse
+  };
+});
+
 import { NextRequest } from 'next/server';
-import { POST } from '../route';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
 import Stripe from 'stripe';
@@ -15,6 +65,11 @@ jest.mock('@/lib/prisma');
 jest.mock('@/lib/supabase');
 jest.mock('@/lib/logger');
 jest.mock('stripe');
+jest.mock('@/lib/rate-limit');
+jest.mock('@/lib/monitoring');
+
+// Import after mocks are set up
+import { POST } from '../route';
 
 const mockPrisma = jest.mocked(prisma);
 const mockSupabase = jest.mocked(supabase);

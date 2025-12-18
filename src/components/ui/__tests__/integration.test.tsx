@@ -6,8 +6,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import GearCard from '@/components/gear/GearCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { AnimatedCard } from '@/components/ui/animated-card';
 import { GearItem } from '@/types';
 

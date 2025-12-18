@@ -65,23 +65,24 @@ AnimatedForm.Field = ({
   );
 };
 
-AnimatedForm.Input = ({ 
-  id, 
-  label, 
-  required, 
-  placeholder, 
+AnimatedForm.Input = ({
+  id,
+  label,
+  required,
+  placeholder,
   type = 'text',
   className,
-  ...props 
-}: React.InputHTMLAttributes<HTMLInputElement> & { 
-  label: string; 
-  required?: boolean; 
+  ...props
+}: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'id'> & {
+  id: string;
+  label: string;
+  required?: boolean;
   className?: string;
 }) => {
   return (
-    <AnimatedForm.Field 
-      id={id} 
-      label={label} 
+    <AnimatedForm.Field
+      id={id}
+      label={label}
       required={required}
       className={className}
     >

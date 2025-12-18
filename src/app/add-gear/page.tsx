@@ -7,8 +7,8 @@ import { useAuth } from '../../components/auth/AuthProvider';
 import ImageUpload from '../../components/ImageUpload';
 import toast from 'react-hot-toast';
 import { event } from '../../lib/gtag';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
 import Layout from '../../components/ui/Layout';
 
@@ -125,17 +125,21 @@ export default function AddGearPage() {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
                 <div className="space-y-3">
-                  <Input
-                    label="Gear Title"
-                    type="text"
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                    placeholder="e.g., Canon EOS R5 Mirrorless Camera"
-                    helperText="Be specific and descriptive to attract more renters"
-                    className="text-xs"
-                  />
+                  <div>
+                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                      Gear Title
+                    </label>
+                    <Input
+                      type="text"
+                      id="title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
+                      placeholder="e.g., Canon EOS R5 Mirrorless Camera"
+                      className="w-full"
+                    />
+                    <p className="mt-1 text-sm text-gray-500">Be specific and descriptive to attract more renters</p>
+                  </div>
 
                   <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
@@ -199,25 +203,33 @@ export default function AddGearPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Input
-                      label="Brand"
-                      type="text"
-                      id="brand"
-                      value={brand}
-                      onChange={(e) => setBrand(e.target.value)}
-                      placeholder="e.g., Canon, Sony, Nikon"
-                      className="text-xs"
-                    />
+                    <div>
+                      <label htmlFor="brand" className="block text-sm font-medium text-gray-700 mb-1">
+                        Brand
+                      </label>
+                      <Input
+                        type="text"
+                        id="brand"
+                        value={brand}
+                        onChange={(e) => setBrand(e.target.value)}
+                        placeholder="e.g., Canon, Sony, Nikon"
+                        className="w-full"
+                      />
+                    </div>
 
-                    <Input
-                      label="Model"
-                      type="text"
-                      id="model"
-                      value={model}
-                      onChange={(e) => setModel(e.target.value)}
-                      placeholder="e.g., EOS R5, A7 IV"
-                      className="text-xs"
-                    />
+                    <div>
+                      <label htmlFor="model" className="block text-sm font-medium text-gray-700 mb-1">
+                        Model
+                      </label>
+                      <Input
+                        type="text"
+                        id="model"
+                        value={model}
+                        onChange={(e) => setModel(e.target.value)}
+                        placeholder="e.g., EOS R5, A7 IV"
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -226,45 +238,63 @@ export default function AddGearPage() {
               <div className="border-t border-gray-200 pt-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Pricing</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Input
-                    label="Daily Rate"
-                    type="number"
-                    id="dailyRate"
-                    value={dailyRate}
-                    onChange={(e) => setDailyRate(e.target.value)}
-                    required
-                    step="0.01"
-                    placeholder="50.00"
-                    leftIcon={<span className="text-gray-400 text-xs">$</span>}
-                    helperText="Per day rental rate"
-                    className="text-xs"
-                  />
+                  <div>
+                    <label htmlFor="dailyRate" className="block text-sm font-medium text-gray-700 mb-1">
+                      Daily Rate
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                      <Input
+                        type="number"
+                        id="dailyRate"
+                        value={dailyRate}
+                        onChange={(e) => setDailyRate(e.target.value)}
+                        required
+                        step="0.01"
+                        placeholder="50.00"
+                        className="w-full pl-7"
+                      />
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">Per day rental rate</p>
+                  </div>
 
-                  <Input
-                    label="Weekly Rate (Optional)"
-                    type="number"
-                    id="weeklyRate"
-                    value={weeklyRate}
-                    onChange={(e) => setWeeklyRate(e.target.value)}
-                    step="0.01"
-                    placeholder="300.00"
-                    leftIcon={<span className="text-gray-400 text-xs">$</span>}
-                    helperText="Discounted weekly rate"
-                    className="text-xs"
-                  />
+                  <div>
+                    <label htmlFor="weeklyRate" className="block text-sm font-medium text-gray-700 mb-1">
+                      Weekly Rate (Optional)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                      <Input
+                        type="number"
+                        id="weeklyRate"
+                        value={weeklyRate}
+                        onChange={(e) => setWeeklyRate(e.target.value)}
+                        step="0.01"
+                        placeholder="300.00"
+                        className="w-full pl-7"
+                      />
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">Discounted weekly rate</p>
+                  </div>
 
-                  <Input
-                    label="Monthly Rate (Optional)"
-                    type="number"
-                    id="monthlyRate"
-                    value={monthlyRate}
-                    onChange={(e) => setMonthlyRate(e.target.value)}
-                    step="0.01"
-                    placeholder="1000.00"
-                    leftIcon={<span className="text-gray-400 text-xs">$</span>}
-                    helperText="Discounted monthly rate"
-                    className="text-xs"
-                  />
+                  <div>
+                    <label htmlFor="monthlyRate" className="block text-sm font-medium text-gray-700 mb-1">
+                      Monthly Rate (Optional)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                      <Input
+                        type="number"
+                        id="monthlyRate"
+                        value={monthlyRate}
+                        onChange={(e) => setMonthlyRate(e.target.value)}
+                        step="0.01"
+                        placeholder="1000.00"
+                        className="w-full pl-7"
+                      />
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">Discounted monthly rate</p>
+                  </div>
                 </div>
               </div>
 
@@ -322,18 +352,24 @@ export default function AddGearPage() {
                         </p>
                       </div>
 
-                      <Input
-                        label="Replacement Value"
-                        type="number"
-                        id="replacementValue"
-                        value={replacementValue}
-                        onChange={(e) => setReplacementValue(e.target.value)}
-                        step="0.01"
-                        placeholder="2500.00"
-                        leftIcon={<span className="text-gray-400 text-xs">$</span>}
-                        helperText="Full replacement cost if lost/damaged"
-                        className="text-xs"
-                      />
+                      <div>
+                        <label htmlFor="replacementValue" className="block text-sm font-medium text-gray-700 mb-1">
+                          Replacement Value
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                          <Input
+                            type="number"
+                            id="replacementValue"
+                            value={replacementValue}
+                            onChange={(e) => setReplacementValue(e.target.value)}
+                            step="0.01"
+                            placeholder="2500.00"
+                            className="w-full pl-7"
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">Full replacement cost if lost/damaged</p>
+                      </div>
                     </div>
                   )}
 
@@ -354,48 +390,60 @@ export default function AddGearPage() {
               {/* Location */}
               <div className="border-t border-gray-200 pt-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Location</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input
-                    label="City"
-                    type="text"
-                    id="city"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    required
-                    placeholder="e.g., San Francisco"
-                    leftIcon={
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                      City
+                    </label>
+                    <div className="relative">
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                    }
-                    className="text-xs"
-                  />
+                      <Input
+                        type="text"
+                        id="city"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        required
+                        placeholder="e.g., San Francisco"
+                        className="w-full pl-9"
+                      />
+                    </div>
+                  </div>
 
-                  <Input
-                    label="State"
-                    type="text"
-                    id="state"
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    required
-                    placeholder="CA"
-                    maxLength={2}
-                    helperText="2-letter state code"
-                    className="text-xs"
-                  />
+                  <div>
+                    <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+                      State
+                    </label>
+                    <Input
+                      type="text"
+                      id="state"
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      required
+                      placeholder="CA"
+                      maxLength={2}
+                      className="w-full"
+                    />
+                    <p className="mt-1 text-sm text-gray-500">2-letter state code</p>
+                  </div>
 
-                  <Input
-                    label="Zip Code (Optional)"
-                    type="text"
-                    id="zipCode"
-                    value={zipCode}
-                    onChange={(e) => setZipCode(e.target.value)}
-                    placeholder="94102"
-                    maxLength={10}
-                    helperText="For location-based search"
-                    className="text-xs"
-                  />
+                  <div>
+                    <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
+                      Zip Code (Optional)
+                    </label>
+                    <Input
+                      type="text"
+                      id="zipCode"
+                      value={zipCode}
+                      onChange={(e) => setZipCode(e.target.value)}
+                      placeholder="94102"
+                      maxLength={10}
+                      className="w-full"
+                    />
+                    <p className="mt-1 text-sm text-gray-500">For location-based search</p>
+                  </div>
                 </div>
               </div>
 
@@ -424,8 +472,7 @@ export default function AddGearPage() {
                   </div>
                   <Button
                     type="submit"
-                    loading={loading}
-                    disabled={!title || !description || !dailyRate || !city || !state || images.length === 0}
+                    disabled={loading || !title || !description || !dailyRate || !city || !state || images.length === 0}
                     className="px-6 py-3"
                   >
                     {loading ? 'Publishing...' : 'Publish Listing'}

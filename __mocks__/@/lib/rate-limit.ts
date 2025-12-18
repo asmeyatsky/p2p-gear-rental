@@ -47,4 +47,8 @@ export const rateLimitConfig = {
     limiter: new MockRateLimiter(),
     limit: 5,
   },
+  payment: {
+    limiter: new MockRateLimiter(),
+    limit: 10,
+  },
 };

@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 import { Container, Grid } from './ui/Layout';
 
 const footerLinks = {
