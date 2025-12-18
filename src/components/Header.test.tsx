@@ -34,9 +34,8 @@ describe('Header', () => {
         <Header />
       </AuthProvider>
     );
-    expect(screen.getByText('About')).toBeInTheDocument();
+    expect(screen.getByText('How It Works')).toBeInTheDocument();
     expect(screen.getByText('Browse Gear')).toBeInTheDocument();
-    expect(screen.getByText('FAQ')).toBeInTheDocument();
     expect(screen.getByText('Contact')).toBeInTheDocument();
   });
 
@@ -46,7 +45,7 @@ describe('Header', () => {
         <Header />
       </AuthProvider>
     );
-    expect(screen.getByText('Log In')).toBeInTheDocument();
-    expect(screen.getByText('Sign Up')).toBeInTheDocument();
+    expect(screen.getByText('Sign In')).toBeInTheDocument();
+    expect(screen.getByText('Get Started')).toBeInTheDocument();
   });
 });

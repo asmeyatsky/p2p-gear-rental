@@ -1,5 +1,5 @@
-export * from './button';
-export * from './input';
+export * from './Button';
+export * from './Input';
 export * from './dialog';
 export * from './select';
 export * from './animated-modal';

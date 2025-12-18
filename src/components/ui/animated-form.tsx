@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Button } from './button';
-import { Input } from './input';
+import { Button } from './Button';
+import { Input } from './Input';
 import { Label } from '@radix-ui/react-label';
 import { cn } from '@/lib/utils';
 

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from './button';
+import { Button } from './Button';
 import { cn } from '@/lib/utils';
 
 interface AnimatedModalProps {

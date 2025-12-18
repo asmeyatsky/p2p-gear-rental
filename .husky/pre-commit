@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+# Pre-commit hook to prevent breaking changes
+
+echo "Running pre-commit checks to prevent regressions..."
+
+# Run all tests to ensure nothing is broken
+npm test
+
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed! Please fix them before committing."
+  exit 1
+fi
+
+# Check for critical components that must not break
+echo "Checking for critical UI components..."
+
+# Check that essential UI components are still present
+if ! grep -r "motion\." src/components/gear/GearCard.tsx >/dev/null; then
+  echo "❌ Motion component missing from GearCard!"
+  exit 1
+fi
+
+if ! grep -r "shadcn" src/components/ui >/dev/null; then
+  echo "❌ shadcn components missing!"
+  exit 1
+fi
+
+echo "✅ All regression checks passed!"
+exit 0

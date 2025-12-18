@@ -6,8 +6,8 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { event } from '@/lib/gtag';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 export default function SignupPage() {
   const [name, setName] = useState('');

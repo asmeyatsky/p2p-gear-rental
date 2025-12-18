@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import AvailabilityCalendar from '@/components/gear/AvailabilityCalendar';
 
 interface GearDetailsClientProps {
