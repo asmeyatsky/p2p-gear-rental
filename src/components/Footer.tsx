@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Container, Grid } from './ui/Layout';
 
 const footerLinks = {
@@ -38,7 +40,7 @@ export default function Footer() {
                 <span className="text-xl font-bold text-gray-900">GearShare</span>
               </div>
               <p className="text-gray-600 mb-6 max-w-sm">
-                Your trusted marketplace for renting photography and videography equipment. 
+                Your trusted marketplace for renting photography and videography equipment.
                 Connect with local gear owners and access professional equipment affordably.
               </p>
               <div className="flex space-x-4">
@@ -127,14 +129,14 @@ export default function Footer() {
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 lg:max-w-sm">
-                <input
+                <Input
                   type="email"
                   placeholder="Enter your email"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2"
                 />
-                <button className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium whitespace-nowrap">
+                <Button className="whitespace-nowrap">
                   Subscribe
-                </button>
+                </Button>
               </div>
             </div>
           </div>
