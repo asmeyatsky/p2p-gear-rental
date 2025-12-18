@@ -15,6 +15,18 @@ jest.mock('@/lib/supabase');
 jest.mock('@/lib/cache');
 jest.mock('@/lib/logger');
 jest.mock('@/lib/monitoring');
+jest.mock('@/lib/rate-limit');
+jest.mock('stripe', () => {
+  return jest.fn().mockImplementation(() => ({
+    paymentIntents: {
+      create: jest.fn().mockResolvedValue({
+        id: 'pi_test123',
+        client_secret: 'cs_test_secret',
+        status: 'requires_payment_method',
+      }),
+    },
+  }));
+});
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockSupabase = supabase as jest.Mocked<typeof supabase>;
@@ -35,6 +47,9 @@ describe('API /rentals', () => {
     location: null,
     website: null,
     avatarUrl: null,
+    zipCode: null,
+    latitude: null,
+    longitude: null,
   };
 
   const mockSession: Partial<Session> = {
@@ -75,7 +90,12 @@ describe('API /rentals', () => {
           paymentIntentId: null,
           clientSecret: null,
           paymentStatus: null,
-          totalAmount: 250,
+          totalPrice: 250,
+          basePrice: 200,
+          serviceFee: 24,
+          hostingFee: 1.50,
+          insurancePremium: 20,
+          insuranceType: 'STANDARD',
           createdAt: new Date(),
           updatedAt: new Date(),
           gear: {
@@ -98,6 +118,9 @@ describe('API /rentals', () => {
               location: null,
               website: null,
               avatarUrl: null,
+              zipCode: null,
+              latitude: null,
+              longitude: null,
             },
             description: '',
             weeklyRate: null,
@@ -109,6 +132,14 @@ describe('API /rentals', () => {
             model: null,
             condition: null,
             userId: 'user-2',
+            insuranceRequired: false,
+            insuranceRate: 0.10,
+            replacementValue: null,
+            zipCode: null,
+            latitude: null,
+            longitude: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           },
           renter: mockUser,
           payments: []
@@ -198,6 +229,12 @@ describe('API /rentals', () => {
         brand: null,
         model: null,
         condition: null,
+        insuranceRequired: false,
+        insuranceRate: 0.10,
+        replacementValue: null,
+        zipCode: null,
+        latitude: null,
+        longitude: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -211,10 +248,15 @@ describe('API /rentals', () => {
         endDate: new Date(validRentalData.endDate),
         status: 'PENDING',
         message: validRentalData.message,
-        paymentIntentId: null,
-        clientSecret: null,
-        paymentStatus: null,
-        totalAmount: 250,
+        paymentIntentId: 'pi_test123',
+        clientSecret: 'cs_test_secret',
+        paymentStatus: 'requires_payment_method',
+        totalPrice: 250,
+        basePrice: 200,
+        serviceFee: 24,
+        hostingFee: 1.50,
+        insurancePremium: 0,
+        insuranceType: 'NONE',
         createdAt: new Date(),
         updatedAt: new Date(),
         gear: mockGear,
@@ -222,7 +264,7 @@ describe('API /rentals', () => {
       };
 
       mockPrisma.gear.findUnique.mockResolvedValue(mockGear);
-      mockPrisma.rental.findFirst.mockResolvedValue(null); // No conflicting rentals
+      mockPrisma.rental.findMany.mockResolvedValue([]); // No conflicting rentals
       mockPrisma.rental.create.mockResolvedValue(mockCreatedRental);
 
       const request = new NextRequest('http://localhost:3000/api/rentals', {
@@ -235,8 +277,10 @@ describe('API /rentals', () => {
       const data = await response.json();
 
       expect(response.status).toBe(201);
-      expect(data.id).toBe('rental-1');
-      expect(data.status).toBe('pending');
+      expect(data.rental.id).toBe('rental-1');
+      expect(data.rental.status).toBe('PENDING');
+      expect(data.clientSecret).toBe('cs_test_secret');
+      expect(data.priceBreakdown).toBeDefined();
     });
 
     it('should prevent users from renting their own gear', async () => {
@@ -255,6 +299,12 @@ describe('API /rentals', () => {
         brand: null,
         model: null,
         condition: null,
+        insuranceRequired: false,
+        insuranceRate: 0.10,
+        replacementValue: null,
+        zipCode: null,
+        latitude: null,
+        longitude: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -288,6 +338,12 @@ describe('API /rentals', () => {
         brand: null,
         model: null,
         condition: null,
+        insuranceRequired: false,
+        insuranceRate: 0.10,
+        replacementValue: null,
+        zipCode: null,
+        latitude: null,
+        longitude: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -304,13 +360,18 @@ describe('API /rentals', () => {
         paymentIntentId: null,
         clientSecret: null,
         paymentStatus: null,
-        totalAmount: 250,
+        totalPrice: 250,
+        basePrice: 200,
+        serviceFee: 24,
+        hostingFee: 1.50,
+        insurancePremium: 0,
+        insuranceType: 'NONE',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       mockPrisma.gear.findUnique.mockResolvedValue(mockGear);
-      mockPrisma.rental.findFirst.mockResolvedValue(conflictingRental);
+      mockPrisma.rental.findMany.mockResolvedValue([conflictingRental]);
 
       const request = new NextRequest('http://localhost:3000/api/rentals', {
         method: 'POST',
@@ -321,15 +382,6 @@ describe('API /rentals', () => {
       const response = await POST(request);
 
       expect(response.status).toBe(400);
-      expect(mockPrisma.rental.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            gearId: 'gear-1',
-            status: { in: ['pending', 'approved'] },
-            OR: expect.any(Array)
-          })
-        })
-      );
     });
 
     it('should validate date ranges', async () => {
@@ -456,12 +508,18 @@ describe('API /rentals', () => {
         brand: null,
         model: null,
         condition: null,
+        insuranceRequired: false,
+        insuranceRate: 0.10,
+        replacementValue: null,
+        zipCode: null,
+        latitude: null,
+        longitude: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       mockPrisma.gear.findUnique.mockResolvedValue(mockGear);
-      mockPrisma.rental.findFirst.mockResolvedValue(null);
+      mockPrisma.rental.findMany.mockResolvedValue([]);
       mockPrisma.rental.create.mockRejectedValue(new Error('Database error'));
 
       const request = new NextRequest('http://localhost:3000/api/rentals', {

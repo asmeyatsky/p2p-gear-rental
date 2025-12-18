@@ -15,6 +15,8 @@ interface RentalDetails {
     title: string;
     images: string[];
     dailyRate: number;
+    insuranceRequired?: boolean;
+    insuranceRate?: number;
   };
   startDate: string;
   endDate: string;
@@ -22,6 +24,11 @@ interface RentalDetails {
   paymentIntentId?: string;
   clientSecret?: string;
   paymentStatus?: string;
+  totalPrice?: number;
+  basePrice?: number;
+  serviceFee?: number;
+  hostingFee?: number;
+  insurancePremium?: number;
   amount?: number;
 }
 
@@ -235,10 +242,46 @@ export default function ConfirmPaymentPage() {
                       {Math.ceil((new Date(rental.endDate).getTime() - new Date(rental.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
                     </span>
                   </div>
-                  <div className="flex justify-between pt-2 border-t">
+
+                  {/* Price Breakdown */}
+                  <div className="pt-3 mt-3 border-t border-dashed space-y-2">
+                    <div className="text-sm font-medium text-gray-700 mb-2">Price Breakdown</div>
+
+                    {rental.basePrice !== undefined && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Base Rental</span>
+                        <span className="font-medium">${rental.basePrice.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {rental.insurancePremium !== undefined && rental.insurancePremium > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Insurance Protection</span>
+                        <span className="font-medium">${rental.insurancePremium.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {rental.serviceFee !== undefined && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Service Fee (12%)</span>
+                        <span className="font-medium">${rental.serviceFee.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {rental.hostingFee !== undefined && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Technology Fee</span>
+                        <span className="font-medium">${rental.hostingFee.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between pt-3 border-t">
                     <span className="text-lg font-semibold">Total:</span>
                     <span className="text-lg font-semibold text-blue-600">
-                      ${(calculateAmount(rental) / 100).toFixed(2)}
+                      ${rental.totalPrice !== undefined
+                        ? rental.totalPrice.toFixed(2)
+                        : (calculateAmount(rental) / 100).toFixed(2)}
                     </span>
                   </div>
                 </div>

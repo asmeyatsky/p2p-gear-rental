@@ -10,6 +10,7 @@ import { logger } from '@/lib/logger';
 import { searchEngine, SearchOptions } from '@/lib/search-engine';
 import { queryOptimizer } from '@/lib/database/query-optimizer';
 import { executeWithRetry } from '@/lib/database';
+import { calculateDistance } from '@/lib/pricing';
 
 async function handleGetGear(request: NextRequest) {
   // Validate query parameters
@@ -29,7 +30,10 @@ async function handleGetGear(request: NextRequest) {
     city,
     state,
     location,
-    radius,
+    lat,
+    lng,
+    radius = 25,
+    insuranceRequired,
     page,
     limit,
     sortBy,
@@ -47,6 +51,8 @@ async function handleGetGear(request: NextRequest) {
     city,
     state,
     location,
+    lat,
+    lng,
     radius,
     page,
     limit,

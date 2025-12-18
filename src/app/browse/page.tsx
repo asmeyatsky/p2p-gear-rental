@@ -47,8 +47,16 @@ interface SearchFilters {
   maxPrice: string;
   city: string;
   state: string;
+  radius: string;
   sortBy: string;
 }
+
+const radiusOptions = [
+  { value: '10', label: '10 miles' },
+  { value: '25', label: '25 miles' },
+  { value: '50', label: '50 miles' },
+  { value: '100', label: '100 miles' },
+];
 
 const categories = [
   { value: '', label: 'All Categories', icon: '📦' },
@@ -75,6 +83,7 @@ const sortOptions = [
   { value: 'price-low', label: 'Price: Low to High' },
   { value: 'price-high', label: 'Price: High to Low' },
   { value: 'rating', label: 'Highest Rated' },
+  { value: 'distance', label: 'Nearest' },
 ];
 
 function BrowsePageContent() {
@@ -93,6 +102,7 @@ function BrowsePageContent() {
     maxPrice: '',
     city: '',
     state: '',
+    radius: '25',
     sortBy: 'newest',
   });
   const initialFetchDone = useRef(false);
@@ -149,6 +159,7 @@ function BrowsePageContent() {
       maxPrice: searchParams?.get('maxPrice') || '',
       city: searchParams?.get('city') || '',
       state: searchParams?.get('state') || '',
+      radius: searchParams?.get('radius') || '25',
       sortBy: searchParams?.get('sortBy') || 'newest',
     };
 
@@ -175,6 +186,7 @@ function BrowsePageContent() {
       maxPrice: '',
       city: '',
       state: '',
+      radius: '25',
       sortBy: 'newest',
     };
     handleFiltersChange(clearedFilters);
@@ -262,7 +274,7 @@ function BrowsePageContent() {
               className="overflow-hidden border-t border-gray-100"
             >
               <div className="max-w-7xl mx-auto px-2 py-2">
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1">
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-1">
                   {/* Condition */}
                   <div>
                     <label className="block text-[10px] font-medium text-gray-500 mb-0.5">Cond</label>
@@ -311,6 +323,20 @@ function BrowsePageContent() {
                       onChange={(e) => handleFilterChange('city', e.target.value)}
                       className="w-full px-1.5 py-0.5 text-[9px] text-gray-700 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
+                  </div>
+
+                  {/* Radius */}
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-0.5">Radius</label>
+                    <select
+                      value={filters.radius}
+                      onChange={(e) => handleFilterChange('radius', e.target.value)}
+                      className="w-full px-1.5 py-0.5 text-[9px] text-gray-700 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      {radiusOptions.map((r) => (
+                        <option key={r.value} value={r.value}>{r.label}</option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Sort By */}

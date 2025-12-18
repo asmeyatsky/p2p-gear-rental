@@ -28,6 +28,9 @@ model User {
   // Location
   city              String?
   state             String?
+  zipCode           String?
+  latitude          Float?
+  longitude         Float?
 
   // Stripe Connect for payouts
   stripeAccountId   String?           // Stripe Connect account for receiving payments
@@ -72,6 +75,9 @@ model Gear {
   images      String @default("[]")
   city        String
   state       String
+  zipCode     String?
+  latitude    Float?
+  longitude   Float?
   category    String?
   brand       String?
   model       String?
@@ -80,6 +86,7 @@ model Gear {
   // Insurance & Protection
   replacementValue  Float?            // Full replacement cost if damaged/lost
   insuranceRequired Boolean @default(false)  // Owner can require renters to have insurance
+  insuranceRate     Float   @default(0.10)   // Insurance rate as decimal (e.g., 0.10 = 10%)
   securityDeposit   Float?            // Optional security deposit amount
 
   // Availability
@@ -108,6 +115,8 @@ model Gear {
   @@index([monthlyRate])
   @@index([averageRating])
   @@index([isAvailable])
+  @@index([latitude, longitude])
+  @@index([zipCode])
 }
 
 model Rental {
@@ -125,13 +134,16 @@ model Rental {
 
   // Payment
   totalPrice        Float?
+  basePrice         Float?        // Base rental price (dailyRate * days)
+  serviceFee        Float?        // Platform service fee (percentage of base)
+  hostingFee        Float?        // Flat technology/hosting fee
   paymentIntentId   String?
   clientSecret      String?
   paymentStatus     String?
 
   // Insurance & Protection
   insuranceType     InsuranceType @default(NONE)
-  insurancePremium  Float?        // Cost of insurance
+  insurancePremium  Float?        // Cost of insurance (insuranceRate * basePrice)
   securityDepositPaid Float?      // Amount held as deposit
   securityDepositRefunded Boolean @default(false)
 

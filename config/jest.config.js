@@ -16,6 +16,10 @@ module.exports = {
     '^@supabase/ssr$': '<rootDir>/__mocks__/@supabase/ssr.ts',
     '^next/navigation$': '<rootDir>/__mocks__/next/navigation.ts',
     '^@/lib/prisma$': '<rootDir>/__mocks__/@/lib/prisma.ts',
+    '^@/lib/cache$': '<rootDir>/__mocks__/@/lib/cache.ts',
+    '^@/lib/logger$': '<rootDir>/__mocks__/@/lib/logger.ts',
+    '^@/lib/monitoring$': '<rootDir>/__mocks__/@/lib/monitoring.ts',
+    '^@/lib/rate-limit$': '<rootDir>/__mocks__/@/lib/rate-limit.ts',
   },
   transform: {
     '^.+\.(ts|tsx|js)$': ['babel-jest', { configFile: './config/babel.config.js' }],

@@ -7,6 +7,7 @@ import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
 import { createRentalSchema } from '@/lib/validations/rental';
+import { calculatePriceBreakdown, calculateNumberOfDays, getBestDailyRate } from '@/lib/pricing';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -169,22 +170,42 @@ export const POST = withErrorHandler(
           throw new ValidationError('This gear is not available for the selected dates. Please choose different dates.');
         }
 
-        // Calculate rental duration and amount
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const amount = Math.round(gear.dailyRate * diffDays * 100); // Amount in cents
+        // Calculate rental duration and pricing
+        const numberOfDays = calculateNumberOfDays(new Date(startDate), new Date(endDate));
 
-        logger.debug('Rental calculation', { 
-          diffDays,
-          dailyRate: gear.dailyRate,
-          totalAmount: amount / 100
+        // Get the best applicable daily rate
+        const effectiveDailyRate = getBestDailyRate(
+          gear.dailyRate,
+          gear.weeklyRate,
+          gear.monthlyRate,
+          numberOfDays
+        );
+
+        // Calculate full price breakdown with fees
+        const priceBreakdown = calculatePriceBreakdown({
+          dailyRate: effectiveDailyRate,
+          numberOfDays,
+          insuranceRequired: gear.insuranceRequired,
+          insuranceRate: gear.insuranceRate,
+        });
+
+        const amountInCents = Math.round(priceBreakdown.totalPrice * 100);
+
+        logger.debug('Rental calculation', {
+          numberOfDays,
+          effectiveDailyRate,
+          basePrice: priceBreakdown.basePrice,
+          insuranceAmount: priceBreakdown.insuranceAmount,
+          serviceFee: priceBreakdown.serviceFee,
+          hostingFee: priceBreakdown.hostingFee,
+          totalPrice: priceBreakdown.totalPrice,
+          ownerPayout: priceBreakdown.ownerPayout,
+          platformRevenue: priceBreakdown.platformRevenue,
         }, 'API');
 
         // Create Stripe Payment Intent
         const paymentIntent = await stripe.paymentIntents.create({
-          amount: amount,
+          amount: amountInCents,
           currency: 'usd',
           automatic_payment_methods: {
             enabled: true,
@@ -195,16 +216,20 @@ export const POST = withErrorHandler(
             ownerId: gear.userId || '',
             startDate,
             endDate,
+            basePrice: priceBreakdown.basePrice.toString(),
+            insuranceAmount: priceBreakdown.insuranceAmount.toString(),
+            serviceFee: priceBreakdown.serviceFee.toString(),
+            hostingFee: priceBreakdown.hostingFee.toString(),
           },
         });
 
-        logger.debug('Stripe payment intent created', { 
+        logger.debug('Stripe payment intent created', {
           paymentIntentId: paymentIntent.id,
-          amount: amount / 100,
+          amount: priceBreakdown.totalPrice,
           currency: 'USD'
         }, 'STRIPE');
 
-        // Create the rental request
+        // Create the rental request with full price breakdown
         const rental = await trackDatabaseQuery('rental.create', () =>
           prisma.rental.create({
             data: {
@@ -214,7 +239,12 @@ export const POST = withErrorHandler(
               startDate,
               endDate,
               status: 'PENDING',
-              totalPrice: amount / 100,
+              totalPrice: priceBreakdown.totalPrice,
+              basePrice: priceBreakdown.basePrice,
+              serviceFee: priceBreakdown.serviceFee,
+              hostingFee: priceBreakdown.hostingFee,
+              insurancePremium: priceBreakdown.insuranceAmount,
+              insuranceType: gear.insuranceRequired ? 'STANDARD' : 'NONE',
               message,
               paymentIntentId: paymentIntent.id,
               clientSecret: paymentIntent.client_secret,
@@ -230,17 +260,27 @@ export const POST = withErrorHandler(
           CacheManager.del(CacheManager.keys.gear.detail(gearId)),
         ]);
 
-        logger.info('Rental created successfully', { 
+        logger.info('Rental created successfully', {
           rentalId: rental.id,
           gearId,
           renterId: session.user.id,
           ownerId: gear.userId,
-          amount: amount / 100
+          totalPrice: priceBreakdown.totalPrice,
+          platformRevenue: priceBreakdown.platformRevenue,
         }, 'API');
 
-        return NextResponse.json({ 
-          rental, 
-          clientSecret: paymentIntent.client_secret 
+        return NextResponse.json({
+          rental,
+          clientSecret: paymentIntent.client_secret,
+          priceBreakdown: {
+            basePrice: priceBreakdown.basePrice,
+            insuranceAmount: priceBreakdown.insuranceAmount,
+            serviceFee: priceBreakdown.serviceFee,
+            hostingFee: priceBreakdown.hostingFee,
+            totalPrice: priceBreakdown.totalPrice,
+            numberOfDays: priceBreakdown.numberOfDays,
+            dailyRate: priceBreakdown.dailyRate,
+          },
         }, { status: 201 });
       }
     )

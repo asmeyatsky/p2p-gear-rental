@@ -28,6 +28,10 @@ export default function AddGearPage() {
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [condition, setCondition] = useState('');
+  const [insuranceRequired, setInsuranceRequired] = useState(false);
+  const [insuranceRate, setInsuranceRate] = useState('10');
+  const [replacementValue, setReplacementValue] = useState('');
+  const [zipCode, setZipCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -64,11 +68,15 @@ export default function AddGearPage() {
           monthlyRate: monthlyRate ? parseFloat(monthlyRate) : undefined,
           city,
           state,
+          zipCode: zipCode || undefined,
           images,
           category,
           brand,
           model,
           condition,
+          insuranceRequired,
+          insuranceRate: parseFloat(insuranceRate) / 100, // Convert percentage to decimal
+          replacementValue: replacementValue ? parseFloat(replacementValue) : undefined,
         }),
       });
 
@@ -260,6 +268,89 @@ export default function AddGearPage() {
                 </div>
               </div>
 
+              {/* Insurance & Protection */}
+              <div className="border-t border-gray-200 pt-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Insurance & Protection</h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  Protect your gear by requiring insurance for renters. The insurance premium is automatically calculated and added to the rental price.
+                </p>
+
+                <div className="space-y-4">
+                  {/* Insurance Toggle */}
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                      <label htmlFor="insuranceRequired" className="text-sm font-medium text-gray-900">
+                        Require Insurance
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Renters will pay an insurance premium to protect your gear
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        id="insuranceRequired"
+                        checked={insuranceRequired}
+                        onChange={(e) => setInsuranceRequired(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
+
+                  {/* Conditional Insurance Options */}
+                  {insuranceRequired && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                      <div>
+                        <label htmlFor="insuranceRate" className="block text-sm font-medium text-gray-700 mb-1">
+                          Insurance Rate (%)
+                        </label>
+                        <select
+                          id="insuranceRate"
+                          value={insuranceRate}
+                          onChange={(e) => setInsuranceRate(e.target.value)}
+                          className="block w-full rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-3"
+                        >
+                          <option value="5">5% - Basic Coverage</option>
+                          <option value="8">8% - Standard Coverage</option>
+                          <option value="10">10% - Enhanced Coverage</option>
+                          <option value="12">12% - Premium Coverage</option>
+                          <option value="15">15% - Maximum Coverage</option>
+                        </select>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Percentage of the daily rate charged as insurance premium
+                        </p>
+                      </div>
+
+                      <Input
+                        label="Replacement Value"
+                        type="number"
+                        id="replacementValue"
+                        value={replacementValue}
+                        onChange={(e) => setReplacementValue(e.target.value)}
+                        step="0.01"
+                        placeholder="2500.00"
+                        leftIcon={<span className="text-gray-400 text-xs">$</span>}
+                        helperText="Full replacement cost if lost/damaged"
+                        className="text-xs"
+                      />
+                    </div>
+                  )}
+
+                  <div className="text-xs text-gray-500 flex items-start gap-2">
+                    <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>
+                      <Link href="/insurance-terms" className="text-purple-600 hover:text-purple-700">
+                        Learn more about insurance coverage
+                      </Link>{' '}
+                      and what is covered in case of damage or theft.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Location */}
               <div className="border-t border-gray-200 pt-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Location</h2>
@@ -291,6 +382,18 @@ export default function AddGearPage() {
                     placeholder="CA"
                     maxLength={2}
                     helperText="2-letter state code"
+                    className="text-xs"
+                  />
+
+                  <Input
+                    label="Zip Code (Optional)"
+                    type="text"
+                    id="zipCode"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
+                    placeholder="94102"
+                    maxLength={10}
+                    helperText="For location-based search"
                     className="text-xs"
                   />
                 </div>

@@ -3,6 +3,7 @@ import { GearItem } from '@/types';
 import { prisma } from '@/lib/db';
 import { CacheManager } from '@/lib/cache';
 import { logger } from '@/lib/logger';
+import { calculateDistance } from '@/lib/pricing';
 
 export interface SearchOptions {
   query?: string;
@@ -13,7 +14,9 @@ export interface SearchOptions {
   city?: string;
   state?: string;
   location?: string;
-  radius?: number; // in miles
+  lat?: number;      // Latitude for coordinate-based search
+  lng?: number;      // Longitude for coordinate-based search
+  radius?: number;   // in miles
   availability?: {
     startDate: string;
     endDate: string;
@@ -237,34 +240,62 @@ class SearchEngine {
       });
   }
 
-  private sortResults(gear: GearItem[], sortBy: string): GearItem[] {
+  private sortResults(gear: GearItem[], sortBy: string, userLat?: number, userLng?: number): GearItem[] {
     const sorted = [...gear];
 
     switch (sortBy) {
       case 'price-low':
         return sorted.sort((a, b) => a.dailyRate - b.dailyRate);
-      
+
       case 'price-high':
         return sorted.sort((a, b) => b.dailyRate - a.dailyRate);
-      
+
       case 'newest':
         return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
+
       case 'rating':
         return sorted.sort((a, b) => {
           const aRating = a.averageRating || 0;
           const bRating = b.averageRating || 0;
           return bRating - aRating;
         });
-      
+
       case 'distance':
-        // TODO: Implement geolocation-based sorting
+        if (userLat !== undefined && userLng !== undefined) {
+          return sorted.sort((a, b) => {
+            const aLat = (a as any).latitude;
+            const aLng = (a as any).longitude;
+            const bLat = (b as any).latitude;
+            const bLng = (b as any).longitude;
+
+            // Items without coordinates go to the end
+            if (!aLat || !aLng) return 1;
+            if (!bLat || !bLng) return -1;
+
+            const distA = calculateDistance(userLat, userLng, aLat, aLng);
+            const distB = calculateDistance(userLat, userLng, bLat, bLng);
+            return distA - distB;
+          });
+        }
         return sorted;
-      
+
       case 'relevance':
       default:
         return sorted;
     }
+  }
+
+  private filterByDistance(gear: GearItem[], lat: number, lng: number, radiusMiles: number): GearItem[] {
+    return gear.filter(item => {
+      const itemLat = (item as any).latitude;
+      const itemLng = (item as any).longitude;
+
+      // If item doesn't have coordinates, include it (fallback to city/state filtering)
+      if (!itemLat || !itemLng) return true;
+
+      const distance = calculateDistance(lat, lng, itemLat, itemLng);
+      return distance <= radiusMiles;
+    });
   }
 
   private paginateResults(gear: GearItem[], page: number, limit: number): {
@@ -296,9 +327,12 @@ class SearchEngine {
       sortBy = 'relevance',
       page = 1,
       limit = 20,
+      lat,
+      lng,
+      radius = 25,
     } = options;
 
-    logger.info('Search request', { query, sortBy, page, limit, ...options }, 'SEARCH');
+    logger.info('Search request', { query, sortBy, page, limit, lat, lng, radius, ...options }, 'SEARCH');
 
     let exactMatches: GearItem[] = [];
     let fuzzyMatches: GearItem[] = [];
@@ -319,16 +353,21 @@ class SearchEngine {
         // Remove duplicates (prioritize exact matches)
         const exactIds = new Set(exactMatches.map(item => item.id));
         const uniqueFuzzyMatches = fuzzyMatches.filter(item => !exactIds.has(item.id));
-        
+
         allResults = [...exactMatches, ...uniqueFuzzyMatches];
       } else {
         // No query provided, just filter and sort
         allResults = await this.performExactSearch(options);
       }
 
+      // Apply distance filtering if coordinates are provided
+      if (lat !== undefined && lng !== undefined) {
+        allResults = this.filterByDistance(allResults, lat, lng, radius);
+      }
+
       // Sort results
       if (sortBy !== 'relevance') {
-        allResults = this.sortResults(allResults, sortBy);
+        allResults = this.sortResults(allResults, sortBy, lat, lng);
       }
 
       // Paginate results
