@@ -11,16 +11,17 @@ describe('Footer', () => {
   it('renders quick links', () => {
     render(<Footer />);
     expect(screen.getByText('About Us')).toBeInTheDocument();
-    expect(screen.getByText('Browse Gear')).toBeInTheDocument();
-    expect(screen.getByText('FAQ')).toBeInTheDocument();
     expect(screen.getByText('Contact')).toBeInTheDocument();
+    expect(screen.getByText('Careers')).toBeInTheDocument(); // Changed from 'Browse Gear' and 'FAQ'
+    expect(screen.getByText('Help Center')).toBeInTheDocument(); // Instead of 'FAQ'
   });
 
   it('renders social media links', () => {
     render(<Footer />);
-    expect(screen.getByText('Facebook')).toBeInTheDocument();
-    expect(screen.getByText('Twitter')).toBeInTheDocument();
-    expect(screen.getByText('Instagram')).toBeInTheDocument();
+    expect(screen.getByLabelText('Facebook')).toBeInTheDocument();
+    expect(screen.getByLabelText('Twitter')).toBeInTheDocument();
+    expect(screen.getByLabelText('Instagram')).toBeInTheDocument();
+    expect(screen.getByLabelText('LinkedIn')).toBeInTheDocument();
   });
 
   it('renders the copyright notice', () => {

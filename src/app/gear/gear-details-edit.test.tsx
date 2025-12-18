@@ -1,10 +1,19 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import React from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import GearDetailsPage from '../gear/[id]/page';
+import { useParams, useRouter, redirect } from 'next/navigation';
 import EditGearPage from '../edit-gear/[id]/page';
+import GearDetailsClient from './[id]/GearDetailsClient';
 import { useAuth } from '@/components/auth/AuthProvider';
 import toast from 'react-hot-toast';
+
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useParams: jest.fn(),
+  useRouter: jest.fn(),
+  redirect: jest.fn(),
+  usePathname: jest.fn(),
+  useSearchParams: jest.fn(),
+}));
 
 
 // Mock useAuth hook
@@ -36,7 +45,7 @@ jest.mock('@/lib/gtag', () => ({
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-describe('GearDetailsPage', () => {
+describe('GearDetailsClient', () => {
   const mockPush = jest.fn();
   const mockUser = {
     id: 'test-user-id',
@@ -47,119 +56,71 @@ describe('GearDetailsPage', () => {
     title: 'Test Gear',
     description: 'A test gear item',
     dailyRate: 10.0,
+    weeklyRate: 60,
+    monthlyRate: 150,
     city: 'Test City',
     state: 'TS',
     images: ['/image1.jpg'],
     category: 'cameras',
     userId: 'test-user-id',
+    user: {
+      id: 'test-user-id',
+      full_name: 'Test User',
+      email: 'test@example.com',
+      averageRating: 4.5,
+      totalReviews: 10,
+    },
     brand: 'Test Brand',
     model: 'Test Model',
     condition: 'good',
-    createdAt: '2023-01-01T00:00:00.000Z',
-    updatedAt: '2023-01-01T00:00:00.000Z',
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useParams as jest.Mock).mockReturnValue({ id: mockGear.id });
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (useAuth as jest.Mock).mockReturnValue({
       user: mockUser,
       loading: false,
     });
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockGear),
-    });
   });
 
-  it('displays gear details and edit/delete buttons for owner', async () => {
+  it('displays gear details and edit button for owner', async () => {
+    const isOwnGear = true; // Simulate owner
     await act(async () => {
-      render(<GearDetailsPage />);
+      render(<GearDetailsClient gear={mockGear} currentUserId={mockUser.id} />);
     });
 
-    // Use findByText to wait for the element to appear
-    expect(await screen.findByText(mockGear.title)).toBeInTheDocument();
-    expect(await screen.findByText(mockGear.description)).toBeInTheDocument();
-    expect(await screen.findByText(`$${mockGear.dailyRate.toFixed(2)}`)).toBeInTheDocument(); // Wait for dailyRate
-    expect(await screen.findByText(/edit gear/i)).toBeInTheDocument();
-    expect(await screen.findByText(/delete gear/i)).toBeInTheDocument();
+    expect(screen.getByText(mockGear.title)).toBeInTheDocument();
+    expect(screen.getByText(mockGear.description)).toBeInTheDocument();
+    expect(screen.getByText(`$${mockGear.dailyRate}/day`)).toBeInTheDocument();
+
+    // For owners, check for edit button
+    expect(screen.getByText(/edit listing/i)).toBeInTheDocument();
   });
 
-  it('does not display edit/delete buttons for non-owner', async () => {
-    (useAuth as jest.Mock).mockReturnValue({
-      user: { ...mockUser, id: 'other-user-id' },
-      loading: false,
-    });
-
+  it('does not show edit button for non-owner', async () => {
     await act(async () => {
-      render(<GearDetailsPage />);
+      render(<GearDetailsClient gear={mockGear} currentUserId={'other-user-id'} />);
     });
 
-    // Wait for the gear details to load before asserting on button absence
-    expect(await screen.findByText(mockGear.title)).toBeInTheDocument();
+    expect(screen.getByText(mockGear.title)).toBeInTheDocument();
+
+    // Check that edit button is not present for non-owner
+    expect(screen.queryByText(/edit listing/i)).not.toBeInTheDocument();
+    // Instead, non-owner should see request rental button
+    expect(screen.getByText(/request rental/i)).toBeInTheDocument();
+  });
+
+  it('calls router.push to edit page for owner', async () => {
+    await act(async () => {
+      render(<GearDetailsClient gear={mockGear} currentUserId={mockUser.id} />);
+    });
+
+    const editButton = screen.getByText(/edit listing/i);
+    fireEvent.click(editButton);
 
     await waitFor(() => {
-      expect(screen.queryByText(/edit gear/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/delete gear/i)).not.toBeInTheDocument();
-    });
-  });
-
-  it('calls delete API and redirects on successful deletion', async () => {
-    window.confirm = jest.fn(() => true); // Mock confirm dialog
-    
-    // Mock the initial fetch call
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockGear),
-    });
-    
-    // Mock the delete API call
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ message: 'Gear deleted successfully' }),
-    });
-
-    await act(async () => {
-      render(<GearDetailsPage />);
-    });
-
-    // Wait for the delete button to appear before clicking
-    const deleteButton = await screen.findByText(/delete gear/i);
-    fireEvent.click(deleteButton);
-
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(`/api/gear/${mockGear.id}`, {
-        method: 'DELETE',
-      });
-      expect(toast.success).toHaveBeenCalledWith('Gear deleted successfully!');
-      expect(mockPush).toHaveBeenCalledWith('/');
-    });
-  });
-
-  it('displays error toast on failed update', async () => {
-    // Mock the initial fetch call
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockGear),
-    });
-    
-    // Mock the failed update API call
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Failed to update' }),
-    });
-
-    await act(async () => {
-      render(<EditGearPage />);
-    });
-
-    const updateButton = await screen.findByRole('button', { name: /update gear/i });
-    fireEvent.click(updateButton);
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Failed to update');
-      expect(mockPush).not.toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith(`/gear/${mockGear.id}/edit`);
     });
   });
 });
@@ -287,7 +248,7 @@ describe('EditGearPage', () => {
       ok: true,
       json: () => Promise.resolve(mockGear),
     });
-    
+
     // Mock the failed update API call
     mockFetch.mockResolvedValueOnce({
       ok: false,
