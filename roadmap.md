@@ -30,6 +30,7 @@ The application has a solid foundation with core functionalities like user manag
 *   **Improvement:** Optimize image loading and implement server-side rendering (SSR) or static site generation (SSG) where appropriate.
 
 ### 6. Advanced Features (Future Considerations)
+*   **Real-Time Messaging System:** Enable direct communication between renters and listers (Implemented).
 *   **Advanced Search & Filters:** Map view for location-based search.
 *   **User Dashboards:** More comprehensive dashboards for renters and owners.
 *   **Dispute Resolution System:** A mechanism to handle disagreements.

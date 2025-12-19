@@ -1,49 +1,70 @@
 variable "project_id" {
-  description = "The GCP project ID."
+  description = "The ID of the Google Cloud project"
   type        = string
 }
 
 variable "region" {
-  description = "The GCP region for resources."
+  description = "The region for the resources"
   type        = string
-  default     = "us-central1"
+  default     = "europe-west2"  # London
 }
 
-variable "db_password" {
-  description = "The password for the database user."
+variable "app_version" {
+  description = "Application version tag for the Docker image"
   type        = string
-  sensitive   = true
+  default     = "latest"
 }
 
-variable "supabase_url" {
-  description = "The Supabase project URL."
+variable "db_tier" {
+  description = "Cloud SQL instance tier"
+  type        = string
+  default     = "db-f1-micro"
+}
+
+variable "kms_key_name" {
+  description = "KMS key name for encryption (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "db_username" {
+  description = "Database username"
+  type        = string
+  default     = "p2p_rental_user"
+}
+
+variable "next_public_base_url" {
+  description = "Base URL for the application"
   type        = string
 }
 
-variable "supabase_anon_key" {
-  description = "The Supabase anon key."
+variable "next_public_supabase_url" {
+  description = "Supabase URL"
+  type        = string
+}
+
+variable "next_public_supabase_anon_key" {
+  description = "Supabase anon key"
   type        = string
 }
 
 variable "supabase_service_role_key" {
-  description = "The Supabase service role key."
+  description = "Supabase service role key"
   type        = string
-  sensitive   = true
 }
 
 variable "stripe_secret_key" {
-  description = "The Stripe secret key."
-  type        = string
-  sensitive   = true
-}
-
-variable "stripe_publishable_key" {
-  description = "The Stripe publishable key."
+  description = "Stripe secret key"
   type        = string
 }
 
 variable "stripe_webhook_secret" {
-  description = "The Stripe webhook secret."
+  description = "Stripe webhook secret"
   type        = string
-  sensitive   = true
+}
+
+variable "repo_name" {
+  description = "Name of the source repository"
+  type        = string
+  default     = "p2p-gear-rental"
 }
