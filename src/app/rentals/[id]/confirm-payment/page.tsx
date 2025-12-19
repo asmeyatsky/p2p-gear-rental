@@ -151,7 +151,7 @@ export default function ConfirmPaymentPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden flex flex-col">
         <Header />
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center">
@@ -165,7 +165,7 @@ export default function ConfirmPaymentPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden flex flex-col">
         <Header />
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center max-w-md">
@@ -210,7 +210,7 @@ export default function ConfirmPaymentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden flex flex-col">
       <Header />
       <div className="flex-grow py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

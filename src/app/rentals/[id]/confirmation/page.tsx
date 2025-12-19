@@ -133,7 +133,7 @@ export default function PaymentConfirmationPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden flex flex-col">
         <Header />
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center">
@@ -214,17 +214,17 @@ export default function PaymentConfirmationPage() {
   const statusMessage = getStatusMessage();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden flex flex-col">
       <Header />
       <div className="flex-grow py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow-lg p-8 text-center">
             {getStatusIcon()}
-            
+
             <h1 className={`text-3xl font-bold mb-4 ${statusMessage.color}`}>
               {statusMessage.title}
             </h1>
-            
+
             <p className="text-gray-600 mb-8 text-lg">
               {statusMessage.message}
             </p>

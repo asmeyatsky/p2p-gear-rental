@@ -121,7 +121,7 @@ export default function EditGearPage() {
 
   if (authLoading || loadingGear) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden flex flex-col">
         <Header />
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center py-8">Loading gear for editing...</div>
@@ -135,7 +135,7 @@ export default function EditGearPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden flex flex-col">
       <Header />
       <div className="flex-grow flex items-center justify-center p-4">
         <div className="max-w-2xl w-full p-8 bg-white rounded-lg shadow-md">
