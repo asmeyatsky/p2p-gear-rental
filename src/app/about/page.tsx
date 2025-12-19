@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Layout from '@/components/ui/Layout';
 
 export default function AboutPage() {

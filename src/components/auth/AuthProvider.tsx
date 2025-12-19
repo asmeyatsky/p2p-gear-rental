@@ -15,72 +15,169 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Initialize outside component to avoid issues during server rendering
+function getSupabaseClient() {
+  if (typeof window !== 'undefined') {
+    return createClient();
+  }
+  return null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const supabase = useMemo(() => createClient(), []);
+  // Initialize state with default values that don't rely on hooks during SSR
+  const [authState, setAuthState] = useState<{
+    user: User | null;
+    session: Session | null;
+    loading: boolean;
+  }>({ user: null, session: null, loading: typeof window !== 'undefined' });
+
+  const supabase = useMemo(() => getSupabaseClient(), []);
 
   useEffect(() => {
+    if (!supabase) {
+      // If we're on the server or client without proper setup, just set loading to false
+      if (typeof window !== 'undefined') {
+        setAuthState(prev => ({ ...prev, loading: false }));
+      }
+      return;
+    }
+
+    let isMounted = true;
+
     // Get initial session
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const { data: { session: sessionData } } = await supabase.auth.getSession();
+        if (isMounted) {
+          setAuthState({
+            user: sessionData?.user ?? null,
+            session: sessionData,
+            loading: false
+          });
+        }
+      } catch (error) {
+        console.error('Error getting session:', error);
+        if (isMounted) {
+          setAuthState(prev => ({ ...prev, loading: false }));
+        }
+      }
     };
 
-    getSession();
+    // Only run on the client side
+    if (typeof window !== 'undefined') {
+      getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: AuthChangeEvent, session: Session | null) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
+      // Subscribe to auth state changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event: AuthChangeEvent, session: Session | null) => {
+          if (isMounted) {
+            setAuthState({
+              user: session?.user ?? null,
+              session: session,
+              loading: false
+            });
+          }
+        }
+      );
 
-    return () => subscription.unsubscribe();
+      return () => {
+        isMounted = false;
+        subscription?.unsubscribe?.();
+      };
+    } else {
+      // On server, just set loading to false
+      setAuthState(prev => ({ ...prev, loading: false }));
+    }
   }, [supabase]);
 
   const signIn = async (email: string, password: string): Promise<AuthResponse> => {
-    setLoading(true);
-    const result = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setLoading(false);
-    return result;
+    if (!supabase) {
+      return {
+        data: { user: null, session: null },
+        error: { name: 'Client not initialized', message: 'Supabase client not initialized' } as AuthError
+      };
+    }
+
+    setAuthState(prev => ({ ...prev, loading: true }));
+    try {
+      const result = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (result.data.session) {
+        setAuthState({
+          user: result.data.session.user,
+          session: result.data.session,
+          loading: false
+        });
+      }
+
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Sign in failed';
+      return {
+        data: { user: null, session: null },
+        error: { name: 'Sign in error', message: errorMessage } as AuthError
+      };
+    } finally {
+      if (typeof window !== 'undefined') {
+        setAuthState(prev => ({ ...prev, loading: false }));
+      }
+    }
   };
 
   const signUp = async (email: string, password: string, name?: string): Promise<AuthResponse> => {
-    setLoading(true);
-    const result = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
+    setAuthState(prev => ({ ...prev, loading: true }));
+    try {
+      const result = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          },
         },
-      },
-    });
-    setLoading(false);
-    return result;
+      });
+      return result;
+    } finally {
+      if (typeof window !== 'undefined') {
+        setAuthState(prev => ({ ...prev, loading: false }));
+      }
+    }
   };
 
   const signOut = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    setLoading(false);
-    return { error };
+    if (!supabase) {
+      return { error: { name: 'Client not initialized', message: 'Supabase client not initialized' } as AuthError };
+    }
+
+    setAuthState(prev => ({ ...prev, loading: true }));
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (!error) {
+        setAuthState({
+          user: null,
+          session: null,
+          loading: false
+        });
+      }
+
+      return { error };
+    } finally {
+      if (typeof window !== 'undefined') {
+        setAuthState(prev => ({ ...prev, loading: false }));
+      }
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
-        user,
-        session,
-        loading,
+        user: authState.user,
+        session: authState.session,
+        loading: authState.loading,
         signIn,
         signUp,
         signOut,
