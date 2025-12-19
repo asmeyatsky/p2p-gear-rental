@@ -48,7 +48,17 @@ export const createGearSchema = z.object({
     .max(180, 'Longitude must be between -180 and 180')
     .optional(),
 
-  images: z.array(z.string().url('Invalid image URL'))
+  images: z.array(
+    z.string().refine(
+      (val) => {
+        // Accept full URLs (http/https) or local upload paths (/uploads/)
+        return val.startsWith('http://') ||
+               val.startsWith('https://') ||
+               val.startsWith('/uploads/');
+      },
+      { message: 'Invalid image URL or path' }
+    )
+  )
     .min(1, 'At least one image is required')
     .max(10, 'Maximum 10 images allowed'),
 
