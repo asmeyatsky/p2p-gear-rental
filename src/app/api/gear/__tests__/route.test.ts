@@ -10,16 +10,33 @@ import { withErrorHandler, AuthenticationError } from '@/lib/api-error-handler';
 import { withRateLimit } from '@/lib/rate-limit';
 import { withMonitoring } from '@/lib/monitoring';
 import { prisma } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
 import { createGearSchema, gearQuerySchema } from '@/lib/validations/gear';
 import { executeWithRetry } from '@/lib/database';
 import { queryOptimizer } from '@/lib/database/query-optimizer';
 import { searchEngine } from '@/lib/search-engine';
 import { CacheManager } from '@/lib/cache';
 
+// Mock session for authentication
+const mockGetSession = jest.fn();
+
+// Mock next/headers cookies
+jest.mock('next/headers', () => ({
+  cookies: jest.fn(() => Promise.resolve({
+    getAll: () => [{ name: 'sb-token', value: 'mock-token' }]
+  }))
+}));
+
+// Mock @supabase/ssr createServerClient
+jest.mock('@supabase/ssr', () => ({
+  createServerClient: jest.fn(() => ({
+    auth: {
+      getSession: mockGetSession
+    }
+  }))
+}));
+
 // Mock dependencies with implementations
 jest.mock('@/lib/db');
-jest.mock('@/lib/supabase');
 jest.mock('@/lib/cache', () => ({
   CacheManager: {
     keys: {
@@ -99,7 +116,6 @@ jest.mock('@/lib/monitoring', () => ({
 
 // Import after mocking
 const mockPrisma = prisma;
-const mockSupabase = supabase;
 const mockExecuteWithRetry = executeWithRetry;
 
 describe('API /gear', () => {
@@ -317,8 +333,8 @@ describe('API /gear', () => {
     };
 
     beforeEach(() => {
-      // Mock authenticated user
-      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValue({
+      // Mock authenticated user using the new cookie-based auth
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession as Session },
         error: null
       });
@@ -365,9 +381,69 @@ describe('API /gear', () => {
     });
 
     it('should reject requests without authentication', async () => {
-      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValue({
+      // Mock no session (unauthenticated)
+      mockGetSession.mockResolvedValue({
         data: { session: null },
         error: null
+      });
+
+      const request = new NextRequest('http://localhost:3000/api/gear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validGearData)
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should use cookie-based authentication', async () => {
+      // This test verifies that the route uses cookie-based auth
+      const mockCreatedGear: Partial<Gear & { user: Partial<User> }> = {
+        id: 'gear-cookie-test',
+        ...validGearData,
+        images: JSON.stringify(validGearData.images),
+        userId: 'user-1',
+        user: mockUser,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        weeklyRate: 300,
+        monthlyRate: 1000,
+        averageRating: null,
+        totalReviews: 0,
+        totalRentals: 0,
+        isAvailable: true,
+      };
+
+      // Mock executeWithRetry to return the created user and gear
+      (mockExecuteWithRetry as jest.Mock)
+        .mockResolvedValueOnce(mockUser)
+        .mockResolvedValueOnce(mockCreatedGear);
+
+      const request = new NextRequest('http://localhost:3000/api/gear', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'sb-access-token=mock-token; sb-refresh-token=mock-refresh'
+        },
+        body: JSON.stringify(validGearData)
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      // Verify authentication was called
+      expect(mockGetSession).toHaveBeenCalled();
+      expect(response.status).toBe(201);
+      expect(data.id).toBe('gear-cookie-test');
+    });
+
+    it('should handle auth session errors gracefully', async () => {
+      // Mock auth error
+      mockGetSession.mockResolvedValue({
+        data: { session: null },
+        error: { message: 'Session expired' }
       });
 
       const request = new NextRequest('http://localhost:3000/api/gear', {
