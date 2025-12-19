@@ -8,6 +8,7 @@ import { getGearDetailSSR, generateGearMetadata, measureSSRPerformance, revalida
 import GearDetailsClient from './GearDetailsClient';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { logger } from '@/lib/logger';
+import Header from '@/components/Header';
 
 async function getServerSession() {
   try {
@@ -65,6 +66,8 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
+        <Header />
+
         {/* Animated Background Elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />

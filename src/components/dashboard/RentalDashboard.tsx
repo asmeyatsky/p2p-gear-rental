@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import Header from '@/components/Header';
 
 interface RentalStats {
   totalRentals: number;
@@ -216,18 +217,23 @@ export default function RentalDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+        <Header />
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Rental Dashboard</h1>
-        <p className="text-gray-600">Manage your gear rentals and track performance</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      <Header />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Rental Dashboard</h1>
+          <p className="text-gray-600">Manage your gear rentals and track performance</p>
+        </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
@@ -541,6 +547,7 @@ export default function RentalDashboard() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
