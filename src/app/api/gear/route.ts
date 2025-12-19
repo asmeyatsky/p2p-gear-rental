@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 import { prisma } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
 import { withErrorHandler, AuthenticationError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
 import { gearQuerySchema, createGearSchema } from '@/lib/validations/gear';
@@ -10,7 +11,23 @@ import { logger } from '@/lib/logger';
 import { searchEngine, SearchOptions } from '@/lib/search-engine';
 import { queryOptimizer } from '@/lib/database/query-optimizer';
 import { executeWithRetry } from '@/lib/database';
-import { calculateDistance } from '@/lib/pricing';
+
+// Helper to get server session with cookie support
+async function getServerSession() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+      },
+    }
+  );
+  return supabase.auth.getSession();
+}
 
 async function handleGetGear(request: NextRequest) {
   // Validate query parameters
@@ -134,10 +151,11 @@ export const POST = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
       async (request: NextRequest) => {
-      // Check authentication
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check authentication using cookie-based session
+      const { data: { session } } = await getServerSession();
 
       if (!session || !session.user) {
+        logger.warn('Gear creation failed: No valid session', {}, 'AUTH');
         throw new AuthenticationError();
       }
 

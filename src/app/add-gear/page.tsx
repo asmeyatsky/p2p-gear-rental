@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../components/auth/AuthProvider';
 import ImageUpload from '../../components/ImageUpload';
+import Header from '../../components/Header';
 import toast from 'react-hot-toast';
 import { event } from '../../lib/gtag';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import Card from '../../components/ui/Card';
-import Layout from '../../components/ui/Layout';
 
 export default function AddGearPage() {
   const { user, loading: authLoading } = useAuth();
@@ -43,32 +42,36 @@ export default function AddGearPage() {
 
   if (authLoading || !user) {
     return (
-      <Layout>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+        <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   // Success screen
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8 max-w-md text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Listing Published!</h2>
-          <p className="text-gray-600 mb-4">Your gear is now live and visible to renters.</p>
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-            Redirecting to your listing...
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8 max-w-md text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Listing Published!</h2>
+            <p className="text-gray-600 mb-4">Your gear is now live and visible to renters.</p>
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Redirecting to your listing...
+            </div>
           </div>
         </div>
       </div>
@@ -85,6 +88,7 @@ export default function AddGearPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Ensure cookies are sent with the request
         body: JSON.stringify({
           title,
           description,
@@ -106,8 +110,13 @@ export default function AddGearPage() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to add gear');
+        const errorData = await res.json().catch(() => ({ error: `HTTP ${res.status}: ${res.statusText}` }));
+        if (res.status === 401) {
+          toast.error('Please log in to list your gear');
+          router.push('/auth/login?redirectTo=/add-gear');
+          return;
+        }
+        throw new Error(errorData.error || errorData.message || 'Failed to add gear');
       }
 
       const data = await res.json();
@@ -126,8 +135,9 @@ export default function AddGearPage() {
         router.push(data.id ? `/gear/${data.id}` : '/browse');
       }, 1500);
     } catch (err: unknown) {
+      console.error('Error adding gear:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      toast.error(`Error adding gear: ${errorMessage}`); // Toast notification
+      toast.error(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -135,6 +145,8 @@ export default function AddGearPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden">
+      <Header />
+
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
@@ -142,7 +154,7 @@ export default function AddGearPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '4s' }} />
       </div>
 
-      <div className="relative z-10 px-4 py-8 min-h-screen">
+      <div className="relative z-10 px-4 py-8">
         <div className="max-w-3xl mx-auto">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900">List Your Gear</h1>
