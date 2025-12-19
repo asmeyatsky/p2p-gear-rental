@@ -325,4 +325,3 @@ export default function ConfirmPaymentPage() {
         </div>
       </div>
     </div>
-}
