@@ -22,6 +22,23 @@ interface RentalDetails {
   amount?: number;
 }
 
+import Header from '@/components/Header';
+
+interface RentalDetails {
+  id: string;
+  gear: {
+    id: string;
+    title: string;
+    images: string[];
+    dailyRate: number;
+  };
+  startDate: string;
+  endDate: string;
+  status: string;
+  paymentStatus?: string;
+  amount?: number;
+}
+
 export default function PaymentConfirmationPage() {
   const params = useParams();
   const id = params?.id;
@@ -115,10 +132,13 @@ export default function PaymentConfirmationPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Confirming payment...</p>
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Confirming payment...</p>
+          </div>
         </div>
       </div>
     );
@@ -193,96 +213,98 @@ export default function PaymentConfirmationPage() {
   const statusMessage = getStatusMessage();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-          {getStatusIcon()}
-          
-          <h1 className={`text-3xl font-bold mb-4 ${statusMessage.color}`}>
-            {statusMessage.title}
-          </h1>
-          
-          <p className="text-gray-600 mb-8 text-lg">
-            {statusMessage.message}
-          </p>
-
-          {rental && (
-            <div className="bg-gray-50 rounded-lg p-6 mb-8 text-left">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Rental Details</h2>
-              
-              <div className="flex items-start space-x-4 mb-4">
-                <Image
-                  src={rental.gear.images[0] || '/placeholder-gear.jpg'}
-                  alt={rental.gear.title}
-                  width={64}
-                  height={64}
-                  className="object-cover rounded-lg"
-                />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{rental.gear.title}</h3>
-                  <p className="text-gray-600">${rental.gear.dailyRate}/day</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600">Start Date:</span>
-                  <p className="font-medium">{formatDate(rental.startDate)}</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">End Date:</span>
-                  <p className="font-medium">{formatDate(rental.endDate)}</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">Duration:</span>
-                  <p className="font-medium">
-                    {Math.ceil((new Date(rental.endDate).getTime() - new Date(rental.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
-                  </p>
-                </div>
-                <div>
-                  <span className="text-gray-600">Total Paid:</span>
-                  <p className="font-semibold text-blue-600">
-                    {formatCurrency(calculateAmount(rental))}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/dashboard"
-              className="bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Go to Dashboard
-            </Link>
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+      <div className="flex-grow py-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            {getStatusIcon()}
             
-            {paymentStatus === 'failed' && rental && (
-              <Link
-                href={`/rentals/${rental.id}/confirm-payment`}
-                className="bg-gray-600 text-white px-6 py-3 rounded-md font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              >
-                Try Again
-              </Link>
+            <h1 className={`text-3xl font-bold mb-4 ${statusMessage.color}`}>
+              {statusMessage.title}
+            </h1>
+            
+            <p className="text-gray-600 mb-8 text-lg">
+              {statusMessage.message}
+            </p>
+
+            {rental && (
+              <div className="bg-gray-50 rounded-lg p-6 mb-8 text-left">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Rental Details</h2>
+                
+                <div className="flex items-start space-x-4 mb-4">
+                  <Image
+                    src={rental.gear.images[0] || '/placeholder-gear.jpg'}
+                    alt={rental.gear.title}
+                    width={64}
+                    height={64}
+                    className="object-cover rounded-lg"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{rental.gear.title}</h3>
+                    <p className="text-gray-600">${rental.gear.dailyRate}/day</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Start Date:</span>
+                    <p className="font-medium">{formatDate(rental.startDate)}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">End Date:</span>
+                    <p className="font-medium">{formatDate(rental.endDate)}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Duration:</span>
+                    <p className="font-medium">
+                      {Math.ceil((new Date(rental.endDate).getTime() - new Date(rental.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Total Paid:</span>
+                    <p className="font-semibold text-blue-600">
+                      {formatCurrency(calculateAmount(rental))}
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
-            
-            {paymentStatus === 'success' && rental && (
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href={`/gear/${rental.gear.id}`}
-                className="bg-gray-600 text-white px-6 py-3 rounded-md font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                href="/dashboard"
+                className="bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                View Gear
+                Go to Dashboard
               </Link>
+              
+              {paymentStatus === 'failed' && rental && (
+                <Link
+                  href={`/rentals/${rental.id}/confirm-payment`}
+                  className="bg-gray-600 text-white px-6 py-3 rounded-md font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  Try Again
+                </Link>
+              )}
+              
+              {paymentStatus === 'success' && rental && (
+                <Link
+                  href={`/gear/${rental.gear.id}`}
+                  className="bg-gray-600 text-white px-6 py-3 rounded-md font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  View Gear
+                </Link>
+              )}
+            </div>
+
+            {paymentStatus === 'success' && (
+              <div className="mt-8 text-sm text-gray-500">
+                <p>Need help? Contact our support team at support@gearshare.com</p>
+              </div>
             )}
           </div>
-
-          {paymentStatus === 'success' && (
-            <div className="mt-8 text-sm text-gray-500">
-              <p>Need help? Contact our support team at support@gearshare.com</p>
-            </div>
-          )}
         </div>
       </div>
-    </div>
-  );
+    </div>  );
 }

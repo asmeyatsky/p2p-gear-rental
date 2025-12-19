@@ -7,6 +7,8 @@ import { GearItem } from '@/types';
 import ImageUpload from '@/components/ImageUpload';
 import toast from 'react-hot-toast';
 
+import Header from '@/components/Header';
+
 export default function EditGearPage() {
   const params = useParams();
   const id = params?.id;
@@ -117,7 +119,14 @@ export default function EditGearPage() {
   };
 
   if (authLoading || loadingGear) {
-    return <div className="text-center py-8">Loading gear for editing...</div>;
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center py-8">Loading gear for editing...</div>
+        </div>
+      </div>
+    );
   }
 
   if (!user || !gear || gear.userId !== user.id) {
@@ -125,110 +134,115 @@ export default function EditGearPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-8 bg-white rounded-lg shadow-md">
-      <h1 className="text-3xl font-bold mb-6 text-center">Edit Gear</h1>
-      {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+      <div className="flex-grow flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full p-8 bg-white rounded-lg shadow-md">
+          <h1 className="text-3xl font-bold mb-6 text-center">Edit Gear</h1>
+          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
+              <input
+                type="text"
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                rows={4}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              ></textarea>
+            </div>
+            <div>
+              <label htmlFor="dailyRate" className="block text-sm font-medium text-gray-700">Daily Rate ($)</label>
+              <input
+                type="number"
+                id="dailyRate"
+                value={dailyRate}
+                onChange={(e) => setDailyRate(e.target.value)}
+                required
+                step="0.01"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700">City</label>
+              <input
+                type="text"
+                id="city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="state" className="block text-sm font-medium text-gray-700">State</label>
+              <input
+                type="text"
+                id="state"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="brand" className="block text-sm font-medium text-gray-700">Brand (Optional)</label>
+              <input
+                type="text"
+                id="brand"
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="model" className="block text-sm font-medium text-gray-700">Model (Optional)</label>
+              <input
+                type="text"
+                id="model"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="condition" className="block text-sm font-medium text-gray-700">Condition (Optional)</label>
+              <input
+                type="text"
+                id="condition"
+                value={condition}
+                onChange={(e) => setCondition(e.target.value)}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+            <ImageUpload
+              onImagesChange={setImages}
+              existingImages={images}
+              maxImages={10}
+              maxSizePerImage={5}
+            />
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? 'Updating...' : 'Update Gear'}
+            </button>
+          </form>
         </div>
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-            rows={4}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          ></textarea>
-        </div>
-        <div>
-          <label htmlFor="dailyRate" className="block text-sm font-medium text-gray-700">Daily Rate ($)</label>
-          <input
-            type="number"
-            id="dailyRate"
-            value={dailyRate}
-            onChange={(e) => setDailyRate(e.target.value)}
-            required
-            step="0.01"
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label htmlFor="city" className="block text-sm font-medium text-gray-700">City</label>
-          <input
-            type="text"
-            id="city"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label htmlFor="state" className="block text-sm font-medium text-gray-700">State</label>
-          <input
-            type="text"
-            id="state"
-            value={state}
-            onChange={(e) => setState(e.target.value)}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label htmlFor="brand" className="block text-sm font-medium text-gray-700">Brand (Optional)</label>
-          <input
-            type="text"
-            id="brand"
-            value={brand}
-            onChange={(e) => setBrand(e.target.value)}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label htmlFor="model" className="block text-sm font-medium text-gray-700">Model (Optional)</label>
-          <input
-            type="text"
-            id="model"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label htmlFor="condition" className="block text-sm font-medium text-gray-700">Condition (Optional)</label>
-          <input
-            type="text"
-            id="condition"
-            value={condition}
-            onChange={(e) => setCondition(e.target.value)}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
-        <ImageUpload
-          onImagesChange={setImages}
-          existingImages={images}
-          maxImages={10}
-          maxSizePerImage={5}
-        />
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {submitting ? 'Updating...' : 'Update Gear'}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }
