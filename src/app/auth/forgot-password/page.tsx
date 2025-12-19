@@ -12,9 +12,19 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const supabase = createClient();
+  const [supabase] = useState(() => typeof window !== 'undefined' ? createClient() : null); // Initialize Supabase only on client
+
+  // Remove mounted guard as it's no longer needed with client-side Supabase init
 
   const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (!supabase) { // Guard supabase calls
+      toast.error('Supabase client not initialized.');
+      setLoading(false);
+      return;
+    }
     e.preventDefault();
     setLoading(true);
 
@@ -38,7 +48,7 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full">
@@ -75,7 +85,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">

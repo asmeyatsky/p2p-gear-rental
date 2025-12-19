@@ -9,6 +9,7 @@ import { event } from '@/lib/gtag';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import Header from '@/components/Header';
+import { createClient } from '@/lib/supabase-browser'; // Import createClient
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,8 +17,17 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
   const router = useRouter();
+  const [supabase] = useState(() => typeof window !== 'undefined' ? createClient() : null); // Initialize Supabase only on client
 
   const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (!supabase) { // Guard supabase calls
+      toast.error('Supabase client not initialized.');
+      setIsLoading(false);
+      return;
+    }
     e.preventDefault();
     setIsLoading(true);
 
@@ -43,7 +53,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden">
+    <div className="min-h-screen bg-background overflow-hidden">
       <Header />
 
       {/* Animated Background Elements */}

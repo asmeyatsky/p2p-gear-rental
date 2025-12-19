@@ -14,12 +14,14 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
+  const [supabase] = useState(() => typeof window !== 'undefined' ? createClient() : null); // Initialize Supabase only on client
 
   useEffect(() => {
+    if (!supabase) return; // Guard supabase calls
+
     // Check if we have a valid session for password reset
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } = {} } = await supabase.auth.getSession(); // Safely destructure
       setIsValidSession(!!session);
     };
 
@@ -36,6 +38,12 @@ function ResetPasswordForm() {
 
     if (password.length < 6) {
       toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    if (!supabase) { // Guard supabase calls
+      toast.error('Supabase client not initialized.');
+      setLoading(false);
       return;
     }
 
@@ -61,7 +69,7 @@ function ResetPasswordForm() {
 
   if (!isValidSession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full">
@@ -89,7 +97,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
@@ -165,7 +173,7 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center">
