@@ -65,21 +65,21 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
     }
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden">
         <Header />
 
         {/* Animated Background Elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '4s' }} />
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '4s' }} />
         </div>
 
-        <div className="relative z-10 px-1 py-1 min-h-screen">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 max-w-7xl mx-auto">
+        <div className="relative z-10 px-4 py-6 min-h-screen">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
             {/* Image Gallery */}
-            <div className="space-y-1">
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-gray-100">
+            <div className="space-y-3">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-white border border-gray-200 shadow-sm">
                 {gear.images && gear.images.length > 0 ? (
                   <Image
                     src={gear.images[0]}
@@ -94,8 +94,8 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-400">
                     <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-2 bg-gray-200 rounded-lg"></div>
-                      <p className="text-xs">No image available</p>
+                      <div className="w-16 h-16 mx-auto mb-2 bg-gray-100 rounded-lg"></div>
+                      <p className="text-sm">No image available</p>
                     </div>
                   </div>
                 )}
@@ -103,9 +103,9 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
 
               {/* Thumbnail images */}
               {gear.images && gear.images.length > 1 && (
-                <div className="grid grid-cols-4 gap-1">
+                <div className="grid grid-cols-4 gap-2">
                   {gear.images.slice(1, 5).map((image: string, index: number) => (
-                    <div key={index} className="relative aspect-square overflow-hidden rounded bg-gray-100">
+                    <div key={index} className="relative aspect-square overflow-hidden rounded-lg bg-white border border-gray-200 shadow-sm">
                       <Image
                         src={image}
                         alt={`${gear.title} - View ${index + 2}`}
@@ -121,44 +121,44 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
             </div>
 
             {/* Gear Information */}
-            <div className="space-y-3">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
               {/* Header */}
               <div>
-                <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+                <div className="flex items-center gap-2 mb-2">
                   {gear.category && (
-                    <span className="bg-white/20 backdrop-blur-sm text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full capitalize">
+                    <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2.5 py-1 rounded-full capitalize">
                       {gear.category}
                     </span>
                   )}
                   {gear.condition && (
-                    <span className="bg-white/20 backdrop-blur-sm text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full capitalize">
+                    <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-full capitalize">
                       {gear.condition}
                     </span>
                   )}
                 </div>
 
-                <h1 className="text-xl font-bold text-white mb-1">{gear.title}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">{gear.title}</h1>
 
                 {(gear.brand || gear.model) && (
-                  <p className="text-xs text-gray-400 mb-2">
+                  <p className="text-sm text-gray-500 mb-3">
                     {[gear.brand, gear.model].filter(Boolean).join(' ')}
                   </p>
                 )}
 
                 {/* Pricing */}
-                <div className="space-y-1">
-                  <div className="text-xl font-bold text-white">
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-100">
+                  <div className="text-2xl font-bold text-gray-900">
                     ${gear.dailyRate.toFixed(2)}
-                    <span className="text-xs font-normal text-gray-400 ml-1">/ day</span>
+                    <span className="text-sm font-normal text-gray-500 ml-1">/ day</span>
                   </div>
 
                   {(gear.weeklyRate || gear.monthlyRate) && (
-                    <div className="flex gap-2 text-[10px] text-gray-400">
+                    <div className="flex gap-4 mt-2 text-sm text-gray-600">
                       {gear.weeklyRate && (
-                        <span>Weekly: ${gear.weeklyRate.toFixed(2)}</span>
+                        <span>Weekly: <strong>${gear.weeklyRate.toFixed(2)}</strong></span>
                       )}
                       {gear.monthlyRate && (
-                        <span>Monthly: ${gear.monthlyRate.toFixed(2)}</span>
+                        <span>Monthly: <strong>${gear.monthlyRate.toFixed(2)}</strong></span>
                       )}
                     </div>
                   )}
@@ -168,36 +168,37 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
               {/* Description */}
               {gear.description && (
                 <div>
-                  <h2 className="text-sm font-semibold text-white mb-2">Description</h2>
-                  <p className="text-xs text-gray-300 leading-relaxed">{gear.description}</p>
+                  <h2 className="text-sm font-semibold text-gray-900 mb-2">Description</h2>
+                  <p className="text-sm text-gray-600 leading-relaxed">{gear.description}</p>
                 </div>
               )}
 
               {/* Location */}
               {(gear.city || gear.state) && (
-                <div>
-                  <h2 className="text-sm font-semibold text-white mb-2">Location</h2>
-                  <p className="text-xs text-gray-300">
-                    {[gear.city, gear.state].filter(Boolean).join(', ')}
-                  </p>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {[gear.city, gear.state].filter(Boolean).join(', ')}
                 </div>
               )}
 
               {/* Owner Information */}
               {gear.user && (
-                <div className="border-t border-white/10 pt-2">
-                  <h2 className="text-sm font-semibold text-white mb-2">Owner</h2>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">
+                <div className="border-t border-gray-200 pt-4">
+                  <h2 className="text-sm font-semibold text-gray-900 mb-3">Listed by</h2>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold">
                         {gear.user.full_name?.charAt(0) || 'U'}
                       </span>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-white">{gear.user.full_name || 'Gear Owner'}</p>
+                      <p className="text-sm font-medium text-gray-900">{gear.user.full_name || 'Gear Owner'}</p>
                       {gear.user.averageRating && (
-                        <div className="flex items-center space-x-1 text-[10px] text-gray-400">
-                          <span className="text-yellow-400 text-xs">★</span>
+                        <div className="flex items-center space-x-1 text-sm text-gray-500">
+                          <span className="text-yellow-500">★</span>
                           <span>{gear.user.averageRating.toFixed(1)}</span>
                           {gear.user.totalReviews && (
                             <span>({gear.user.totalReviews} reviews)</span>
@@ -210,15 +211,15 @@ async function GearDetailsServer({ gearId }: { gearId: string }) {
               )}
 
               {/* Reviews Section */}
-              <div className="border-t border-white/10 pt-2">
-                <h2 className="text-sm font-semibold text-white mb-2">Reviews</h2>
-                <div className="bg-white/5 backdrop-blur-sm p-2 rounded-lg border border-white/10">
-                  <p className="text-xs text-gray-400">Reviews will be displayed here after rentals are completed.</p>
+              <div className="border-t border-gray-200 pt-4">
+                <h2 className="text-sm font-semibold text-gray-900 mb-2">Reviews</h2>
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                  <p className="text-sm text-gray-500">Reviews will be displayed here after rentals are completed.</p>
                 </div>
               </div>
 
               {/* Client-side interactive components */}
-              <div className="border-t border-white/10 pt-2">
+              <div className="border-t border-gray-200 pt-4">
                 <GearDetailsClient gear={gear} currentUserId={currentUserId} />
               </div>
             </div>
