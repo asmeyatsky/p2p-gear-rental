@@ -380,7 +380,7 @@ function BrowsePageContent() {
           </div>
           {filters.query && (
             <div className="text-[10px] text-gray-600">
-              Results for "<span className="font-medium text-gray-800">{filters.query}</span>"
+              Results for &ldquo;<span className="font-medium text-gray-800">{filters.query}</span>&rdquo;
             </div>
           )}
         </div>

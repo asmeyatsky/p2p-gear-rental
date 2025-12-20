@@ -53,10 +53,11 @@ describe('ProfilePage', () => {
     render(<ProfilePage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/user profile/i)).toBeInTheDocument();
-      expect(screen.getByText(/email:/i)).toBeInTheDocument();
-      expect(screen.getByText('test@example.com')).toBeInTheDocument();
-      expect(screen.getByText(/full name:/i)).toBeInTheDocument();
+      expect(screen.getByText(/your profile/i)).toBeInTheDocument();
+      expect(screen.getByText(/email address/i)).toBeInTheDocument();
+      // Email appears multiple times (in header and details), use getAllByText
+      expect(screen.getAllByText('test@example.com').length).toBeGreaterThan(0);
+      expect(screen.getByText(/full name/i)).toBeInTheDocument();
       expect(screen.getByText('Test User')).toBeInTheDocument();
       expect(mockPush).not.toHaveBeenCalled();
     });
@@ -77,10 +78,12 @@ describe('ProfilePage', () => {
     render(<ProfilePage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/user profile/i)).toBeInTheDocument();
-      expect(screen.getByText(/email:/i)).toBeInTheDocument();
-      expect(screen.getByText('test@example.com')).toBeInTheDocument();
-      expect(screen.queryByText(/full name:/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/your profile/i)).toBeInTheDocument();
+      expect(screen.getByText(/email address/i)).toBeInTheDocument();
+      // Email appears multiple times (in header and details), use getAllByText
+      expect(screen.getAllByText('test@example.com').length).toBeGreaterThan(0);
+      // Full Name section should not appear when full_name is not available
+      expect(screen.queryByText('Full Name')).not.toBeInTheDocument();
       expect(mockPush).not.toHaveBeenCalled();
     });
   });

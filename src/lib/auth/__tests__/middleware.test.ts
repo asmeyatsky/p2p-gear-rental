@@ -2,6 +2,43 @@
  * @jest-environment node
  */
 
+// Mock dependencies BEFORE importing the modules
+const mockGetSession = jest.fn();
+const mockUpsert = jest.fn();
+const mockFindUnique = jest.fn();
+
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: mockGetSession,
+    },
+  },
+}));
+
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    user: {
+      upsert: mockUpsert,
+      findUnique: mockFindUnique,
+    },
+    gear: {
+      findUnique: jest.fn(),
+    },
+    rental: {
+      findUnique: jest.fn(),
+    },
+  },
+}));
+
+jest.mock('@/lib/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
+
 import {
   requireAuth,
   requireRole,
@@ -11,17 +48,8 @@ import {
   checkUserStatus,
   sanitizeInput,
 } from '../middleware';
-import { supabase } from '@/lib/supabase';
 import { prisma } from '@/lib/prisma';
 import { AuthenticationError, AuthorizationError } from '@/lib/api-error-handler';
-
-// Mock dependencies
-jest.mock('@/lib/supabase');
-jest.mock('@/lib/prisma');
-jest.mock('@/lib/logger');
-
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 describe('Auth Middleware', () => {
   beforeEach(() => {
@@ -43,16 +71,16 @@ describe('Auth Middleware', () => {
         expires_at: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null
-      } as any);
+      });
 
-      mockPrisma.user.upsert.mockResolvedValue({
+      mockUpsert.mockResolvedValue({
         id: 'user-1',
         email: 'test@example.com',
         full_name: 'Test User'
-      } as any);
+      });
 
       const authContext = await requireAuth();
 
@@ -63,7 +91,7 @@ describe('Auth Middleware', () => {
         isVerified: true
       });
 
-      expect(mockPrisma.user.upsert).toHaveBeenCalledWith({
+      expect(mockUpsert).toHaveBeenCalledWith({
         where: { id: 'user-1' },
         update: {
           email: 'test@example.com',
@@ -79,10 +107,10 @@ describe('Auth Middleware', () => {
     });
 
     it('should throw AuthenticationError for missing session', async () => {
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: null },
         error: null
-      } as any);
+      });
 
       await expect(requireAuth()).rejects.toThrow(AuthenticationError);
     });
@@ -96,19 +124,19 @@ describe('Auth Middleware', () => {
         expires_at: Math.floor(Date.now() / 1000) - 3600 // 1 hour ago
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null
-      } as any);
+      });
 
       await expect(requireAuth()).rejects.toThrow(AuthenticationError);
     });
 
     it('should throw AuthenticationError for Supabase errors', async () => {
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: null },
         error: { message: 'Invalid session' }
-      } as any);
+      });
 
       await expect(requireAuth()).rejects.toThrow(AuthenticationError);
     });
@@ -123,12 +151,12 @@ describe('Auth Middleware', () => {
         expires_at: Math.floor(Date.now() / 1000) + 3600
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null
-      } as any);
+      });
 
-      mockPrisma.user.upsert.mockRejectedValue(new Error('Database error'));
+      mockUpsert.mockRejectedValue(new Error('Database error'));
 
       await expect(requireAuth()).rejects.toThrow(AuthenticationError);
     });
@@ -148,15 +176,15 @@ describe('Auth Middleware', () => {
         expires_at: Math.floor(Date.now() / 1000) + 3600
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null
-      } as any);
+      });
 
-      mockPrisma.user.upsert.mockResolvedValue({
+      mockUpsert.mockResolvedValue({
         id: 'user-1',
         email: 'admin@example.com'
-      } as any);
+      });
 
       const authContext = await requireRole(['admin', 'moderator']);
 
@@ -176,15 +204,15 @@ describe('Auth Middleware', () => {
         expires_at: Math.floor(Date.now() / 1000) + 3600
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null
-      } as any);
+      });
 
-      mockPrisma.user.upsert.mockResolvedValue({
+      mockUpsert.mockResolvedValue({
         id: 'user-1',
         email: 'user@example.com'
-      } as any);
+      });
 
       await expect(requireRole(['admin'])).rejects.toThrow(AuthorizationError);
     });
@@ -204,15 +232,15 @@ describe('Auth Middleware', () => {
         expires_at: Math.floor(Date.now() / 1000) + 3600
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null
-      } as any);
+      });
 
-      mockPrisma.user.upsert.mockResolvedValue({
+      mockUpsert.mockResolvedValue({
         id: 'user-1',
         email: 'admin@example.com'
-      } as any);
+      });
 
       const authContext = await requireAdmin();
 
@@ -231,15 +259,15 @@ describe('Auth Middleware', () => {
         expires_at: Math.floor(Date.now() / 1000) + 3600
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null
-      } as any);
+      });
 
-      mockPrisma.user.upsert.mockResolvedValue({
+      mockUpsert.mockResolvedValue({
         id: 'user-1',
         email: 'verified@example.com'
-      } as any);
+      });
 
       const authContext = await requireVerifiedEmail();
 
@@ -256,15 +284,15 @@ describe('Auth Middleware', () => {
         expires_at: Math.floor(Date.now() / 1000) + 3600
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null
-      } as any);
+      });
 
-      mockPrisma.user.upsert.mockResolvedValue({
+      mockUpsert.mockResolvedValue({
         id: 'user-1',
         email: 'unverified@example.com'
-      } as any);
+      });
 
       await expect(requireVerifiedEmail()).rejects.toThrow(AuthorizationError);
     });
@@ -279,10 +307,10 @@ describe('Auth Middleware', () => {
     };
 
     it('should allow access for gear owner', async () => {
-      mockPrisma.gear.findUnique.mockResolvedValue({
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue({
         id: 'gear-1',
         userId: 'user-1'
-      } as any);
+      });
 
       const authContext = await requireOwnership('gear', 'gear-1', mockAuthContext);
 
@@ -290,11 +318,11 @@ describe('Auth Middleware', () => {
     });
 
     it('should allow access for rental participant', async () => {
-      mockPrisma.rental.findUnique.mockResolvedValue({
+      (prisma.rental.findUnique as jest.Mock).mockResolvedValue({
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2'
-      } as any);
+      });
 
       const authContext = await requireOwnership('rental', 'rental-1', mockAuthContext);
 
@@ -302,10 +330,10 @@ describe('Auth Middleware', () => {
     });
 
     it('should throw AuthorizationError for non-owners', async () => {
-      mockPrisma.gear.findUnique.mockResolvedValue({
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue({
         id: 'gear-1',
         userId: 'user-2' // Different user
-      } as any);
+      });
 
       await expect(
         requireOwnership('gear', 'gear-1', mockAuthContext)
@@ -313,7 +341,7 @@ describe('Auth Middleware', () => {
     });
 
     it('should throw AuthorizationError for non-existent resources', async () => {
-      mockPrisma.gear.findUnique.mockResolvedValue(null);
+      (prisma.gear.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(
         requireOwnership('gear', 'gear-1', mockAuthContext)
@@ -330,17 +358,17 @@ describe('Auth Middleware', () => {
     };
 
     it('should pass for existing users', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockFindUnique.mockResolvedValue({
         id: 'user-1',
         email: 'test@example.com',
         createdAt: new Date()
-      } as any);
+      });
 
       await expect(checkUserStatus(mockAuthContext)).resolves.not.toThrow();
     });
 
     it('should throw AuthorizationError for non-existent users', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockFindUnique.mockResolvedValue(null);
 
       await expect(checkUserStatus(mockAuthContext)).rejects.toThrow(AuthorizationError);
     });

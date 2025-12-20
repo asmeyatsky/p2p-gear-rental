@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { realTimeChatClient } from '@/lib/realtime/chat-client';
 import { Button } from '@/components/ui/Button';
@@ -103,7 +103,7 @@ export default function DashboardMessagesPage() {
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
-              <p className="text-gray-600 mb-6">When you send or receive messages, they'll appear here</p>
+              <p className="text-gray-600 mb-6">When you send or receive messages, they&apos;ll appear here</p>
               <Button>
                 Browse Gear
               </Button>

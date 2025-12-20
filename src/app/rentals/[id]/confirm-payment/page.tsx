@@ -155,7 +155,7 @@ export default function ConfirmPaymentPage() {
         <Header />
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading payment details...</p>
           </div>
         </div>
@@ -316,7 +316,7 @@ export default function ConfirmPaymentPage() {
                   </StripeProvider>
                 ) : (
                   <div className="bg-white rounded-lg shadow p-6 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
                     <p className="text-gray-600">Setting up payment...</p>
                   </div>
                 )}

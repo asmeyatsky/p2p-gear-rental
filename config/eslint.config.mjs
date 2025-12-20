@@ -10,6 +10,9 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: [".next/**", "node_modules/**", "build/**", "dist/**"],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     // Downgrade no-explicit-any to warning for infrastructure/lib code
@@ -20,11 +23,18 @@ const eslintConfig = [
       "**/domain/**/*.ts",
       "**/presentation/**/*.ts",
       "**/__tests__/**/*.ts",
+      "**/__tests__/**/*.tsx",
       "**/*.test.ts",
       "**/*.test.tsx",
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
+      // Allow require imports in test files (common in Jest)
+      "@typescript-eslint/no-require-imports": "off",
+      // Allow unused variables in tests (common for mock setup)
+      "@typescript-eslint/no-unused-vars": "warn",
+      // Allow unsafe function types in tests
+      "@typescript-eslint/no-unsafe-function-type": "warn",
     },
   },
 ];

@@ -3,10 +3,20 @@ import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
-// Initialize Supabase client using environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // Use service role key for server-side operations
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Lazy initialization to prevent build-time errors
+let _supabase: ReturnType<typeof createClient> | null = null;
+
+function getSupabase() {
+  if (!_supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables');
+    }
+    _supabase = createClient(supabaseUrl, supabaseKey);
+  }
+  return _supabase;
+}
 
 // Define Zod schemas for validation
 const GetConversationsQuerySchema = z.object({
@@ -34,7 +44,18 @@ export async function GET(request: NextRequest) {
     // Fetch user's conversations from database
     // This is a simplified implementation - in a real system you'd have a conversations table
     // For now, we'll return an empty list or mock data
-    const { data, error } = await supabase
+    interface RentalRow {
+      id: string;
+      renter_id: string;
+      owner_id: string;
+      gear_id: string;
+      start_date: string;
+      end_date: string;
+      status: string;
+      created_at: string;
+    }
+
+    const { data, error } = await getSupabase()
       .from('rentals') // Simplified: using rentals as proxy for conversations (each rental creates a conversation)
       .select(`
         id,
@@ -48,18 +69,18 @@ export async function GET(request: NextRequest) {
       `)
       .or(`renter_id.eq.${validationResult.data.userId},owner_id.eq.${validationResult.data.userId}`)
       .order('created_at', { ascending: false })
-      .limit(50); // Limit to last 50 rentals for performance
+      .limit(50) as { data: RentalRow[] | null; error: unknown };
 
     if (error) {
       console.error('Error fetching conversations:', error);
       return Response.json(
-        { error: 'Failed to fetch conversations' }, 
+        { error: 'Failed to fetch conversations' },
         { status: 500 }
       );
     }
 
     // Transform rental data to conversation format
-    const conversations = data.map(rental => ({
+    const conversations = (data || []).map(rental => ({
       id: `rental_conv_${rental.id}`, // Create conversation ID based on rental
       participants: [rental.renter_id, rental.owner_id],
       type: 'direct' as const,
