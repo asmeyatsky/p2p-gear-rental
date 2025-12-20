@@ -4,6 +4,17 @@ import MessagesPage from './page';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { realTimeChatClient } from '@/lib/realtime/chat-client';
 
+// Mock Next.js navigation
+jest.mock('next/navigation', () => ({
+  useSearchParams: jest.fn(() => ({
+    get: jest.fn().mockReturnValue(null),
+  })),
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+  })),
+}));
+
 // Mock the dependencies
 jest.mock('@/components/auth/AuthProvider', () => ({
   useAuth: jest.fn(),
@@ -25,7 +36,7 @@ describe('MessagesPage', () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     
     // Mock useAuth to return a logged in user
     (useAuth as jest.Mock).mockReturnValue({
@@ -53,7 +64,7 @@ describe('MessagesPage', () => {
     expect(screen.getByText('Chat with renters and listers')).toBeInTheDocument();
   });
 
-  it('shows loading state initially', () => {
+  it('shows loading state initially', async () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: null,
       loading: true,
@@ -61,7 +72,7 @@ describe('MessagesPage', () => {
 
     render(<MessagesPage />);
     
-    expect(screen.getByRole('status')).toBeInTheDocument(); // Loading spinner
+    expect(await screen.findByRole('status')).toBeInTheDocument(); // Loading spinner
   });
 
   it('loads conversations for the logged-in user', async () => {
@@ -94,7 +105,9 @@ describe('MessagesPage', () => {
       expect(realTimeChatClient.getUserConversations).toHaveBeenCalledWith('user123');
     });
 
-    expect(screen.getByText('User')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('User')).toBeInTheDocument();
+    });
   });
 
   it('allows sending a new message', async () => {
@@ -118,12 +131,17 @@ describe('MessagesPage', () => {
     // For this test, we'll simulate the state after a conversation is selected
   });
 
-  it('handles search input', () => {
+  it('handles search input', async () => {
     render(<MessagesPage />);
-    
+
+    // Wait for the page to load
+    await waitFor(() => {
+      expect(screen.getByText('Messages')).toBeInTheDocument();
+    });
+
     const searchInput = screen.getByPlaceholderText('Search conversations...');
     expect(searchInput).toBeInTheDocument();
-    
+
     fireEvent.change(searchInput, { target: { value: 'test' } });
     expect(searchInput).toHaveValue('test');
   });
