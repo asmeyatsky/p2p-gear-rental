@@ -5,16 +5,16 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { realTimeChatClient } from '@/lib/realtime/chat-client';
 
 // Mock the dependencies
-vi.mock('@/components/auth/AuthProvider', () => ({
-  useAuth: vi.fn(),
+jest.mock('@/components/auth/AuthProvider', () => ({
+  useAuth: jest.fn(),
 }));
 
-vi.mock('@/lib/realtime/chat-client', () => ({
+jest.mock('@/lib/realtime/chat-client', () => ({
   realTimeChatClient: {
-    getUserConversations: vi.fn(),
-    getMessages: vi.fn(),
+    getUserConversations: jest.fn(),
+    getMessages: jest.fn(),
   },
-  sendChatMessage: vi.fn(),
+  sendChatMessage: jest.fn(),
 }));
 
 describe('MessagesPage', () => {
@@ -33,9 +33,9 @@ describe('MessagesPage', () => {
       loading: false,
     });
 
-    // Mock chat engine responses
-    (realTimeChatEngine.getUserConversations as jest.Mock).mockResolvedValue([]);
-    (realTimeChatEngine.getMessages as jest.Mock).mockResolvedValue({
+    // Mock chat client responses
+    (realTimeChatClient.getUserConversations as jest.Mock).mockResolvedValue([]);
+    (realTimeChatClient.getMessages as jest.Mock).mockResolvedValue({
       messages: [],
       hasMore: false,
     });
@@ -86,12 +86,12 @@ describe('MessagesPage', () => {
       }
     ];
     
-    (realTimeChatEngine.getUserConversations as jest.Mock).mockResolvedValue(mockConversations);
-    
+    (realTimeChatClient.getUserConversations as jest.Mock).mockResolvedValue(mockConversations);
+
     render(<MessagesPage />);
-    
+
     await waitFor(() => {
-      expect(realTimeChatEngine.getUserConversations).toHaveBeenCalledWith('user123');
+      expect(realTimeChatClient.getUserConversations).toHaveBeenCalledWith('user123');
     });
 
     expect(screen.getByText('User')).toBeInTheDocument();

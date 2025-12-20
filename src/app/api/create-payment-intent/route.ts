@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
-import { AuthenticationError, ValidationError, ApiError, RateLimitError } from '@/lib/api-error-handler';
+import { AuthenticationError, ValidationError, ApiError, RateLimitError, NotFoundError, AuthorizationError } from '@/lib/api-error-handler';
 import { rateLimitConfig, getClientIdentifier } from '@/lib/rate-limit';
 import { monitoring } from '@/lib/monitoring';
 import { logger } from '@/lib/logger';
 import { createPaymentIntentSchema } from '@/lib/validations/payment';
+import { ZodError } from 'zod';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2025-08-27.basil',
@@ -72,11 +73,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!rental) {
-      throw new ValidationError('Rental not found');
+      throw new NotFoundError('Rental not found');
     }
 
     if (rental.renterId !== session.user.id) {
-      throw new ValidationError('You are not authorized to pay for this rental');
+      throw new AuthorizationError('You are not authorized to pay for this rental');
     }
 
     if (rental.paymentStatus === 'succeeded') {
@@ -191,7 +192,21 @@ export async function POST(request: NextRequest) {
     // Error Handling Logic (from withErrorHandler)
     logger.error('API Error:', { error: err instanceof Error ? err.message : 'Unknown error' }); // Log the error for monitoring
 
-    if (err instanceof ApiError) {
+    if (err instanceof ZodError) {
+      // Handle Zod validation errors
+      const message = process.env.NODE_ENV === 'production'
+        ? 'Invalid input data'
+        : err.issues?.map((issue: any) => issue.message).join(', ') || 'Validation error';
+
+      response = NextResponse.json(
+        {
+          error: message,
+          code: 'VALIDATION_ERROR',
+          timestamp: new Date().toISOString()
+        },
+        { status: 400 }
+      );
+    } else if (err instanceof ApiError) {
       // Cast to ApiError to access properties
       const apiError = err as ApiError;
       response = NextResponse.json(
@@ -204,8 +219,8 @@ export async function POST(request: NextRequest) {
       );
     } else if (err instanceof Error) {
       // Don't expose internal error details in production
-      const message = process.env.NODE_ENV === 'production' 
-        ? 'Internal server error' 
+      const message = process.env.NODE_ENV === 'production'
+        ? 'Internal server error'
         : err.message;
 
       response = NextResponse.json(

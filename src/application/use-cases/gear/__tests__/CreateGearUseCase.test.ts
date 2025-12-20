@@ -1,4 +1,4 @@
-import { CreateGearUseCase } from '../../../application/use-cases/gear/CreateGearUseCase';
+import { CreateGearUseCase } from '../CreateGearUseCase';
 import { IGearRepository } from '../../../domain/ports/repositories';
 import { IGearDomainService } from '../../../domain/services/GearDomainService';
 import { Gear } from '../../../domain/entities/Gear';

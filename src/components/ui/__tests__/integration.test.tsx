@@ -42,8 +42,10 @@ describe('UI Component Integration', () => {
 
     // Check that the card contains expected content
     expect(screen.getByText('Test Gear')).toBeInTheDocument();
-    expect(screen.getByText('$50')).toBeInTheDocument();
-    expect(screen.getByText('Test City,TS')).toBeInTheDocument();
+    // Price is shown in multiple places, use getAllByText
+    expect(screen.getAllByText(/\$50/).length).toBeGreaterThan(0);
+    // Location format: city,state (no space)
+    expect(screen.getByText(/Test City,\s*TS/)).toBeInTheDocument();
 
     // Verify that motion elements are rendered with proper class names
     const cardElement = container.firstChild;

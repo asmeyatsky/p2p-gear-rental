@@ -2,6 +2,23 @@
  * @jest-environment node
  */
 
+// Set environment variables before importing modules
+process.env.STRIPE_SECRET_KEY = 'sk_test_12345';
+
+// Define mock functions first
+const mockPaymentIntentsCreate = jest.fn();
+const mockPaymentIntentsUpdate = jest.fn();
+
+// Mock Stripe at the top level before other imports
+jest.mock('stripe', () => {
+  return jest.fn(() => ({
+    paymentIntents: {
+      create: mockPaymentIntentsCreate,
+      update: mockPaymentIntentsUpdate,
+    },
+  }));
+});
+
 // Mock next/server with inline class definitions
 jest.mock('next/server', () => {
   class MockHeaders {
@@ -60,11 +77,10 @@ import Stripe from 'stripe';
 import { User, Rental, Gear } from '@prisma/client';
 import { Session } from '@supabase/supabase-js';
 
-// Mock dependencies
+// Mock dependencies first
 jest.mock('@/lib/prisma');
 jest.mock('@/lib/supabase');
 jest.mock('@/lib/logger');
-jest.mock('stripe');
 jest.mock('@/lib/rate-limit');
 jest.mock('@/lib/monitoring');
 
@@ -73,26 +89,20 @@ import { POST } from '../route';
 
 const mockPrisma = jest.mocked(prisma);
 const mockSupabase = jest.mocked(supabase);
-const mockStripe = jest.mocked(Stripe);
-
-// Mock Stripe instance
-const mockStripeInstance = {
-  paymentIntents: {
-    create: jest.fn(),
-  },
-} as unknown as Stripe;
 
 describe('API /create-payment-intent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockStripe.mockImplementation(() => mockStripeInstance);
+    // Reset the mock functions
+    mockPaymentIntentsCreate.mockClear();
+    mockPaymentIntentsUpdate.mockClear();
   });
 
   describe('POST /api/create-payment-intent', () => {
     const validPaymentData = {
       rentalId: 'rental-1',
-      amount: 25000, // $250.00
-      currency: 'usd'
+      amount: 25000, // $250.00 (5 days * $50/day)
+      gearTitle: 'Test Gear Title'
     };
 
     const mockUser: Partial<User> = {
@@ -134,6 +144,7 @@ describe('API /create-payment-intent', () => {
     });
 
     it('should create payment intent for valid rental', async () => {
+      // Calculate expected amount: 5 days * $50/day * 100 (for cents) = 25000 cents = $250.00
       const mockRental: Partial<Rental & { gear: Partial<Gear> }> = {
         id: 'rental-1',
         renterId: 'user-1',
@@ -141,11 +152,12 @@ describe('API /create-payment-intent', () => {
         status: 'APPROVED',
         totalPrice: 250.00,
         startDate: new Date('2024-12-01'),
-        endDate: new Date('2024-12-05'),
+        endDate: new Date('2024-12-06'), // 5 days (Dec 1-5 inclusive)
         gear: {
           id: 'gear-1',
           title: 'Test Camera',
-          dailyRate: 50
+          dailyRate: 50, // $50 per day
+          userId: 'user-2' // gear owner ID
         }
       };
 
@@ -158,7 +170,13 @@ describe('API /create-payment-intent', () => {
       };
 
       (mockPrisma.rental.findUnique as jest.Mock).mockResolvedValue(mockRental as Rental);
-      (mockStripeInstance.paymentIntents.create as jest.Mock).mockResolvedValue(mockPaymentIntent);
+      mockPaymentIntentsCreate.mockResolvedValue(mockPaymentIntent);
+      (mockPrisma.rental.update as jest.Mock).mockResolvedValue({
+        ...mockRental,
+        paymentIntentId: 'pi_test123',
+        clientSecret: 'pi_test123_secret',
+        paymentStatus: 'requires_payment_method'
+      });
 
       const request = new NextRequest('http://localhost:3000/api/create-payment-intent', {
         method: 'POST',
@@ -173,25 +191,37 @@ describe('API /create-payment-intent', () => {
       expect(data.clientSecret).toBe('pi_test123_secret');
       expect(data.paymentIntentId).toBe('pi_test123');
 
-      expect(mockStripeInstance.paymentIntents.create).toHaveBeenCalledWith({
+      expect(mockPaymentIntentsCreate).toHaveBeenCalledWith({
         amount: 25000,
         currency: 'usd',
+        automatic_payment_methods: {
+          enabled: true,
+        },
         metadata: {
           rentalId: 'rental-1',
+          gearTitle: 'Test Gear Title',
+          gearOwnerId: 'user-2',
           renterId: 'user-1',
-          ownerId: 'user-2',
-          gearId: 'gear-1'
+          startDate: mockRental.startDate.toString(),
+          endDate: mockRental.endDate.toString(),
         }
       });
     });
 
     it('should prevent payment for non-approved rentals', async () => {
-      const mockRental: Partial<Rental> = {
+      const mockRental: Partial<Rental & { gear: Partial<Gear> }> = {
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2',
         status: 'PENDING', // Not approved
-        totalPrice: 250.00
+        totalPrice: 250.00,
+        startDate: new Date('2024-12-01'),
+        endDate: new Date('2024-12-06'), // 5 days
+        gear: {
+          id: 'gear-1',
+          dailyRate: 50, // $50 per day
+          userId: 'user-2'
+        }
       };
 
       (mockPrisma.rental.findUnique as jest.Mock).mockResolvedValue(mockRental as Rental);
@@ -244,20 +274,33 @@ describe('API /create-payment-intent', () => {
     });
 
     it('should validate amount matches rental total', async () => {
-      const mockRental: Partial<Rental> = {
+      const mockRental: Partial<Rental & { gear: Partial<Gear> }> = {
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2',
         status: 'APPROVED',
-        totalPrice: 300.00 // Different amount
+        totalPrice: 300.00, // Different amount
+        startDate: new Date('2024-12-01'),
+        endDate: new Date('2024-12-06'), // 5 days
+        gear: {
+          id: 'gear-1',
+          dailyRate: 60, // Different rate: 5 days * $60 = $300
+          userId: 'user-2'
+        }
       };
 
       (mockPrisma.rental.findUnique as jest.Mock).mockResolvedValue(mockRental as Rental);
 
+      // Use an amount that doesn't match the calculated amount (5 * 60 * 100 = 30000)
+      const wrongAmountData = {
+        ...validPaymentData,
+        amount: 25000 // This doesn't match 30000
+      };
+
       const request = new NextRequest('http://localhost:3000/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validPaymentData)
+        body: JSON.stringify(wrongAmountData)
       });
 
       const response = await POST(request);
@@ -285,7 +328,8 @@ describe('API /create-payment-intent', () => {
     it('should validate required fields', async () => {
       const invalidData = {
         rentalId: '', // Empty rentalId
-        amount: 25000
+        amount: 25000,
+        gearTitle: 'Test Gear Title'
       };
 
       const request = new NextRequest('http://localhost:3000/api/create-payment-intent', {
@@ -326,7 +370,7 @@ describe('API /create-payment-intent', () => {
       };
 
       (mockPrisma.rental.findUnique as jest.Mock).mockResolvedValue(mockRental as Rental);
-      (mockStripeInstance.paymentIntents.create as jest.Mock).mockRejectedValue(
+      mockPaymentIntentsCreate.mockRejectedValue(
         new Error('Your card was declined')
       );
 
@@ -356,14 +400,22 @@ describe('API /create-payment-intent', () => {
     });
 
     it('should prevent duplicate payment intents for same rental', async () => {
-      // Rental already has a paymentIntentId
-      const mockRental: Partial<Rental> = {
+      // Rental already has payment completed
+      const mockRental: Partial<Rental & { gear: Partial<Gear> }> = {
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2',
         status: 'APPROVED',
         totalPrice: 250.00,
-        paymentIntentId: 'pi_existing123'
+        paymentIntentId: 'pi_existing123',
+        paymentStatus: 'succeeded', // Payment already completed
+        startDate: new Date('2024-12-01'),
+        endDate: new Date('2024-12-06'), // 5 days
+        gear: {
+          id: 'gear-1',
+          dailyRate: 50, // $50 per day
+          userId: 'user-2'
+        }
       };
 
       (mockPrisma.rental.findUnique as jest.Mock).mockResolvedValue(mockRental as Rental);

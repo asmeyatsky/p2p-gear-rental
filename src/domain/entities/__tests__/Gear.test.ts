@@ -1,4 +1,4 @@
-import { Gear } from '../domain/entities/Gear';
+import { Gear } from '../Gear';
 
 describe('Gear Entity', () => {
   const validGearData = {

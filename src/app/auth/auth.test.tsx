@@ -45,8 +45,8 @@ describe('LoginPage', () => {
 
   it('renders the login form', () => {
     render(<LoginPage />);
-    expect(screen.getByPlaceholderText(/email address/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/enter your email/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/enter your password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
@@ -55,14 +55,14 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    fireEvent.change(screen.getByPlaceholderText(/email address/i), { target: { value: 'test@example.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText(/enter your email/i), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByPlaceholderText(/enter your password/i), { target: { value: 'password123' } });
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password123');
       expect(toast.success).toHaveBeenCalledWith('Logged in successfully!');
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(mockPush).toHaveBeenCalledWith('/dashboard');
     });
   });
 
@@ -71,8 +71,8 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    fireEvent.change(screen.getByPlaceholderText(/email address/i), { target: { value: 'test@example.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'wrongpassword' } });
+    fireEvent.change(screen.getByPlaceholderText(/enter your email/i), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByPlaceholderText(/enter your password/i), { target: { value: 'wrongpassword' } });
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
@@ -100,10 +100,10 @@ describe('SignupPage', () => {
 
   it('renders the signup form', () => {
     render(<SignupPage />);
-    expect(screen.getByPlaceholderText(/full name/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/email address/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign up/i })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/enter your full name/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/enter your email/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/create a password/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
   });
 
   it('calls signUp and redirects on successful signup', async () => {
@@ -111,10 +111,10 @@ describe('SignupPage', () => {
 
     render(<SignupPage />);
 
-    fireEvent.change(screen.getByPlaceholderText(/full name/i), { target: { value: 'John Doe' } });
-    fireEvent.change(screen.getByPlaceholderText(/email address/i), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+    fireEvent.change(screen.getByPlaceholderText(/enter your full name/i), { target: { value: 'John Doe' } });
+    fireEvent.change(screen.getByPlaceholderText(/enter your email/i), { target: { value: 'john@example.com' } });
+    fireEvent.change(screen.getByPlaceholderText(/create a password/i), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: /create account/i }));
 
     await waitFor(() => {
       expect(mockSignUp).toHaveBeenCalledWith('john@example.com', 'password123', 'John Doe');
@@ -128,10 +128,10 @@ describe('SignupPage', () => {
 
     render(<SignupPage />);
 
-    fireEvent.change(screen.getByPlaceholderText(/full name/i), { target: { value: 'Jane Doe' } });
-    fireEvent.change(screen.getByPlaceholderText(/email address/i), { target: { value: 'jane@example.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+    fireEvent.change(screen.getByPlaceholderText(/enter your full name/i), { target: { value: 'Jane Doe' } });
+    fireEvent.change(screen.getByPlaceholderText(/enter your email/i), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByPlaceholderText(/create a password/i), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: /create account/i }));
 
     await waitFor(() => {
       expect(mockSignUp).toHaveBeenCalledWith('jane@example.com', 'password123', 'Jane Doe');
