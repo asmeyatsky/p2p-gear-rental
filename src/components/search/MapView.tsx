@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GearItem } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
+import Map, { Marker, Popup, NavigationControl } from 'react-map-gl';
 
 interface ViewState {
   longitude: number;
@@ -29,12 +30,13 @@ export default function MapView({
   className = '',
   onMarkerClick,
 }: MapViewProps) {
+  const mapRef = useRef<any>(null);
   const [viewState, setViewState] = useState<ViewState>({
     longitude: center?.longitude || -122.4194,
     latitude: center?.latitude || 37.7749,
     zoom: 10,
   });
-  
+
   const [selectedGear, setSelectedGear] = useState<GearWithCoordinates | null>(null);
   const [gearWithCoords, setGearWithCoords] = useState<GearWithCoordinates[]>([]);
 
@@ -42,7 +44,7 @@ export default function MapView({
   useEffect(() => {
     const geocodeGear = async () => {
       const geocodedGear: GearWithCoordinates[] = [];
-      
+
       for (const gear of gearItems) {
         try {
           // Mock geocoding - in production, use a real geocoding service
@@ -57,7 +59,7 @@ export default function MapView({
           geocodedGear.push(gear);
         }
       }
-      
+
       setGearWithCoords(geocodedGear);
     };
 
@@ -66,17 +68,25 @@ export default function MapView({
     }
   }, [gearItems]);
 
-  // Auto-fit map to show all markers (disabled for now)
+  // Auto-fit map to show all markers
   useEffect(() => {
-    if (gearWithCoords.length > 0) {
+    if (gearWithCoords.length > 0 && mapRef.current) {
       const validCoords = gearWithCoords
         .filter(gear => gear.coordinates)
         .map(gear => gear.coordinates!);
 
       if (validCoords.length > 0) {
         const bounds = calculateBounds(validCoords);
-        // Map fitBounds disabled - will re-enable when mapRef is restored
-        console.log('Map bounds calculated:', bounds);
+        // Fit bounds to show all markers
+        if (mapRef.current && bounds.minLat !== bounds.maxLat && bounds.minLng !== bounds.maxLng) {
+          mapRef.current.fitBounds(
+            [
+              [bounds.minLng, bounds.minLat],
+              [bounds.maxLng, bounds.maxLat]
+            ],
+            { padding: 50, duration: 0 } // No animation for initial fit
+          );
+        }
       }
     }
   }, [gearWithCoords]);
@@ -88,25 +98,19 @@ export default function MapView({
 
   return (
     <div className={`relative ${className}`} style={{ minHeight: '400px' }}>
-      {/* <Map
+      <Map
         ref={mapRef}
         {...viewState}
-        onViewStateChange={(viewState) => setViewState(viewState.viewState)}
-        mapboxApiAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+        onMove={(evt) => setViewState(evt.viewState)}
+        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
         mapStyle="mapbox://styles/mapbox/streets-v11"
         width="100%"
         height="100%"
         style={{ width: '100%', height: '100%' }}
         onClick={() => setSelectedGear(null)}
-      > */}
-      <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">
-        <div className="text-center">
-          <div className="text-4xl mb-4">🗺️</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Map View Coming Soon</h3>
-          <p className="text-gray-600">Interactive map with gear locations will be available soon</p>
-        </div>
-      </div>
-      {/* Map functionality temporarily disabled
+      >
+        <NavigationControl position="top-right" />
+
         {gearWithCoords
           .filter(gear => gear.coordinates)
           .map((gear) => (
@@ -145,7 +149,7 @@ export default function MapView({
                     sizes="64px"
                   />
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <Link
                     href={`/gear/${selectedGear.id}`}
@@ -153,15 +157,15 @@ export default function MapView({
                   >
                     {selectedGear.title}
                   </Link>
-                  
+
                   <p className="text-sm text-gray-500 truncate">
                     {selectedGear.brand} {selectedGear.model}
                   </p>
-                  
+
                   <p className="text-sm text-gray-600">
                     {selectedGear.city}, {selectedGear.state}
                   </p>
-                  
+
                   <div className="mt-1">
                     <span className="font-semibold text-lg text-green-600">
                       {formatCurrency(selectedGear.dailyRate)}
@@ -170,7 +174,7 @@ export default function MapView({
                   </div>
                 </div>
               </div>
-              
+
               <Link
                 href={`/gear/${selectedGear.id}`}
                 className="mt-3 block w-full bg-blue-600 text-white text-center py-2 px-3 rounded text-sm font-medium hover:bg-blue-700 transition-colors"
@@ -180,38 +184,9 @@ export default function MapView({
             </div>
           </Popup>
         )}
-      </Map> */}
+      </Map>
 
-      {/* Map controls temporarily disabled
-      <div className="absolute top-4 right-4 bg-white rounded-lg shadow-md">
-        <button
-          onClick={() => {
-            if (navigator.geolocation) {
-              navigator.geolocation.getCurrentPosition(
-                (position) => {
-                  setViewState(prev => ({
-                    ...prev,
-                    longitude: position.coords.longitude,
-                    latitude: position.coords.latitude,
-                    zoom: 12,
-                  }));
-                },
-                (error) => {
-                  console.error('Geolocation error:', error);
-                }
-              );
-            }
-          }}
-          className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          title="Go to my location"
-        >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-          </svg>
-        </button>
-      </div> */}
-
-      {/* Loading overlay temporarily disabled
+      {/* Loading overlay */}
       {gearItems.length > 0 && gearWithCoords.length === 0 && (
         <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
           <div className="text-center">
@@ -219,7 +194,7 @@ export default function MapView({
             <p className="mt-2 text-sm text-gray-600">Loading map...</p>
           </div>
         </div>
-      )} */}
+      )}
     </div>
   );
 }
@@ -238,11 +213,11 @@ async function mockGeocode(city: string, state: string): Promise<{ latitude: num
 
   const key = `${city}, ${state}`;
   const coords = mockCoords[key];
-  
+
   if (coords) {
     return coords;
   }
-  
+
   // Return random coordinates in the US for unknown locations
   return {
     latitude: 39.8283 + (Math.random() - 0.5) * 10,
