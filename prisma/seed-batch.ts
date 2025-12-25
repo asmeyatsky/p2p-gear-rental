@@ -4,15 +4,14 @@ import { faker } from '@faker-js/faker';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Start seeding...');
+  console.log('Start seeding with batch processing...');
 
   // Clear existing data
   await prisma.gear.deleteMany({});
   console.log('Cleared existing gear data.');
 
-  // Create a user to associate with the gear items
-  // This is a simplified approach; in a real app, you might have multiple users
-const user = await prisma.user.upsert({
+  // Create a user
+  const user = await prisma.user.upsert({
     where: { email: 'seeduser@example.com' },
     update: {},
     create: {
@@ -22,7 +21,6 @@ const user = await prisma.user.upsert({
     },
   });
   console.log(`Created/found seed user: ${user.email}`);
-
 
   const categories = ['cameras', 'lenses', 'drones', 'lighting', 'audio', 'tripods', 'accessories', 'stabilizers', 'monitors'];
   const conditions = ['new', 'like-new', 'good', 'fair', 'worn'];
@@ -34,8 +32,8 @@ const user = await prisma.user.upsert({
     const title = faker.commerce.productName();
     const description = faker.commerce.productDescription();
     const dailyRate = parseFloat(faker.commerce.price({ min: 10, max: 200, dec: 2 }));
-    const weeklyRate = parseFloat((dailyRate * 5.5).toFixed(2)); // Approx 10% discount for weekly
-    const monthlyRate = parseFloat((dailyRate * 20).toFixed(2)); // Approx 30% discount for monthly
+    const weeklyRate = parseFloat((dailyRate * 5.5).toFixed(2));
+    const monthlyRate = parseFloat((dailyRate * 20).toFixed(2));
 
     const randomCategory = faker.helpers.arrayElement(categories);
     const randomCondition = faker.helpers.arrayElement(conditions);
@@ -43,40 +41,67 @@ const user = await prisma.user.upsert({
     const randomState = faker.helpers.arrayElement(states);
     const randomBrand = faker.helpers.arrayElement(brands);
     
-    // Generate a consistent image URL
     const imageSeed = `${randomCategory}-${randomBrand}-${randomCity}`;
     const imageUrl = `https://picsum.photos/seed/${imageSeed}/800/600`;
 
     return {
-      title: `${title} - ${index + 1}`, // Add index for uniqueness
+      title: `${title} - ${index + 1}`,
       description: description,
       dailyRate: dailyRate,
       weeklyRate: weeklyRate,
       monthlyRate: monthlyRate,
-      images: JSON.stringify([imageUrl, imageUrl.replace('600', '601')]), // Two images, slightly different
+      images: JSON.stringify([imageUrl, imageUrl.replace('600', '601')]),
       city: randomCity,
       state: randomState,
       category: randomCategory,
       brand: randomBrand,
       model: faker.lorem.word(),
       condition: randomCondition,
-      userId: user.id, // Associate with the seed user
+      userId: user.id,
     };
   };
 
   const gearItemsToCreate = 1000;
-  const gearPromises = [];
+  const batchSize = 50; // Process in smaller batches
+  let createdCount = 0;
 
-  for (let i = 0; i < gearItemsToCreate; i++) {
-    gearPromises.push(
-      prisma.gear.create({
-        data: generateFakeGear(i),
-      })
-    );
+  for (let batch = 0; batch < gearItemsToCreate / batchSize; batch++) {
+    console.log(`Processing batch ${batch + 1}/${Math.ceil(gearItemsToCreate / batchSize)}...`);
+    
+    const batchPromises = [];
+    for (let i = 0; i < batchSize; i++) {
+      const index = batch * batchSize + i;
+      if (index >= gearItemsToCreate) break;
+      
+      batchPromises.push(
+        prisma.gear.create({
+          data: generateFakeGear(index),
+        })
+      );
+    }
+
+    try {
+      const results = await Promise.all(batchPromises);
+      createdCount += results.length;
+      console.log(`✅ Batch ${batch + 1} completed. Created ${results.length} items. Total: ${createdCount}`);
+      
+      // Small delay between batches to avoid overwhelming the connection pool
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error(`❌ Error in batch ${batch + 1}:`, error.message);
+      // Try individually if batch fails
+      for (const promise of batchPromises) {
+        try {
+          await promise;
+          createdCount++;
+        } catch (individualError) {
+          console.log('⚠️ Individual item failed:', individualError.message);
+        }
+      }
+    }
   }
 
-  await Promise.all(gearPromises);
-  console.log(`Seeded ${gearItemsToCreate} gear items.`);
+  console.log(`🎉 Seeding completed! Created ${createdCount} gear items.`);
 }
 
 main()

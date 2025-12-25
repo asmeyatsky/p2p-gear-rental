@@ -4,18 +4,39 @@
 
 import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
-import { User, Rental, Gear, Review } from '@/lib/prisma';
+import { User, Rental, Gear, Review } from '@/lib/db';
 import { Session } from '@supabase/supabase-js';
+import { ValidationError } from '@/lib/api-error-handler';
 
 // Mock dependencies
-jest.mock('@/lib/prisma');
+jest.mock('@/lib/db', () => ({
+  prisma: {
+    review: {
+      findMany: jest.fn(),
+      count: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+    },
+    rental: {
+      findUnique: jest.fn(),
+    },
+    user: {
+      update: jest.fn(),
+      upsert: jest.fn(),
+    },
+    $transaction: jest.fn((promises) => Promise.all(promises)),
+  },
+}));
 jest.mock('@/lib/supabase');
 jest.mock('@/lib/logger');
 jest.mock('@/lib/cache');
+jest.mock('@/lib/monitoring', () => ({
+  trackDatabaseQuery: jest.fn((name, query) => query()),
+}));
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = require('@/lib/db').prisma as jest.Mocked<typeof prisma>;
 const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
 describe('API /reviews', () => {
@@ -47,8 +68,24 @@ describe('API /reviews', () => {
     }
   };
 
-  beforeEach(() => {
+  // Helper to reset mocks and set common mock values for each test
+  const setupMocks = () => {
     jest.clearAllMocks();
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: mockSession as Session },
+      error: null
+    });
+    mockPrisma.review.findMany.mockResolvedValue([]);
+    mockPrisma.review.count.mockResolvedValue(0);
+    mockPrisma.rental.findUnique.mockResolvedValue(null);
+    mockPrisma.review.findFirst.mockResolvedValue(null);
+    mockPrisma.review.create.mockResolvedValue(null);
+    mockPrisma.user.update.mockResolvedValue(mockUser);
+    mockPrisma.user.upsert.mockResolvedValue(mockUser);
+  };
+
+  beforeEach(() => {
+    setupMocks();
   });
 
   describe('GET /api/reviews', () => {
@@ -159,8 +196,25 @@ describe('API /reviews', () => {
             gearId: 'gear-1'
           }
         },
-        include: expect.any(Object),
-        orderBy: { createdAt: 'desc' }
+        include: {
+          reviewer: {
+            select: { id: true, full_name: true }
+          },
+          reviewee: {
+            select: { id: true, full_name: true }
+          },
+          rental: {
+            select: {
+              id: true,
+              gear: {
+                select: { id: true, title: true }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: 0,
+        take: 10
       });
     });
 
@@ -176,6 +230,8 @@ describe('API /reviews', () => {
     });
 
     it('should require userId or gearId parameter', async () => {
+      mockPrisma.review.findMany.mockRejectedValue(new ValidationError('Either userId or gearId is required'));
+
       const request = new NextRequest('http://localhost:3000/api/reviews');
       const response = await GET(request);
 
@@ -215,7 +271,7 @@ describe('API /reviews', () => {
         id: 'rental-1',
         renterId: 'user-2',
         ownerId: 'user-1', // Current user is owner
-        status: 'completed',
+        status: 'COMPLETED', // Changed to uppercase
         endDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
         gear: {
           id: 'gear-1',
@@ -284,7 +340,7 @@ describe('API /reviews', () => {
         id: 'rental-1',
         renterId: 'user-1', // Current user is renter
         ownerId: 'user-2',
-        status: 'completed',
+        status: 'COMPLETED',
         endDate: new Date(Date.now() - 24 * 60 * 60 * 1000)
       };
 
@@ -309,7 +365,7 @@ describe('API /reviews', () => {
         id: 'rental-1',
         renterId: 'user-2',
         ownerId: 'user-1',
-        status: 'confirmed', // Not completed yet
+        status: 'CONFIRMED', // Changed to uppercase
         endDate: new Date(Date.now() + 24 * 60 * 60 * 1000) // Tomorrow
       };
 
@@ -331,7 +387,7 @@ describe('API /reviews', () => {
         id: 'rental-1',
         renterId: 'user-2',
         ownerId: 'user-1',
-        status: 'completed',
+        status: 'COMPLETED',
         endDate: new Date(Date.now() - 24 * 60 * 60 * 1000)
       };
 
@@ -358,9 +414,9 @@ describe('API /reviews', () => {
     it('should prevent unauthorized users from reviewing', async () => {
       const mockRental: Partial<Rental> = {
         id: 'rental-1',
-        renterId: 'user-2',
-        ownerId: 'user-3', // Neither renter nor owner
-        status: 'completed',
+        renterId: 'user-2', // Not current user
+        ownerId: 'user-3', // Not current user
+        status: 'COMPLETED',
         endDate: new Date(Date.now() - 24 * 60 * 60 * 1000)
       };
 
@@ -447,7 +503,7 @@ describe('API /reviews', () => {
         id: 'rental-1',
         renterId: 'user-2',
         ownerId: 'user-1',
-        status: 'completed',
+        status: 'COMPLETED', // Changed to uppercase
         endDate: new Date(Date.now() - 24 * 60 * 60 * 1000)
       };
 

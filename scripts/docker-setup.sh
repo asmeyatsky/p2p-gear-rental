@@ -24,10 +24,7 @@ if ! command_exists docker; then
     exit 1
 fi
 
-if ! command_exists docker-compose; then
-    echo "❌ Docker Compose is not installed. Please install Docker Compose first."
-    exit 1
-fi
+
 
 echo "✅ Docker prerequisites satisfied"
 
@@ -59,15 +56,15 @@ read -p "Enter choice (1-2): " env_choice
 case $env_choice in
     1)
         echo "🔧 Setting up development environment..."
-        COMPOSE_FILE="docker-compose.dev.yml"
+        COMPOSE_FILE="docker compose.dev.yml"
         ;;
     2)
         echo "🚀 Setting up production environment..."
-        COMPOSE_FILE="docker-compose.yml"
+        COMPOSE_FILE="docker compose.yml"
         ;;
     *)
         echo "❌ Invalid choice. Defaulting to development."
-        COMPOSE_FILE="docker-compose.dev.yml"
+        COMPOSE_FILE="docker compose.dev.yml"
         ;;
 esac
 
@@ -80,7 +77,7 @@ echo "📦 Pulling base images..."
 docker compose -f "$COMPOSE_FILE" pull
 
 # Build application (if production)
-if [ "$COMPOSE_FILE" = "docker-compose.yml" ]; then
+if [ "$COMPOSE_FILE" = "docker compose.yml" ]; then
     echo "🔨 Building application image..."
     docker compose -f "$COMPOSE_FILE" build app
 fi
@@ -102,7 +99,7 @@ else
 fi
 
 # Run database migrations (if production)
-if [ "$COMPOSE_FILE" = "docker-compose.yml" ]; then
+if [ "$COMPOSE_FILE" = "docker compose.yml" ]; then
     echo "🗄️  Running database migrations..."
     docker compose -f "$COMPOSE_FILE" exec app npm run migrate
 fi
@@ -125,7 +122,7 @@ docker compose -f "$COMPOSE_FILE" ps
 echo ""
 echo "🌐 Application URLs:"
 echo "==================="
-if [ "$COMPOSE_FILE" = "docker-compose.dev.yml" ]; then
+if [ "$COMPOSE_FILE" = "docker compose.dev.yml" ]; then
     echo "Application: http://localhost:3000"
     echo "Database: localhost:5432"
     echo "Redis: localhost:6379"
