@@ -1,10 +1,14 @@
+const { pathsToModuleNameMapper } = require('ts-jest');
+const { compilerOptions } = require('./tsconfig.json');
+
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/config/jest.setup.ts'],
   testPathIgnorePatterns: ['<rootDir>/e2e/', '<rootDir>/.next/'],
   rootDir: '..',
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
+    ...pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
+    // Mocks must come after the paths mapper
     '^@supabase/supabase-js$': '<rootDir>/__mocks__/@supabase/supabase-js.ts',
     '^@/components/auth/AuthProvider$': '<rootDir>/__mocks__/components/auth/AuthProvider.tsx',
     '^next/server$': '<rootDir>/__mocks__/next/server.js',
@@ -22,7 +26,7 @@ module.exports = {
     '^@/lib/rate-limit$': '<rootDir>/__mocks__/@/lib/rate-limit.ts',
   },
   transform: {
-    '^.+\.(ts|tsx|js)$': ['babel-jest', { configFile: './config/babel.config.js' }],
+    '^.+\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
   },
   transformIgnorePatterns: [
     '/node_modules/(?!@supabase)',

@@ -1,8 +1,20 @@
-import { screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import MyRentalsPage from './page';
-import { render } from '@/test-utils';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
+
+// Mock Next.js router
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+  })),
+}));
+
+// Mock useAuth hook
+jest.mock('@/components/auth/AuthProvider', () => ({
+  useAuth: jest.fn(),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
 
 const mockPush = jest.fn();
 

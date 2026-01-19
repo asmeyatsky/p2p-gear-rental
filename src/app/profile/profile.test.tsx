@@ -58,11 +58,11 @@ describe('ProfilePage', () => {
       // Email appears multiple times (in header and details), use getAllByText
       expect(screen.getAllByText('test@example.com').length).toBeGreaterThan(0);
 
-      // Find the "Full Name" label first, then check if the next element has the expected value
+      // Find the "Full Name" label first, then check if the next sibling element has the expected value
       const fullNameLabel = screen.getByText(/full name/i);
-      // Get the next sibling element which should contain the actual name
-      const nextElement = fullNameLabel.parentElement?.nextElementSibling as HTMLElement;
-      expect(nextElement?.textContent).toBe('Test User');
+      // Get the next sibling element (the <p> tag) which contains the actual name
+      const valueElement = fullNameLabel.nextElementSibling as HTMLElement;
+      expect(valueElement?.textContent).toBe('Test User');
       expect(mockPush).not.toHaveBeenCalled();
     });
   });

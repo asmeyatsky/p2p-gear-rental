@@ -2,24 +2,20 @@
  * @jest-environment node
  */
 
-// Mock dependencies BEFORE importing the modules
-const mockGetSession = jest.fn();
-const mockUpsert = jest.fn();
-const mockFindUnique = jest.fn();
-
+// Mock dependencies - create mocks inline to avoid hoisting issues
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
-      getSession: mockGetSession,
+      getSession: jest.fn(),
     },
   },
 }));
 
-jest.mock('@/lib/prisma', () => ({
+jest.mock('@/lib/db', () => ({
   prisma: {
     user: {
-      upsert: mockUpsert,
-      findUnique: mockFindUnique,
+      upsert: jest.fn(),
+      findUnique: jest.fn(),
     },
     gear: {
       findUnique: jest.fn(),
@@ -48,12 +44,23 @@ import {
   checkUserStatus,
   sanitizeInput,
 } from '../middleware';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import { AuthenticationError, AuthorizationError } from '@/lib/api-error-handler';
+
+// Get references to the mocks after imports
+const mockGetSession = supabase.auth.getSession as jest.Mock;
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 describe('Auth Middleware', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
+    // Configure the mocked prisma methods directly using mockPrisma
+    mockPrisma.user.upsert.mockResolvedValue({});
+    mockPrisma.user.findUnique.mockResolvedValue(null);
+    mockPrisma.gear.findUnique.mockResolvedValue(null);
+    mockPrisma.rental.findUnique.mockResolvedValue(null);
   });
 
   describe('requireAuth', () => {
@@ -76,7 +83,7 @@ describe('Auth Middleware', () => {
         error: null
       });
 
-      mockUpsert.mockResolvedValue({
+      mockPrisma.user.upsert.mockResolvedValue({
         id: 'user-1',
         email: 'test@example.com',
         full_name: 'Test User'
@@ -91,7 +98,7 @@ describe('Auth Middleware', () => {
         isVerified: true
       });
 
-      expect(mockUpsert).toHaveBeenCalledWith({
+      expect(mockPrisma.user.upsert).toHaveBeenCalledWith({
         where: { id: 'user-1' },
         update: {
           email: 'test@example.com',
@@ -156,7 +163,7 @@ describe('Auth Middleware', () => {
         error: null
       });
 
-      mockUpsert.mockRejectedValue(new Error('Database error'));
+      mockPrisma.user.upsert.mockRejectedValue(new Error('Database error'));
 
       await expect(requireAuth()).rejects.toThrow(AuthenticationError);
     });
@@ -181,7 +188,7 @@ describe('Auth Middleware', () => {
         error: null
       });
 
-      mockUpsert.mockResolvedValue({
+      mockPrisma.user.upsert.mockResolvedValue({
         id: 'user-1',
         email: 'admin@example.com'
       });
@@ -209,7 +216,7 @@ describe('Auth Middleware', () => {
         error: null
       });
 
-      mockUpsert.mockResolvedValue({
+      mockPrisma.user.upsert.mockResolvedValue({
         id: 'user-1',
         email: 'user@example.com'
       });
@@ -237,7 +244,7 @@ describe('Auth Middleware', () => {
         error: null
       });
 
-      mockUpsert.mockResolvedValue({
+      mockPrisma.user.upsert.mockResolvedValue({
         id: 'user-1',
         email: 'admin@example.com'
       });
@@ -264,7 +271,7 @@ describe('Auth Middleware', () => {
         error: null
       });
 
-      mockUpsert.mockResolvedValue({
+      mockPrisma.user.upsert.mockResolvedValue({
         id: 'user-1',
         email: 'verified@example.com'
       });
@@ -289,7 +296,7 @@ describe('Auth Middleware', () => {
         error: null
       });
 
-      mockUpsert.mockResolvedValue({
+      mockPrisma.user.upsert.mockResolvedValue({
         id: 'user-1',
         email: 'unverified@example.com'
       });
@@ -307,7 +314,7 @@ describe('Auth Middleware', () => {
     };
 
     it('should allow access for gear owner', async () => {
-      (prisma.gear.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.gear.findUnique.mockResolvedValue({
         id: 'gear-1',
         userId: 'user-1'
       });
@@ -318,7 +325,7 @@ describe('Auth Middleware', () => {
     });
 
     it('should allow access for rental participant', async () => {
-      (prisma.rental.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.rental.findUnique.mockResolvedValue({
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2'
@@ -330,7 +337,7 @@ describe('Auth Middleware', () => {
     });
 
     it('should throw AuthorizationError for non-owners', async () => {
-      (prisma.gear.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.gear.findUnique.mockResolvedValue({
         id: 'gear-1',
         userId: 'user-2' // Different user
       });
@@ -341,7 +348,7 @@ describe('Auth Middleware', () => {
     });
 
     it('should throw AuthorizationError for non-existent resources', async () => {
-      (prisma.gear.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPrisma.gear.findUnique.mockResolvedValue(null);
 
       await expect(
         requireOwnership('gear', 'gear-1', mockAuthContext)
@@ -358,7 +365,7 @@ describe('Auth Middleware', () => {
     };
 
     it('should pass for existing users', async () => {
-      mockFindUnique.mockResolvedValue({
+      mockPrisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
         email: 'test@example.com',
         createdAt: new Date()
@@ -368,7 +375,7 @@ describe('Auth Middleware', () => {
     });
 
     it('should throw AuthorizationError for non-existent users', async () => {
-      mockFindUnique.mockResolvedValue(null);
+      mockPrisma.user.findUnique.mockResolvedValue(null);
 
       await expect(checkUserStatus(mockAuthContext)).rejects.toThrow(AuthorizationError);
     });

@@ -1,14 +1,16 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { requireAuth } from '@/lib/auth-middleware';
-import { withErrorHandler, withMonitoring } from '@/lib/middleware';
+import { authenticateRequest } from '@/lib/auth-middleware';
+import { withErrorHandler } from '@/lib/api-error-handler';
+import { withMonitoring } from '@/lib/monitoring';
 import { rateLimitConfig } from '@/lib/enhanced-rate-limit';
 import { prisma } from '@/lib/prisma';
+import { createGearSchema } from '@/lib/validations/gear';
 
 export const GET = withErrorHandler(
   withMonitoring(
     async (req: NextRequest) => {
       try {
-        const { user } = await requireAuth(req);
+        const { user } = await authenticateRequest(req);
         
         if (!user) {
           return Response.json(
@@ -59,6 +61,59 @@ export const GET = withErrorHandler(
           { status: 500 }
         );
       }
+    }
+  )
+);
+
+export const POST = withErrorHandler(
+  withMonitoring(
+    async (req: NextRequest) => {
+      const { user } = await authenticateRequest(req);
+      if (!user) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      }
+
+      const body = await req.json();
+      const validation = createGearSchema.safeParse(body);
+
+      if (!validation.success) {
+        return NextResponse.json({ error: 'Invalid data', details: validation.error.issues }, { status: 400 });
+      }
+
+      const {
+        title,
+        description,
+        dailyRate,
+        weeklyRate,
+        monthlyRate,
+        city,
+        state,
+        images,
+        category,
+        brand,
+        model,
+        condition
+      } = validation.data;
+
+      const newGear = await prisma.gear.create({
+        data: {
+          title,
+          description,
+          dailyRate,
+          weeklyRate,
+          monthlyRate,
+          city,
+          state,
+          images,
+          category,
+          brand,
+          model,
+          condition,
+          userId: user.id,
+        }
+      });
+
+      return NextResponse.json(newGear, { status: 201 });
     }
   )
 );
