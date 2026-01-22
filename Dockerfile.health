@@ -1,0 +1,32 @@
+# Ultra-simple working Docker for Cloud Run
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install only production dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production
+
+# Copy source
+COPY . .
+
+# Simple health check server
+RUN sh -c 'cat > server.js << EOF
+const { createServer } = require("http");
+const server = createServer((req, res) => {
+  if (req.url === "/api/health") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }));
+  } else {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("P2P Gear Rental - Health: /api/health");
+  }
+});
+
+server.listen(3000, () => {
+  console.log("Server started on port 3000");
+});
+EOF'
+
+EXPOSE 3000
+CMD ["node", "server.js"]
