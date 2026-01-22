@@ -94,7 +94,7 @@ class SearchEngine {
       });
       
       // Convert to GearItem format
-      allGear = dbGear.map(gear => ({
+      allGear = dbGear.map((gear: any) => ({
         ...gear,
         images: gear.images ? JSON.parse(gear.images as string) : [],
         createdAt: gear.createdAt.toISOString(),
@@ -187,7 +187,7 @@ class SearchEngine {
       }
     });
 
-    return gear.map(g => ({
+    return gear.map((g: any) => ({
       ...g,
       images: g.images ? JSON.parse(g.images as string) : [],
       createdAt: g.createdAt.toISOString(),

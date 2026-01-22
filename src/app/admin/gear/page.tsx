@@ -57,7 +57,12 @@ export default function AdminGearPage() {
 
       if (error) throw error;
 
-      setGears(data || []);
+      // Transform data to match Gear interface (user is returned as array from join)
+      const transformedData = (data || []).map((item: any) => ({
+        ...item,
+        user: Array.isArray(item.user) ? item.user[0] : item.user
+      }));
+      setGears(transformedData);
     } catch (error) {
       console.error('Error fetching gear:', error);
     } finally {

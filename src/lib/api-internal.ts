@@ -99,7 +99,7 @@ export async function fetchFeaturedGear(limit: number = 12): Promise<GearItem[]>
       take: limit,
     });
 
-    return gear.map(g => ({
+    return gear.map((g: any) => ({
       id: g.id,
       title: g.title,
       description: g.description,
@@ -205,7 +205,7 @@ export async function fetchCategories(): Promise<CategoryCount[]> {
       take: 8,
     });
 
-    const result = categories.map(c => ({
+    const result = categories.map((c: any) => ({
       name: c.category,
       count: c._count.category,
     }));
@@ -276,7 +276,7 @@ export async function searchGear(params: {
     ]);
 
     return {
-      data: gear.map(g => ({
+      data: gear.map((g: any) => ({
         id: g.id,
         title: g.title,
         description: g.description,

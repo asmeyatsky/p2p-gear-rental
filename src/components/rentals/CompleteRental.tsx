@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/useToast';
-import { supabase } from '@/lib/supabase';
 
 interface CompleteRentalProps {
   rentalId: string;
@@ -13,11 +11,12 @@ interface CompleteRentalProps {
 export default function CompleteRental({ rentalId, onRentalCompleted }: CompleteRentalProps) {
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const router = useRouter();
-  const { toast } = useToast();
 
   const handleCompleteRental = async () => {
     setLoading(true);
+    setMessage(null);
     try {
       const response = await fetch(`/api/rentals/${rentalId}/complete`, {
         method: 'PUT',
@@ -32,11 +31,7 @@ export default function CompleteRental({ rentalId, onRentalCompleted }: Complete
         throw new Error(data.error || 'Failed to complete rental');
       }
 
-      toast({
-        title: 'Rental Completed',
-        description: 'The rental has been marked as completed successfully.',
-        variant: 'success',
-      });
+      setMessage({ type: 'success', text: 'The rental has been marked as completed successfully.' });
 
       // Close confirmation modal
       setShowConfirmation(false);
@@ -46,11 +41,7 @@ export default function CompleteRental({ rentalId, onRentalCompleted }: Complete
       router.refresh();
     } catch (error) {
       console.error('Error completing rental:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to complete rental',
-        variant: 'destructive',
-      });
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to complete rental' });
     } finally {
       setLoading(false);
     }

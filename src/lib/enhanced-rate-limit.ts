@@ -12,8 +12,8 @@ interface RateLimitEntry {
 
 class EnhancedRateLimit {
   private static caches = new Map<string, LRUCache<string, RateLimitEntry>>();
-  private readonly defaultLimit = 100;
-  private readonly defaultWindow = 15 * 60 * 1000; // 15 minutes in milliseconds
+  private static readonly defaultLimit = 100;
+  private static readonly defaultWindow = 15 * 60 * 1000; // 15 minutes in milliseconds
 
   constructor(
     private limit: number = EnhancedRateLimit.defaultLimit,
@@ -79,11 +79,11 @@ class EnhancedRateLimit {
   isAllowed(req: NextRequest): { allowed: boolean; resetTime?: number; headers?: Record<string, string> } {
     const identifier = this.getIdentifier(req);
     
-    if (!this.caches.has(identifier)) {
-      this.caches.set(identifier, new LRUCache<string, RateLimitEntry>(100));
+    if (!EnhancedRateLimit.caches.has(identifier)) {
+      EnhancedRateLimit.caches.set(identifier, new LRUCache<string, RateLimitEntry>({ max: 100 }));
     }
     
-    const cache = this.caches.get(identifier)!;
+    const cache = EnhancedRateLimit.caches.get(identifier)!;
     const now = Date.now();
     const entry = cache.get(identifier) || {
       count: 0,
@@ -143,7 +143,7 @@ class EnhancedRateLimit {
   // Clear old entries periodically
   static cleanup(): void {
     const now = Date.now();
-    for (const [key, cache] of this.caches.entries()) {
+    for (const [key, cache] of EnhancedRateLimit.caches.entries()) {
       const entries = Array.from(cache.entries()) as [string, RateLimitEntry][];
       entries.forEach(([id, entry]) => {
         if (now - entry.lastAccess > this.defaultWindow * 2) {

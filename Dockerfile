@@ -1,6 +1,6 @@
-# Use the official Node.js 18 image
+# Use the official Node.js 20 image (required for Next.js 16+)
 # https://hub.docker.com/_/node
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -28,7 +28,31 @@ COPY . .
 # Uncomment the following line to disable telemetry at build time
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+# Generate Prisma client for TypeScript types
+RUN npx prisma generate
+
+# Build with optimized memory usage and dummy env vars
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+# Set dummy environment variables for build time
+ENV STRIPE_SECRET_KEY=sk_test_dummy
+ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
+ENV NEXT_PUBLIC_SUPABASE_URL=https://dummy.supabase.co
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy_key
+ENV SUPABASE_SERVICE_ROLE_KEY=dummy_service_role
+ENV REDIS_URL=redis://localhost:6379
+# Build with production config that skips static generation issues
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+# Set dummy environment variables for build time to prevent errors
+ENV STRIPE_SECRET_KEY=sk_test_dummy
+ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
+ENV NEXT_PUBLIC_SUPABASE_URL=https://dummy.supabase.co
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy_key
+ENV SUPABASE_SERVICE_ROLE_KEY=dummy_service_role
+ENV REDIS_URL=redis://localhost:6379
+# Use production config that avoids static generation
+RUN cp config/next.config.prod.js config/next.config.js && npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner

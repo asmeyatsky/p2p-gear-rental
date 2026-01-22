@@ -27,7 +27,7 @@ async function createRandomUsers() {
       zipCode: faker.location.zipCode(),
       phoneNumber: faker.phone.number(),
       verificationStatus: faker.helpers.arrayElement(['UNVERIFIED', 'VERIFIED', 'PENDING']),
-      trustScore: faker.number.float({ min: 60, max: 100, precision: 0.1 }),
+      trustScore: faker.number.float({ min: 60, max: 100, fractionDigits: 1 }),
       latitude: faker.location.latitude(),
       longitude: faker.location.longitude(),
     };
@@ -62,15 +62,15 @@ async function createRandomUsers() {
       // Small delay between batches
       await new Promise(resolve => setTimeout(resolve, 200));
     } catch (error) {
-      console.error(`❌ Error in batch ${batch + 1}:`, error.message);
-      
+      console.error(`❌ Error in batch ${batch + 1}:`, error instanceof Error ? error.message : error);
+
       // Try individually if batch fails
       for (const promise of batchPromises) {
         try {
           await promise;
           createdCount++;
         } catch (individualError) {
-          console.log('⚠️ Individual user creation failed:', individualError.message);
+          console.log('⚠️ Individual user creation failed:', individualError instanceof Error ? individualError.message : individualError);
         }
       }
     }

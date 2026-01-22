@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useRef, useEffect, useState } from 'react';
 
 interface AccessibilityProps {
   children: ReactNode;
@@ -60,7 +60,7 @@ export function FocusTrap({ children, className = '', trapFocus = false, onKeyDo
       if (event.key === 'Escape') {
         const firstElement = focusableElements[0] as HTMLElement;
         firstElement?.focus();
-        onKeyDown?.(event);
+        onKeyDown?.(event as unknown as React.KeyboardEvent);
       } else if (event.key === 'Tab') {
         event.preventDefault();
         const focusableArray = Array.from(focusableElements) as HTMLElement[];
@@ -78,7 +78,7 @@ export function FocusTrap({ children, className = '', trapFocus = false, onKeyDo
           nextElement?.focus();
         }
         
-        onKeyDown?.(event);
+        onKeyDown?.(event as unknown as React.KeyboardEvent);
       }
     };
 

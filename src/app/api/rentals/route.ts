@@ -72,17 +72,19 @@ export const GET = withErrorHandler(
           })
         );
 
-        // Cache the result
-        await CacheManager.set(cacheKey, rentals, CacheManager.TTL.SHORT);
+        const rentalList = rentals as any[];
 
-        logger.info('Rentals fetched successfully', { 
+        // Cache the result
+        await CacheManager.set(cacheKey, rentalList, CacheManager.TTL.SHORT);
+
+        logger.info('Rentals fetched successfully', {
           userId,
-          count: rentals.length,
-          asRenter: rentals.filter(r => r.renterId === userId).length,
-          asOwner: rentals.filter(r => r.ownerId === userId).length
+          count: rentalList.length,
+          asRenter: rentalList.filter((r: any) => r.renterId === userId).length,
+          asOwner: rentalList.filter((r: any) => r.ownerId === userId).length
         }, 'API');
 
-        return NextResponse.json(rentals);
+        return NextResponse.json(rentalList);
       }
     )
   )
@@ -122,8 +124,10 @@ export const POST = withErrorHandler(
           throw new ValidationError('Gear not found');
         }
 
+        const gearData = gear as any;
+
         // Prevent renting own gear
-        if (gear.userId === session.user.id) {
+        if (gearData.userId === session.user.id) {
           throw new ValidationError('Cannot rent your own gear');
         }
 
@@ -156,11 +160,12 @@ export const POST = withErrorHandler(
           })
         );
 
-        if (conflictingRentals.length > 0) {
+        const conflictList = conflictingRentals as any[];
+        if (conflictList.length > 0) {
           logger.warn('Booking conflict detected', {
             gearId,
             requestedDates: { startDate, endDate },
-            conflictingRentals: conflictingRentals.map(r => ({
+            conflictingRentals: conflictList.map((r: any) => ({
               id: r.id,
               startDate: r.startDate,
               endDate: r.endDate,
@@ -175,9 +180,9 @@ export const POST = withErrorHandler(
 
         // Get the best applicable daily rate
         const effectiveDailyRate = getBestDailyRate(
-          gear.dailyRate,
-          gear.weeklyRate,
-          gear.monthlyRate,
+          gearData.dailyRate,
+          gearData.weeklyRate,
+          gearData.monthlyRate,
           numberOfDays
         );
 
@@ -185,8 +190,8 @@ export const POST = withErrorHandler(
         const priceBreakdown = calculatePriceBreakdown({
           dailyRate: effectiveDailyRate,
           numberOfDays,
-          insuranceRequired: gear.insuranceRequired,
-          insuranceRate: gear.insuranceRate,
+          insuranceRequired: gearData.insuranceRequired,
+          insuranceRate: gearData.insuranceRate,
         });
 
         const amountInCents = Math.round(priceBreakdown.totalPrice * 100);
@@ -211,9 +216,9 @@ export const POST = withErrorHandler(
             enabled: true,
           },
           metadata: {
-            gearId: gear.id,
+            gearId: gearData.id,
             renterId: session.user.id,
-            ownerId: gear.userId || '',
+            ownerId: gearData.userId || '',
             startDate,
             endDate,
             basePrice: priceBreakdown.basePrice.toString(),
@@ -235,7 +240,7 @@ export const POST = withErrorHandler(
             data: {
               gearId,
               renterId: session.user.id,
-              ownerId: gear.userId || '',
+              ownerId: gearData.userId || '',
               startDate,
               endDate,
               status: 'PENDING',
@@ -244,7 +249,7 @@ export const POST = withErrorHandler(
               serviceFee: priceBreakdown.serviceFee,
               hostingFee: priceBreakdown.hostingFee,
               insurancePremium: priceBreakdown.insuranceAmount,
-              insuranceType: gear.insuranceRequired ? 'STANDARD' : 'NONE',
+              insuranceType: gearData.insuranceRequired ? 'STANDARD' : 'NONE',
               message,
               paymentIntentId: paymentIntent.id,
               clientSecret: paymentIntent.client_secret,
@@ -253,24 +258,26 @@ export const POST = withErrorHandler(
           })
         );
 
+        const createdRental = rental as any;
+
         // Invalidate relevant caches
         await Promise.all([
           CacheManager.del(CacheManager.keys.rental.user(session.user.id)),
-          CacheManager.del(CacheManager.keys.rental.user(gear.userId || '')),
+          CacheManager.del(CacheManager.keys.rental.user(gearData.userId || '')),
           CacheManager.del(CacheManager.keys.gear.detail(gearId)),
         ]);
 
         logger.info('Rental created successfully', {
-          rentalId: rental.id,
+          rentalId: createdRental.id,
           gearId,
           renterId: session.user.id,
-          ownerId: gear.userId,
+          ownerId: gearData.userId,
           totalPrice: priceBreakdown.totalPrice,
           platformRevenue: priceBreakdown.platformRevenue,
         }, 'API');
 
         return NextResponse.json({
-          rental,
+          rental: createdRental,
           clientSecret: paymentIntent.client_secret,
           priceBreakdown: {
             basePrice: priceBreakdown.basePrice,

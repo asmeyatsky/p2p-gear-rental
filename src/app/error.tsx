@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { ExclamationTriangleIcon, HomeIcon } from '@heroicons/react/24/outline';
 

@@ -66,7 +66,8 @@ export const GET = withErrorHandler(
         );
 
         // Build list of unavailable date ranges
-        const unavailableDates = rentals.map(rental => ({
+        const rentalList = rentals as any[];
+        const unavailableDates = rentalList.map((rental: any) => ({
           start: rental.startDate.toISOString().split('T')[0],
           end: rental.endDate.toISOString().split('T')[0],
           status: rental.status,
@@ -75,7 +76,7 @@ export const GET = withErrorHandler(
         const response = {
           gearId,
           unavailableDates,
-          totalBookings: rentals.length,
+          totalBookings: rentalList.length,
         };
 
         // Cache the result (short TTL since availability changes)
@@ -146,14 +147,15 @@ export const POST = withErrorHandler(
           })
         );
 
-        const isAvailable = conflicts.length === 0;
+        const conflictList = conflicts as any[];
+        const isAvailable = conflictList.length === 0;
 
         logger.info('Availability check completed', {
           gearId,
           startDate,
           endDate,
           isAvailable,
-          conflictCount: conflicts.length,
+          conflictCount: conflictList.length,
         }, 'API');
 
         return NextResponse.json({
@@ -161,7 +163,7 @@ export const POST = withErrorHandler(
           startDate,
           endDate,
           isAvailable,
-          conflicts: isAvailable ? [] : conflicts.map(c => ({
+          conflicts: isAvailable ? [] : conflictList.map((c: any) => ({
             start: c.startDate.toISOString().split('T')[0],
             end: c.endDate.toISOString().split('T')[0],
           })),

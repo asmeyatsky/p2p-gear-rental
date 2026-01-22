@@ -34,7 +34,8 @@ export function validateEnvironment() {
       throw new Error(`Invalid environment variables: ${optional.error.issues.map(i => i.message).join(', ')}`);
     }
   } catch (error) {
-    console.error('❌ Critical environment variables missing:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Critical environment variables missing:', errorMessage);
     throw new Error('Application cannot start without required environment variables');
   }
 }

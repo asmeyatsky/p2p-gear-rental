@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import prisma from '@/lib/db';
+import { prisma } from '@/lib/db';
 import Papa from 'papaparse';
 import { createGearSchema } from '@/lib/validations/gear';
 import { withErrorHandler, ValidationError } from '@/lib/api-error-handler';
@@ -13,7 +13,7 @@ export const POST = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
       async (req: NextRequest) => {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const supabase = createServerClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -53,7 +53,7 @@ export const POST = withErrorHandler(
 
           if (parseResult.errors.length > 0) {
             logger.error('CSV parsing errors', { errors: parseResult.errors }, 'API');
-            throw new ValidationError('Error parsing CSV file', parseResult.errors);
+            throw new ValidationError(`Error parsing CSV file: ${JSON.stringify(parseResult.errors)}`);
           }
 
           const gearData = parseResult.data as any[];

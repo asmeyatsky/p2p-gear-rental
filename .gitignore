@@ -45,3 +45,19 @@ next-env.d.ts
 # Local uploads (keep .gitkeep but ignore actual uploads)
 /public/uploads/gear-images/*
 !/public/uploads/gear-images/.gitkeep
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfplan
+terraform/tfplan-*
+terraform/crash.log
+terraform/crash.*.log
+terraform/.terraform.tfstate.lock.info
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
+# Keep .terraform.lock.hcl for reproducible builds
+!terraform/.terraform.lock.hcl

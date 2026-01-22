@@ -1,5 +1,8 @@
 'use client';
+
+// Force this page to be dynamically rendered
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -20,8 +23,9 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${origin}/auth/reset-password`,
       });
 
       if (error) {

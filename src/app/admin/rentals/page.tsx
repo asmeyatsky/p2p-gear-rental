@@ -62,7 +62,14 @@ export default function AdminRentalsPage() {
 
       if (error) throw error;
 
-      setRentals(data || []);
+      // Transform data to match Rental interface (joins are returned as arrays)
+      const transformedData = (data || []).map((item: any) => ({
+        ...item,
+        gear: Array.isArray(item.gear) ? item.gear[0] : item.gear,
+        renter: Array.isArray(item.renter) ? item.renter[0] : item.renter,
+        owner: Array.isArray(item.owner) ? item.owner[0] : item.owner
+      }));
+      setRentals(transformedData);
     } catch (error) {
       console.error('Error fetching rentals:', error);
     } finally {

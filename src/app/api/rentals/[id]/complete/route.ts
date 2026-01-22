@@ -42,13 +42,15 @@ export const PUT = withErrorHandler(
           throw new NotFoundError('Rental request not found');
         }
 
+        const rentalData = rental as any;
+
         // Only the owner (gear owner) can mark the rental as completed
-        if (rental.ownerId !== session.user.id) {
+        if (rentalData.ownerId !== session.user.id) {
           throw new ForbiddenError('You are not authorized to complete this rental');
         }
 
-        if (!['APPROVED', 'ACTIVE'].includes(rental.status)) {
-          throw new ValidationError(`Rental request is ${rental.status}. Only approved or active rentals can be marked as completed.`);
+        if (!['APPROVED', 'ACTIVE'].includes(rentalData.status)) {
+          throw new ValidationError(`Rental request is ${rentalData.status}. Only approved or active rentals can be marked as completed.`);
         }
 
         // Update rental status to completed
@@ -69,25 +71,24 @@ export const PUT = withErrorHandler(
 
         // Invalidate relevant caches
         await Promise.all([
-          CacheManager.del(CacheManager.keys.rental.user(rental.renterId)),
-          CacheManager.del(CacheManager.keys.rental.user(rental.ownerId)),
+          CacheManager.del(CacheManager.keys.rental.user(rentalData.renterId)),
+          CacheManager.del(CacheManager.keys.rental.user(rentalData.ownerId)),
           CacheManager.del(CacheManager.keys.rental.item(id)),
         ]);
 
         // Send notification to renter about completion
         try {
           const notificationService = container.getNotificationService();
-          await notificationService.sendRentalNotification(
-            rental.renterId,
-            rental.id,
-            `Your rental of ${rental.gear.title} has been marked as completed by the owner. You can now leave a review.`,
+          await notificationService.sendNotification(
+            rentalData.renterId,
+            `Your rental of ${rentalData.gear?.title} has been marked as completed by the owner. You can now leave a review.`,
             'Rental Completed'
           );
         } catch (error) {
           logger.error('Failed to send completion notification', {
             error: (error as Error).message,
             rentalId: id,
-            renterId: rental.renterId
+            renterId: rentalData.renterId
           }, 'NOTIFICATIONS');
           // Don't fail the request if notification fails
         }
@@ -95,8 +96,8 @@ export const PUT = withErrorHandler(
         logger.info('Rental completed successfully', {
           rentalId: id,
           ownerId: session.user.id,
-          renterId: rental.renterId,
-          gearTitle: rental.gear.title
+          renterId: rentalData.renterId,
+          gearTitle: rentalData.gear?.title
         }, 'API');
 
         return NextResponse.json(updatedRental);

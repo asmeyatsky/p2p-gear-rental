@@ -92,9 +92,10 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     })
   );
 
-  if (updatedRentals.count === 0) {
-    logger.warn('No rentals found for successful payment', { 
-      paymentIntentId: paymentIntent.id 
+  const updateResult = updatedRentals as { count: number };
+  if (updateResult.count === 0) {
+    logger.warn('No rentals found for successful payment', {
+      paymentIntentId: paymentIntent.id
     }, 'STRIPE');
     return;
   }
@@ -112,9 +113,9 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     ]);
   }
 
-  logger.info('Payment success processed', { 
+  logger.info('Payment success processed', {
     paymentIntentId: paymentIntent.id,
-    updatedRentals: updatedRentals.count
+    updatedRentals: updateResult.count
   }, 'STRIPE');
 }
 
@@ -126,16 +127,18 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
   }, 'STRIPE');
 
   // Update rental status
-  const updatedRentals = await trackDatabaseQuery('rental.updateMany', () =>
+  const failedUpdatedRentals = await trackDatabaseQuery('rental.updateMany', () =>
     prisma.rental.updateMany({
       where: { paymentIntentId: paymentIntent.id },
-      data: { 
+      data: {
         paymentStatus: 'failed',
         status: 'CANCELLED' // Auto-cancel on failed payment
       },
     })
   );
 
+  const failedUpdateResult = failedUpdatedRentals as { count: number };
+
   // Invalidate related caches
   const rental = await prisma.rental.findFirst({
     where: { paymentIntentId: paymentIntent.id },
@@ -149,44 +152,46 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
     ]);
   }
 
-  logger.info('Payment failure processed', { 
+  logger.info('Payment failure processed', {
     paymentIntentId: paymentIntent.id,
-    updatedRentals: updatedRentals.count
+    updatedRentals: failedUpdateResult.count
   }, 'STRIPE');
 }
 
 async function handlePaymentCancellation(paymentIntent: Stripe.PaymentIntent) {
-  logger.info('Processing canceled payment', { 
+  logger.info('Processing canceled payment', {
     paymentIntentId: paymentIntent.id,
     amount: paymentIntent.amount / 100
   }, 'STRIPE');
 
   // Update rental status
-  const updatedRentals = await trackDatabaseQuery('rental.updateMany', () =>
+  const canceledUpdatedRentals = await trackDatabaseQuery('rental.updateMany', () =>
     prisma.rental.updateMany({
       where: { paymentIntentId: paymentIntent.id },
-      data: { 
+      data: {
         paymentStatus: 'canceled',
         status: 'CANCELLED'
       },
     })
   );
 
+  const canceledUpdateResult = canceledUpdatedRentals as { count: number };
+
   // Invalidate related caches
-  const rental = await prisma.rental.findFirst({
+  const rentalInfo = await prisma.rental.findFirst({
     where: { paymentIntentId: paymentIntent.id },
     select: { renterId: true, ownerId: true }
   });
 
-  if (rental) {
+  if (rentalInfo) {
     await Promise.all([
-      CacheManager.del(CacheManager.keys.rental.user(rental.renterId)),
-      CacheManager.del(CacheManager.keys.rental.user(rental.ownerId)),
+      CacheManager.del(CacheManager.keys.rental.user(rentalInfo.renterId)),
+      CacheManager.del(CacheManager.keys.rental.user(rentalInfo.ownerId)),
     ]);
   }
 
-  logger.info('Payment cancellation processed', { 
+  logger.info('Payment cancellation processed', {
     paymentIntentId: paymentIntent.id,
-    updatedRentals: updatedRentals.count
+    updatedRentals: canceledUpdateResult.count
   }, 'STRIPE');
 }

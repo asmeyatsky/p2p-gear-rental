@@ -33,7 +33,7 @@ export class RentalRepository implements IRentalRepository {
       where: { renterId },
     });
 
-    return rentalsData.map(rental => ({
+    return rentalsData.map((rental: any) => ({
       id: rental.id,
       gearId: rental.gearId,
       renterId: rental.renterId,
@@ -55,7 +55,7 @@ export class RentalRepository implements IRentalRepository {
       where: { ownerId },
     });
 
-    return rentalsData.map(rental => ({
+    return rentalsData.map((rental: any) => ({
       id: rental.id,
       gearId: rental.gearId,
       renterId: rental.renterId,

@@ -52,9 +52,8 @@ export class CompleteRentalUseCase {
 
     // Send notification to the renter
     try {
-      await this.notificationService.sendRentalNotification(
+      await this.notificationService.sendNotification(
         rental.renterId,
-        rental.id,
         `Your rental of the gear has been marked as completed by the owner. You can now leave a review.`,
         'Rental Completed'
       );

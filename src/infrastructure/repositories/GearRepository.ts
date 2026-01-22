@@ -39,7 +39,7 @@ export class GearRepository implements IGearRepository {
       where: { userId },
     });
 
-    return gearData.map(gear => new Gear({
+    return gearData.map((gear: any) => new Gear({
       id: gear.id,
       title: gear.title,
       description: gear.description,
@@ -64,7 +64,7 @@ export class GearRepository implements IGearRepository {
   async findAll(): Promise<Gear[]> {
     const gearData = await prisma.gear.findMany();
 
-    return gearData.map(gear => new Gear({
+    return gearData.map((gear: any) => new Gear({
       id: gear.id,
       title: gear.title,
       description: gear.description,

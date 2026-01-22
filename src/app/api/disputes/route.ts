@@ -1,6 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { Prisma } from '@prisma/client';
 import { supabase } from '@/lib/supabase';
 import { withErrorHandler, AuthenticationError, ValidationError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
@@ -48,7 +47,7 @@ export const GET = withErrorHandler(
         }
 
         // Build where clause - user can see disputes they reported or are respondent in
-        const where: Prisma.DisputeWhereInput = {
+        const where: Record<string, any> = {
           OR: [
             { reporterId: userId },
             { respondentId: userId }
@@ -69,7 +68,7 @@ export const GET = withErrorHandler(
         }
 
         // Build order by
-        let orderBy: Prisma.DisputeOrderByWithRelationInput | Prisma.DisputeOrderByWithRelationInput[] = { createdAt: 'desc' };
+        let orderBy: Record<string, any> | Record<string, any>[] = { createdAt: 'desc' };
         
         switch (sortBy) {
           case 'oldest':
@@ -132,19 +131,20 @@ export const GET = withErrorHandler(
         ]);
 
         // Transform evidence from JSON string back to array for API response
-        const transformedDisputes = disputes.map(dispute => ({
+        const transformedDisputes = (disputes as any[]).map((dispute: any) => ({
           ...dispute,
           evidence: dispute.evidence ? JSON.parse(dispute.evidence as string) : [],
         }));
 
+        const totalCount = total as number;
         const responseData = {
           data: transformedDisputes,
           pagination: {
             page,
             limit,
-            total,
-            pages: Math.ceil(total / limit),
-            hasNext: page < Math.ceil(total / limit),
+            total: totalCount,
+            pages: Math.ceil(totalCount / limit),
+            hasNext: page < Math.ceil(totalCount / limit),
             hasPrev: page > 1
           }
         };
@@ -152,11 +152,11 @@ export const GET = withErrorHandler(
         // Cache for 5 minutes
         await CacheManager.set(cacheKey, responseData, CacheManager.TTL.MEDIUM);
 
-        logger.info('Dispute list retrieved', { 
-          userId, 
-          count: disputes.length, 
-          total,
-          page 
+        logger.info('Dispute list retrieved', {
+          userId,
+          count: transformedDisputes.length,
+          total: totalCount,
+          page
         }, 'API');
 
         return NextResponse.json(responseData);
@@ -189,7 +189,7 @@ export const POST = withErrorHandler(
         }, 'API');
 
         // Verify the rental exists and user is involved
-        const rental = await trackDatabaseQuery('rental.findUnique', () =>
+        const rentalResult = await trackDatabaseQuery('rental.findUnique', () =>
           prisma.rental.findUnique({
             where: { id: validatedData.rentalId },
             include: {
@@ -201,9 +201,11 @@ export const POST = withErrorHandler(
           })
         );
 
-        if (!rental) {
+        if (!rentalResult) {
           throw new ValidationError('Rental not found');
         }
+
+        const rental = rentalResult as { renterId: string; ownerId: string; dispute: any };
 
         if (rental.renterId !== userId && rental.ownerId !== userId) {
           throw new ValidationError('You are not authorized to create a dispute for this rental');
@@ -246,24 +248,26 @@ export const POST = withErrorHandler(
           })
         );
 
+        const createdDispute = dispute as any;
+
         // Invalidate related caches
         await Promise.all([
           CacheManager.invalidatePattern(`disputes:${userId}:*`),
           CacheManager.invalidatePattern(`disputes:${respondentId}:*`),
         ]);
 
-        logger.info('Dispute created successfully', { 
-          disputeId: dispute.id,
+        logger.info('Dispute created successfully', {
+          disputeId: createdDispute.id,
           reporterId: userId,
           respondentId,
           category: validatedData.category,
-          rentalId: validatedData.rentalId 
+          rentalId: validatedData.rentalId
         }, 'API');
 
         // Transform evidence from JSON string back to array for API response
         const transformedDispute = {
-          ...dispute,
-          evidence: dispute.evidence ? JSON.parse(dispute.evidence as string) : [],
+          ...createdDispute,
+          evidence: createdDispute.evidence ? JSON.parse(createdDispute.evidence as string) : [],
         };
 
         return NextResponse.json(transformedDispute, { status: 201 });

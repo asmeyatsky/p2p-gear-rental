@@ -87,7 +87,7 @@ export interface EmailTemplate {
   variables: Record<string, string>;
 }
 
-class NotificationEngine {
+export class NotificationEngine {
   private readonly BATCH_SIZE = 100;
   private readonly RETRY_ATTEMPTS = 3;
   private readonly RETRY_DELAY = 5000; // 5 seconds

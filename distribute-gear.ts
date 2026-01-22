@@ -55,7 +55,7 @@ async function distributeGearToUsers() {
       // Small delay between batches
       await new Promise(resolve => setTimeout(resolve, 200));
     } catch (error) {
-      console.error(`❌ Error in batch ${batch + 1}:`, error.message);
+      console.error(`❌ Error in batch ${batch + 1}:`, error instanceof Error ? error.message : error);
     }
   }
 

@@ -82,9 +82,9 @@ export async function validateFileUpload(file: File, userId?: string): Promise<{
     return { valid: true };
     
   } catch (error) {
-    return { 
-      valid: false, 
-      error: `File validation error: ${error.message}` 
+    return {
+      valid: false,
+      error: `File validation error: ${error instanceof Error ? error.message : String(error)}`
     };
   }
 }
@@ -94,8 +94,8 @@ function sanitizeFileName(fileName: string): string {
   const cleanName = fileName
     .replace(/[<>:"\\|?*]/g, '') // Remove <>:"\/?*
     .replace(/\.\./g, '') // Remove directory traversal
-    .replace(/^\/+|\/+$/g, ''); // Remove leading/trailing slashes
-    .replace(/[^\w\s\-.]/g, ''); // Allow only alphanumeric, spaces, hyphens, dots
+    .replace(/^\/+|\/+$/g, '') // Remove leading/trailing slashes
+    .replace(/[^\w\s\-.]/g, '') // Allow only alphanumeric, spaces, hyphens, dots
     .substring(0, 100); // Limit length
   
   return cleanName;

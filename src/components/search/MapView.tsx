@@ -101,15 +101,14 @@ export default function MapView({
       <Map
         ref={mapRef}
         {...viewState}
-        onMove={(evt) => setViewState(evt.viewState)}
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-        mapStyle="mapbox://styles/mapbox/streets-v11"
         width="100%"
         height="100%"
-        style={{ width: '100%', height: '100%' }}
+        onViewStateChange={(evt: any) => setViewState(evt.viewState)}
+        mapboxApiAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+        mapStyle="mapbox://styles/mapbox/streets-v11"
         onClick={() => setSelectedGear(null)}
       >
-        <NavigationControl position="top-right" />
+        <NavigationControl />
 
         {gearWithCoords
           .filter(gear => gear.coordinates)
@@ -118,12 +117,14 @@ export default function MapView({
               key={gear.id}
               longitude={gear.coordinates!.longitude}
               latitude={gear.coordinates!.latitude}
-              onClick={(e) => {
-                e.originalEvent.stopPropagation();
-                handleMarkerClick(gear);
-              }}
             >
-              <div className="bg-blue-600 text-white px-2 py-1 rounded-lg text-xs font-medium shadow-lg cursor-pointer hover:bg-blue-700 transform hover:scale-105 transition-all">
+              <div
+                className="bg-blue-600 text-white px-2 py-1 rounded-lg text-xs font-medium shadow-lg cursor-pointer hover:bg-blue-700 transform hover:scale-105 transition-all"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkerClick(gear);
+                }}
+              >
                 {formatCurrency(gear.dailyRate)}
               </div>
             </Marker>

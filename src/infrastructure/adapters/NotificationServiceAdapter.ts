@@ -1,5 +1,6 @@
 import { INotificationService } from '../../domain/ports/external-services';
 import { NotificationEngine } from '../../lib/realtime/notification-engine';
+import { Rental } from '../../domain/entities/Rental';
 
 export class NotificationServiceAdapter implements INotificationService {
   private notificationEngine: NotificationEngine;
@@ -15,7 +16,7 @@ export class NotificationServiceAdapter implements INotificationService {
         userId: recipientId,
         title: subject || 'Notification',
         message,
-        type: 'general',
+        type: 'system_maintenance',
         channels: ['in_app', 'email'], // Default channels
         priority: 'normal',
       });
@@ -37,7 +38,7 @@ export class NotificationServiceAdapter implements INotificationService {
         userId: recipientId,
         title: subject || 'Rental Notification',
         message,
-        type: 'rental',
+        type: 'rental_request',
         channels: ['in_app', 'email'],
         priority: 'normal',
         data: { rentalId },
@@ -51,9 +52,9 @@ export class NotificationServiceAdapter implements INotificationService {
   }
 
   async sendPaymentNotification(
-    recipientId: string, 
-    paymentId: string, 
-    message: string, 
+    recipientId: string,
+    paymentId: string,
+    message: string,
     subject?: string
   ): Promise<boolean> {
     try {
@@ -61,7 +62,7 @@ export class NotificationServiceAdapter implements INotificationService {
         userId: recipientId,
         title: subject || 'Payment Notification',
         message,
-        type: 'payment',
+        type: 'payment_received',
         channels: ['in_app', 'email'],
         priority: 'normal',
         data: { paymentId },
@@ -70,6 +71,44 @@ export class NotificationServiceAdapter implements INotificationService {
       return true;
     } catch (error) {
       console.error('Failed to send payment notification:', error);
+      return false;
+    }
+  }
+
+  async sendRentalConfirmation(rental: Rental, recipientId: string): Promise<boolean> {
+    try {
+      await this.notificationEngine.sendNotification({
+        userId: recipientId,
+        title: 'Rental Confirmed',
+        message: `Your rental has been confirmed. Rental ID: ${rental.id}`,
+        type: 'rental_request',
+        channels: ['in_app', 'email'],
+        priority: 'normal',
+        data: { rentalId: rental.id },
+        actionUrl: `/rentals/${rental.id}`,
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to send rental confirmation:', error);
+      return false;
+    }
+  }
+
+  async sendRentalStatusUpdate(rental: Rental, recipientId: string): Promise<boolean> {
+    try {
+      await this.notificationEngine.sendNotification({
+        userId: recipientId,
+        title: 'Rental Status Updated',
+        message: `Your rental status has been updated to: ${rental.status}`,
+        type: 'rental_request',
+        channels: ['in_app', 'email'],
+        priority: 'normal',
+        data: { rentalId: rental.id, status: rental.status },
+        actionUrl: `/rentals/${rental.id}`,
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to send rental status update:', error);
       return false;
     }
   }

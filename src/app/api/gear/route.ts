@@ -13,7 +13,7 @@ export const GET = withErrorHandler(
         const { user } = await authenticateRequest(req);
         
         if (!user) {
-          return Response.json(
+          return NextResponse.json(
             { error: 'Authentication required' },
             { status: 401 }
           );
@@ -46,7 +46,7 @@ export const GET = withErrorHandler(
           prisma.gear.count({ where })
         ]);
 
-        return Response.json({
+        return NextResponse.json({
           gear,
           total,
           pagination: {
@@ -56,7 +56,7 @@ export const GET = withErrorHandler(
           }
         });
       } catch (error) {
-        return Response.json(
+        return NextResponse.json(
           { error: 'Failed to fetch gear listings' },
           { status: 500 }
         );
@@ -104,7 +104,7 @@ export const POST = withErrorHandler(
           monthlyRate,
           city,
           state,
-          images,
+          images: images ? JSON.stringify(images) : undefined,
           category,
           brand,
           model,

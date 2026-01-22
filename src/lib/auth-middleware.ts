@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 import { ApiError, AuthenticationError, AuthorizationError } from '@/lib/api-error-handler';
 
 export async function authenticateRequest(req: NextRequest) {
@@ -43,7 +44,7 @@ export function requireAuth(handler: (req: NextRequest, context: { user: any; se
   };
 }
 
-export function optionalAuth(handler: (req: NextRequest, context: { user?: any; session?: any } = {}) => Promise<Response>) {
+export function optionalAuth(handler: (req: NextRequest, context?: { user?: any; session?: any }) => Promise<Response>) {
   return async (req: NextRequest) => {
     try {
       const auth = await authenticateRequest(req);

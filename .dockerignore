@@ -89,3 +89,26 @@ ehthumbs.db
 
 # Linux
 *~
+
+# Utility scripts (not needed in production)
+create-users.ts
+distribute-gear.ts
+generate-api-requests.ts
+generate-high-activity.ts
+keep-database-active.ts
+check_gear_count.ts
+test-db-connection.ts
+test-db-connection-detailed.ts
+test-supabase-direct.ts
+verify-seed.ts
+scripts/
+prisma/*.ts
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+__tests__/
+__mocks__/
+e2e/
+config/jest*
+config/playwright*

@@ -84,9 +84,15 @@ export default function AdvancedAnalytics() {
         throw new Error('Failed to fetch analytics data');
       }
 
+      // Transform rentals data (join returns array)
+      const transformedRentals = rentals.map((rental: any) => ({
+        ...rental,
+        gear: Array.isArray(rental.gear) ? rental.gear[0] : rental.gear
+      }));
+
       // Process revenue by month
       const revenueByMonthMap: { [key: string]: number } = {};
-      rentals.forEach(rental => {
+      transformedRentals.forEach((rental: any) => {
         const month = new Date(rental.createdAt).toLocaleString('default', { month: 'short', year: 'numeric' });
         revenueByMonthMap[month] = (revenueByMonthMap[month] || 0) + (rental.totalPrice || 0);
       });
@@ -98,7 +104,7 @@ export default function AdvancedAnalytics() {
 
       // Process rentals by category
       const categoryCount: { [key: string]: number } = {};
-      rentals.forEach(rental => {
+      transformedRentals.forEach((rental: any) => {
         const category = rental.gear?.category || 'Uncategorized';
         categoryCount[category] = (categoryCount[category] || 0) + 1;
       });
@@ -122,7 +128,7 @@ export default function AdvancedAnalytics() {
 
       // Process top gear
       const gearRentalCount: { [key: string]: number } = {};
-      rentals.forEach(rental => {
+      transformedRentals.forEach((rental: any) => {
         const gearTitle = rental.gear?.title || 'Unknown';
         gearRentalCount[gearTitle] = (gearRentalCount[gearTitle] || 0) + 1;
       });
@@ -200,9 +206,7 @@ export default function AdvancedAnalytics() {
             <div>
               <dt className="text-sm font-medium text-gray-500 truncate">Total Rentals</dt>
               <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                {analyticsData.revenueByMonth.reduce((sum, item) => sum + item.revenue, 0) > 0 
-                  ? analyticsData.revenueByMonth.reduce((sum, item) => sum + Math.round(item.revenue / 50), 0) // Approximate count
-                  : rentals.length}
+                {analyticsData.rentalsByCategory.reduce((sum, item) => sum + item.value, 0)}
               </dd>
             </div>
           </div>
@@ -277,7 +281,7 @@ export default function AdvancedAnalytics() {
                   cx="50%"
                   cy="50%"
                   labelLine={true}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: any) => `${name || ''} ${((percent || 0) * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"

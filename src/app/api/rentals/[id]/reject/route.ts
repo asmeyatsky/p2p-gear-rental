@@ -44,12 +44,14 @@ export const PUT = withErrorHandler(
           throw new NotFoundError('Rental request not found');
         }
 
-        if (rental.ownerId !== session.user.id) {
+        const rentalData = rental as any;
+
+        if (rentalData.ownerId !== session.user.id) {
           throw new ForbiddenError('You are not the owner of this rental request');
         }
 
-        if (rental.status !== 'PENDING') {
-          throw new ValidationError(`Rental request is already ${rental.status}`);
+        if (rentalData.status !== 'PENDING') {
+          throw new ValidationError(`Rental request is already ${rentalData.status}`);
         }
 
         // Update rental status
@@ -58,7 +60,7 @@ export const PUT = withErrorHandler(
             where: { id },
             data: {
               status: 'REJECTED',
-              message: message || rental.message,
+              message: message || rentalData.message,
             },
             include: {
               gear: { select: { id: true, title: true } },
@@ -70,16 +72,16 @@ export const PUT = withErrorHandler(
 
         // Invalidate relevant caches
         await Promise.all([
-          CacheManager.del(CacheManager.keys.rental.user(rental.renterId)),
-          CacheManager.del(CacheManager.keys.rental.user(rental.ownerId)),
+          CacheManager.del(CacheManager.keys.rental.user(rentalData.renterId)),
+          CacheManager.del(CacheManager.keys.rental.user(rentalData.ownerId)),
           CacheManager.del(CacheManager.keys.rental.item(id)),
         ]);
 
-        logger.info('Rental rejected successfully', { 
+        logger.info('Rental rejected successfully', {
           rentalId: id,
           ownerId: session.user.id,
-          renterId: rental.renterId,
-          gearTitle: rental.gear.title,
+          renterId: rentalData.renterId,
+          gearTitle: rentalData.gear?.title,
           rejectionMessage: message || 'No message provided'
         }, 'API');
 

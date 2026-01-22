@@ -107,6 +107,8 @@ export const PUT = withErrorHandler(
           )
         );
 
+        const gearResult = updatedGear as any;
+
         // Invalidate related caches
         await Promise.all([
           CacheManager.del(CacheManager.keys.gear.detail(gearId)),
@@ -118,13 +120,13 @@ export const PUT = withErrorHandler(
         logger.info('Gear updated successfully', {
           gearId,
           userId: authContext.userId,
-          title: updatedGear.title
+          title: gearResult.title
         }, 'API');
 
         // Transform images from JSON string back to array for API response
         const transformedGear = {
-          ...updatedGear,
-          images: updatedGear.images ? JSON.parse(updatedGear.images as string) : [],
+          ...gearResult,
+          images: gearResult.images ? JSON.parse(gearResult.images as string) : [],
         };
 
         const response = NextResponse.json(transformedGear);
@@ -165,17 +167,17 @@ export const DELETE = withErrorHandler(
           )
         );
 
-        if (activeRentals > 0) {
+        if ((activeRentals as number) > 0) {
           throw new ValidationError('Cannot delete gear with active rentals');
         }
 
         // Get gear info before deletion for cache invalidation
-        const gear = await executeWithRetry(() =>
+        const gearInfo = await executeWithRetry(() =>
           prisma.gear.findUnique({
             where: { id: gearId },
             select: { category: true, title: true }
           })
-        );
+        ) as { category: string; title: string } | null;
 
         // Delete gear (this will cascade to related records due to DB constraints)
         await executeWithRetry(() =>
@@ -191,13 +193,13 @@ export const DELETE = withErrorHandler(
           CacheManager.del(CacheManager.keys.gear.detail(gearId)),
           CacheManager.del(CacheManager.keys.gear.user(authContext.userId)),
           CacheManager.invalidatePattern('gear:list:*'),
-          gear?.category ? CacheManager.del(CacheManager.keys.gear.category(gear.category)) : Promise.resolve(),
+          gearInfo?.category ? CacheManager.del(CacheManager.keys.gear.category(gearInfo.category)) : Promise.resolve(),
         ]);
 
-        logger.info('Gear deleted successfully', { 
-          gearId, 
+        logger.info('Gear deleted successfully', {
+          gearId,
           userId: authContext.userId,
-          title: gear?.title
+          title: gearInfo?.title
         }, 'API');
 
         const response = NextResponse.json({ message: 'Gear deleted successfully' });
