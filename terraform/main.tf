@@ -1,23 +1,43 @@
+# =============================================================================
+# Terraform Configuration
+# =============================================================================
+
 terraform {
+  required_version = ">= 1.0"
+
   required_providers {
     google = {
       source  = "hashicorp/google"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
+
+  # Backend configuration is provided via -backend-config flag
+  # See backends/stage.backend.hcl and backends/prod.backend.hcl
+  backend "gcs" {}
 }
 
-# Configure the Google Cloud provider
+# =============================================================================
+# Provider Configuration
+# =============================================================================
+
 provider "google" {
   project = var.project_id
   region  = var.region
 }
 
-# Enable required APIs
+# =============================================================================
+# Enable Required APIs
+# =============================================================================
+
 resource "google_project_service" "services" {
   for_each = toset([
     "run.googleapis.com",
-    "sqladmin.googleapis.com", 
+    "sqladmin.googleapis.com",
     "redis.googleapis.com",
     "storage.googleapis.com",
     "secretmanager.googleapis.com",
@@ -25,125 +45,296 @@ resource "google_project_service" "services" {
     "artifactregistry.googleapis.com"
   ])
 
-  service = each.value
-
-  # Don't disable APIs that are enabled by default
+  service            = each.value
   disable_on_destroy = false
 }
 
-# Create Artifact Registry for container images
-resource "google_artifact_registry_repository" "app_repository" {
-  location      = var.region
-  repository_id = "${var.project_id}-p2p-gear-rental"
-  format        = "DOCKER"
-  description   = "Docker repository for p2p-gear-rental application"
+# =============================================================================
+# Random Password for Database
+# =============================================================================
+
+resource "random_password" "db_password" {
+  length  = 32
+  special = true
 }
 
-# Cloud SQL instance for the database
+# =============================================================================
+# Artifact Registry
+# =============================================================================
+
+resource "google_artifact_registry_repository" "app_repository" {
+  location      = var.region
+  repository_id = local.artifact_repo_name
+  format        = "DOCKER"
+  description   = "Docker repository for p2p-gear-rental (${var.environment})"
+
+  labels = local.common_labels
+
+  depends_on = [google_project_service.services]
+}
+
+# =============================================================================
+# Cloud SQL (Conditional - disabled when using external database)
+# =============================================================================
+
 resource "google_sql_database_instance" "instance" {
-  name             = "${var.project_id}-p2p-gear-rental-db"
+  count = var.use_external_database ? 0 : 1
+
+  name             = local.db_instance_name
   database_version = "POSTGRES_15"
   region           = var.region
 
   settings {
     tier = var.db_tier
 
-    # Database flags required for Supabase compatibility
     database_flags {
-      name  = "cloudsql.iam.auth.enabled"
-      value = "true"
+      name  = "cloudsql.iam_authentication"
+      value = "on"
     }
 
     ip_configuration {
-      ipv4_enabled    = true
-      require_ssl     = true
+      ipv4_enabled = true
+      require_ssl  = true
       authorized_networks {
         name  = "all"
-        value = "0.0.0.0/0"  # In production, restrict this to specific IPs
+        value = "0.0.0.0/0" # In production, restrict to specific IPs
       }
     }
 
     backup_configuration {
-      enabled            = true
-      automatic          = true
-      point_in_time_recovery_enabled = true
-      location          = var.region
+      enabled                        = var.db_backup_enabled
+      start_time                     = "03:00"
+      point_in_time_recovery_enabled = var.db_backup_enabled
+      location                       = var.region
     }
 
-    encryption {
-      kms_key_name = var.kms_key_name
-    }
+    user_labels = local.common_labels
   }
 
-  deletion_protection = false  # Set to true in production
+  deletion_protection = var.db_deletion_protection
+
+  depends_on = [google_project_service.services]
 }
 
-# Database for the application
 resource "google_sql_database" "database" {
-  name     = "p2p_gear_rental_db"
-  instance = google_sql_database_instance.instance.name
+  count = var.use_external_database ? 0 : 1
+
+  name     = local.db_name
+  instance = google_sql_database_instance.instance[0].name
 }
 
-# Cloud SQL user for the application
 resource "google_sql_user" "db_user" {
+  count = var.use_external_database ? 0 : 1
+
   name     = var.db_username
-  instance = google_sql_database_instance.instance.name
+  instance = google_sql_database_instance.instance[0].name
   password = random_password.db_password.result
 }
 
-# Redis instance for caching/session storage
+# =============================================================================
+# Redis (Conditional - disabled by default)
+# =============================================================================
+
 resource "google_redis_instance" "cache" {
-  name           = "${var.project_id}-p2p-gear-rental-cache"
+  count = var.enable_redis ? 1 : 0
+
+  name           = local.redis_name
   tier           = "BASIC"
-  memory_size_gb = 1
+  memory_size_gb = var.redis_memory_size_gb
+  region         = var.region
 
-  display_name = "Redis instance for p2p-gear-rental"
-  region       = var.region
+  display_name  = "Redis cache for p2p-gear-rental (${var.environment})"
+  redis_version = "REDIS_7_0"
 
-  redis_version = "redis_6_x"
-
-  # Configure Redis settings
   redis_configs = {
     maxmemory-policy = "allkeys-lru"
   }
+
+  labels = local.common_labels
+
+  depends_on = [google_project_service.services]
 }
 
-# Cloud Storage bucket for file uploads
+# =============================================================================
+# Cloud Storage
+# =============================================================================
+
 resource "google_storage_bucket" "gear_images" {
-  name                        = "${var.project_id}-p2p-gear-rental-images"
+  name                        = local.storage_bucket_name
   location                    = var.region
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
 
-  lifecycle_rule {
-    condition {
-      age = 30
-    }
-    action {
-      type = "Delete"
+  # Lifecycle rule (only apply if storage_lifecycle_age > 0)
+  dynamic "lifecycle_rule" {
+    for_each = var.storage_lifecycle_age > 0 ? [1] : []
+    content {
+      condition {
+        age = var.storage_lifecycle_age
+      }
+      action {
+        type = "Delete"
+      }
     }
   }
 
   versioning {
-    enabled = true
+    enabled = var.storage_versioning_enabled
   }
 
-  labels = {
-    purpose = "gear-images"
-  }
+  labels = local.common_labels
+
+  depends_on = [google_project_service.services]
 }
 
-# Cloud Run service for the application
+# =============================================================================
+# Secret Manager
+# =============================================================================
+
+resource "google_secret_manager_secret" "database_url" {
+  secret_id = "${local.secret_prefix}-database-url"
+
+  replication {
+    auto {}
+  }
+
+  labels = local.common_labels
+
+  depends_on = [google_project_service.services]
+}
+
+resource "google_secret_manager_secret_version" "database_url" {
+  secret      = google_secret_manager_secret.database_url.id
+  secret_data = local.database_url
+}
+
+resource "google_secret_manager_secret" "next_public_base_url" {
+  secret_id = "${local.secret_prefix}-next-public-base-url"
+
+  replication {
+    auto {}
+  }
+
+  labels = local.common_labels
+
+  depends_on = [google_project_service.services]
+}
+
+resource "google_secret_manager_secret_version" "next_public_base_url" {
+  secret      = google_secret_manager_secret.next_public_base_url.id
+  secret_data = var.next_public_base_url
+}
+
+resource "google_secret_manager_secret" "next_public_supabase_url" {
+  secret_id = "${local.secret_prefix}-next-public-supabase-url"
+
+  replication {
+    auto {}
+  }
+
+  labels = local.common_labels
+
+  depends_on = [google_project_service.services]
+}
+
+resource "google_secret_manager_secret_version" "next_public_supabase_url" {
+  secret      = google_secret_manager_secret.next_public_supabase_url.id
+  secret_data = var.next_public_supabase_url
+}
+
+resource "google_secret_manager_secret" "next_public_supabase_anon_key" {
+  secret_id = "${local.secret_prefix}-next-public-supabase-anon-key"
+
+  replication {
+    auto {}
+  }
+
+  labels = local.common_labels
+
+  depends_on = [google_project_service.services]
+}
+
+resource "google_secret_manager_secret_version" "next_public_supabase_anon_key" {
+  secret      = google_secret_manager_secret.next_public_supabase_anon_key.id
+  secret_data = var.next_public_supabase_anon_key
+}
+
+resource "google_secret_manager_secret" "supabase_service_role_key" {
+  secret_id = "${local.secret_prefix}-supabase-service-role-key"
+
+  replication {
+    auto {}
+  }
+
+  labels = local.common_labels
+
+  depends_on = [google_project_service.services]
+}
+
+resource "google_secret_manager_secret_version" "supabase_service_role_key" {
+  secret      = google_secret_manager_secret.supabase_service_role_key.id
+  secret_data = var.supabase_service_role_key
+}
+
+resource "google_secret_manager_secret" "stripe_secret_key" {
+  secret_id = "${local.secret_prefix}-stripe-secret-key"
+
+  replication {
+    auto {}
+  }
+
+  labels = local.common_labels
+
+  depends_on = [google_project_service.services]
+}
+
+resource "google_secret_manager_secret_version" "stripe_secret_key" {
+  secret      = google_secret_manager_secret.stripe_secret_key.id
+  secret_data = var.stripe_secret_key
+}
+
+resource "google_secret_manager_secret" "stripe_webhook_secret" {
+  secret_id = "${local.secret_prefix}-stripe-webhook-secret"
+
+  replication {
+    auto {}
+  }
+
+  labels = local.common_labels
+
+  depends_on = [google_project_service.services]
+}
+
+resource "google_secret_manager_secret_version" "stripe_webhook_secret" {
+  secret      = google_secret_manager_secret.stripe_webhook_secret.id
+  secret_data = var.stripe_webhook_secret
+}
+
+# =============================================================================
+# Cloud Run Service
+# =============================================================================
+
 resource "google_cloud_run_service" "app" {
-  name     = "p2p-gear-rental"
+  name     = local.cloud_run_name
   location = var.region
 
   template {
     spec {
       containers {
-        image = "${google_artifact_registry_repository.app_repository.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.app_repository.name}/p2p-gear-rental:${var.app_version}"
+        image = "${google_artifact_registry_repository.app_repository.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.app_repository.repository_id}/p2p-gear-rental:${var.app_version}"
 
-        # Environment variables from Secret Manager
+        # Database URL
+        env {
+          name = "DATABASE_URL"
+          value_from {
+            secret_key_ref {
+              name = google_secret_manager_secret.database_url.secret_id
+              key  = "latest"
+            }
+          }
+        }
+
+        # Application URLs
         env {
           name = "NEXT_PUBLIC_BASE_URL"
           value_from {
@@ -154,6 +345,7 @@ resource "google_cloud_run_service" "app" {
           }
         }
 
+        # Supabase Configuration
         env {
           name = "NEXT_PUBLIC_SUPABASE_URL"
           value_from {
@@ -184,6 +376,7 @@ resource "google_cloud_run_service" "app" {
           }
         }
 
+        # Stripe Configuration
         env {
           name = "STRIPE_SECRET_KEY"
           value_from {
@@ -204,30 +397,40 @@ resource "google_cloud_run_service" "app" {
           }
         }
 
+        # Redis URL (only set if Redis is enabled)
+        dynamic "env" {
+          for_each = var.enable_redis ? [1] : []
+          content {
+            name  = "REDIS_URL"
+            value = local.redis_url
+          }
+        }
+
+        # Environment identifier
         env {
-          name = "REDIS_URL"
-          value = "redis://${google_redis_instance.cache.host}:${google_redis_instance.cache.port}/0"
+          name  = "ENVIRONMENT"
+          value = var.environment
         }
 
         # Health check configuration
-        liveness_probe {
+        # Using startup_probe for initial container startup
+        startup_probe {
           http_get {
             path = "/api/health"
-            port = 3000
           }
-          initial_delay_seconds = 30
+          initial_delay_seconds = 0
           period_seconds        = 10
-          timeout_seconds       = 5
+          timeout_seconds       = 3
           failure_threshold     = 3
         }
 
-        readiness_probe {
+        # Liveness probe for ongoing health checks
+        liveness_probe {
           http_get {
             path = "/api/health"
-            port = 3000
           }
-          initial_delay_seconds = 5
-          period_seconds        = 5
+          initial_delay_seconds = 0
+          period_seconds        = 10
           timeout_seconds       = 3
           failure_threshold     = 3
         }
@@ -235,35 +438,40 @@ resource "google_cloud_run_service" "app" {
         # Resource limits
         resources {
           limits = {
-            memory = "1Gi"
-            cpu    = "1"
-          }
-          requests = {
-            memory = "256Mi"
-            cpu    = "250m"
+            memory = var.cloud_run_memory
+            cpu    = var.cloud_run_cpu
           }
         }
       }
 
-      # Set timeout and concurrency
-      timeout_seconds = 300
+      timeout_seconds       = 300
       container_concurrency = 80
     }
 
     metadata {
       annotations = {
-        # Enable HTTPS only
-        "autoscaling.knative.dev/minScale" = "0"
-        "autoscaling.knative.dev/maxScale" = "10"
+        "autoscaling.knative.dev/minScale" = tostring(var.cloud_run_min_instances)
+        "autoscaling.knative.dev/maxScale" = tostring(var.cloud_run_max_instances)
       }
+      labels = local.common_labels
     }
   }
 
-  # Allow unauthenticated requests - adjust as needed for security
   traffic {
-    percent = 100
+    percent         = 100
     latest_revision = true
   }
+
+  depends_on = [
+    google_project_service.services,
+    google_secret_manager_secret_version.database_url,
+    google_secret_manager_secret_version.next_public_base_url,
+    google_secret_manager_secret_version.next_public_supabase_url,
+    google_secret_manager_secret_version.next_public_supabase_anon_key,
+    google_secret_manager_secret_version.supabase_service_role_key,
+    google_secret_manager_secret_version.stripe_secret_key,
+    google_secret_manager_secret_version.stripe_webhook_secret,
+  ]
 }
 
 # IAM policy for Cloud Run service to allow public access
@@ -274,112 +482,41 @@ resource "google_cloud_run_service_iam_member" "public" {
   member   = "allUsers"
 }
 
-# Secret Manager secrets
-resource "random_password" "db_password" {
-  length  = 16
-  special = true
+# Grant Cloud Run service account access to secrets
+data "google_project" "project" {}
+
+resource "google_secret_manager_secret_iam_member" "cloud_run_secrets" {
+  for_each = toset([
+    google_secret_manager_secret.database_url.secret_id,
+    google_secret_manager_secret.next_public_base_url.secret_id,
+    google_secret_manager_secret.next_public_supabase_url.secret_id,
+    google_secret_manager_secret.next_public_supabase_anon_key.secret_id,
+    google_secret_manager_secret.supabase_service_role_key.secret_id,
+    google_secret_manager_secret.stripe_secret_key.secret_id,
+    google_secret_manager_secret.stripe_webhook_secret.secret_id,
+  ])
+
+  secret_id = each.value
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
-resource "google_secret_manager_secret" "next_public_base_url" {
-  secret_id = "next-public-base-url"
+# =============================================================================
+# Cloud Build Trigger (only for production)
+# =============================================================================
 
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "next_public_base_url_version" {
-  secret      = google_secret_manager_secret.next_public_base_url.id
-  secret_data = var.next_public_base_url
-}
-
-resource "google_secret_manager_secret" "next_public_supabase_url" {
-  secret_id = "next-public-supabase-url"
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "next_public_supabase_url_version" {
-  secret      = google_secret_manager_secret.next_public_supabase_url.id
-  secret_data = var.next_public_supabase_url
-}
-
-resource "google_secret_manager_secret" "next_public_supabase_anon_key" {
-  secret_id = "next-public-supabase-anon-key"
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "next_public_supabase_anon_key_version" {
-  secret      = google_secret_manager_secret.next_public_supabase_anon_key.id
-  secret_data = var.next_public_supabase_anon_key
-}
-
-resource "google_secret_manager_secret" "supabase_service_role_key" {
-  secret_id = "supabase-service-role-key"
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "supabase_service_role_key_version" {
-  secret      = google_secret_manager_secret.supabase_service_role_key.id
-  secret_data = var.supabase_service_role_key
-}
-
-resource "google_secret_manager_secret" "stripe_secret_key" {
-  secret_id = "stripe-secret-key"
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "stripe_secret_key_version" {
-  secret      = google_secret_manager_secret.stripe_secret_key.id
-  secret_data = var.stripe_secret_key
-}
-
-resource "google_secret_manager_secret" "stripe_webhook_secret" {
-  secret_id = "stripe-webhook-secret"
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "stripe_webhook_secret_version" {
-  secret      = google_secret_manager_secret.stripe_webhook_secret.id
-  secret_data = var.stripe_webhook_secret
-}
-
-resource "google_secret_manager_secret" "redis_password" {
-  secret_id = "redis-password"
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "redis_password_version" {
-  secret      = google_secret_manager_secret.redis_password.id
-  secret_data = random_password.db_password.result
-}
-
-# Cloud Build trigger for CI/CD
 resource "google_cloudbuild_trigger" "build_trigger" {
-  name        = "p2p-gear-rental-build"
-  description = "Build and deploy p2p-gear-rental to Cloud Run"
-  
+  count = var.environment == "prod" ? 1 : 0
+
+  name        = local.build_trigger_name
+  description = "Build and deploy p2p-gear-rental to Cloud Run (${var.environment})"
+
   trigger_template {
     branch_name = "main"
     repo_name   = var.repo_name
   }
 
   filename = "cloudbuild.yaml"
+
+  depends_on = [google_project_service.services]
 }
