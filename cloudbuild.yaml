@@ -1,21 +1,21 @@
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-f', 'Dockerfile.simple', '-t', '${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO_NAME}/p2p-gear-rental:$SHORT_SHA', '.']
-    timeout: 600s
+    args: ['build', '-f', 'Dockerfile.production', '-t', '${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO_NAME}/p2p-gear-rental:${_IMAGE_TAG}', '.']
+    timeout: 1200s
 
   # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO_NAME}/p2p-gear-rental:$SHORT_SHA']
+    args: ['push', '${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO_NAME}/p2p-gear-rental:${_IMAGE_TAG}']
 
   # Deploy container image to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
     - 'run'
     - 'deploy'
-    - 'p2p-gear-rental'
+    - 'p2p-gear-rental-staging'
     - '--image'
-    - '${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO_NAME}/p2p-gear-rental:$SHORT_SHA'
+    - '${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO_NAME}/p2p-gear-rental:${_IMAGE_TAG}'
     - '--region'
     - 'europe-west2'
     - '--platform'
@@ -23,20 +23,20 @@ steps:
     - '--port'
     - '3000'
     - '--allow-unauthenticated'
-    - '--set-env-vars'
-    - 'NEXT_PUBLIC_BASE_URL=$_NEXT_PUBLIC_BASE_URL'
-    - '--set-env-vars'
-    - 'NEXT_PUBLIC_SUPABASE_URL=$_NEXT_PUBLIC_SUPABASE_URL'
-    - '--set-env-vars'
-    - 'NEXT_PUBLIC_SUPABASE_ANON_KEY=$_NEXT_PUBLIC_SUPABASE_ANON_KEY'
-    - '--set-env-vars'
-    - 'REDIS_URL=$_REDIS_URL'
     - '--set-secrets'
-    - 'SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest'
+    - 'DATABASE_URL=stage-database-url:latest'
     - '--set-secrets'
-    - 'STRIPE_SECRET_KEY=stripe-secret-key:latest'
+    - 'NEXT_PUBLIC_BASE_URL=stage-next-public-base-url:latest'
     - '--set-secrets'
-    - 'STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest'
+    - 'NEXT_PUBLIC_SUPABASE_URL=stage-next-public-supabase-url:latest'
+    - '--set-secrets'
+    - 'NEXT_PUBLIC_SUPABASE_ANON_KEY=stage-next-public-supabase-anon-key:latest'
+    - '--set-secrets'
+    - 'SUPABASE_SERVICE_ROLE_KEY=stage-supabase-service-role-key:latest'
+    - '--set-secrets'
+    - 'STRIPE_SECRET_KEY=stage-stripe-secret-key:latest'
+    - '--set-secrets'
+    - 'STRIPE_WEBHOOK_SECRET=stage-stripe-webhook-secret:latest'
     - '--memory'
     - '1Gi'
     - '--cpu'
@@ -50,11 +50,8 @@ steps:
 
 substitutions:
   _LOCATION: 'europe-west2'
-  _ARTIFACT_REPO_NAME: '$PROJECT_ID-p2p-gear-rental'
-  _NEXT_PUBLIC_BASE_URL: 'https://p2p-gear-rental.example.com'
-  _NEXT_PUBLIC_SUPABASE_URL: 'https://your-project.supabase.co'
-  _NEXT_PUBLIC_SUPABASE_ANON_KEY: 'your-anon-key'
-  _REDIS_URL: 'redis://[REDIS_HOST]:[REDIS_PORT]/0'  # Replace with actual Redis connection string after deployment
+  _ARTIFACT_REPO_NAME: 'p2pgear-stage-repo'
+  _IMAGE_TAG: 'latest'
 
 options:
   machineType: 'E2_HIGHCPU_8'

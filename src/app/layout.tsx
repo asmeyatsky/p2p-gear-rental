@@ -4,6 +4,9 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 
+// Force all pages to be dynamically rendered (skip static generation during build)
+export const dynamic = 'force-dynamic';
+
 const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],

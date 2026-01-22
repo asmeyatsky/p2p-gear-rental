@@ -12,5 +12,24 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "scripts/**",
+    "config/jest.setup.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "e2e/**",
+    "prisma/**",
+    "check_gear_count.ts",
+    "create-users.ts",
+    "distribute-gear.ts",
+    "generate-api-requests.ts",
+    "generate-high-activity.ts",
+    "keep-database-active.ts",
+    "test-db-connection-detailed.ts",
+    "test-db-connection.ts",
+    "test-supabase-direct.ts",
+    "verify-seed.ts"
   ]
 }
