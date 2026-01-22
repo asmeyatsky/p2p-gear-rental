@@ -1,0 +1,33 @@
+name: Keep Database Active
+
+on:
+  schedule:
+    # Run every 24 hours at 6:00 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping staging health endpoint
+        run: |
+          echo "Pinging staging environment to keep database active..."
+
+          # Health check
+          curl -s "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health"
+          echo ""
+
+          # Database health check
+          curl -s "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health/database"
+          echo ""
+
+          # Multiple pings to generate activity
+          for i in {1..5}; do
+            echo "Ping $i..."
+            curl -s "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health/database"
+            echo ""
+            sleep 2
+          done
+
+          echo "Database activity completed!"
