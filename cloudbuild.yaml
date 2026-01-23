@@ -52,7 +52,7 @@ substitutions:
   _LOCATION: 'europe-west2'
   _ARTIFACT_REPO_NAME: 'p2pgear-stage-repo'
   _IMAGE_TAG: 'latest'
-  _BASE_PATH: '/gear-staging'
+  _BASE_PATH: ''
 
 options:
   machineType: 'E2_HIGHCPU_8'

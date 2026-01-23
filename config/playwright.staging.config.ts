@@ -20,8 +20,11 @@ export default defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below */
   use: {
-    /* Base URL for staging - via load balancer */
-    baseURL: process.env.STAGING_URL || 'https://smeyatsky.com/gear-staging',
+    /* Base URL for staging - direct Cloud Run URL */
+    /* Note: The app has basePath=/gear-staging, so pages are at /gear-staging/ */
+    /* But Playwright's baseURL path joining doesn't work well with paths, so we use the root URL */
+    /* and prefix API paths with /gear-staging in tests */
+    baseURL: process.env.STAGING_URL || 'https://p2p-gear-rental-staging-737733013547.europe-west2.run.app',
 
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
