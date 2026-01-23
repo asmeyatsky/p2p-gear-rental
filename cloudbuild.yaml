@@ -1,7 +1,7 @@
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-f', 'Dockerfile.production', '-t', '${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO_NAME}/p2p-gear-rental:${_IMAGE_TAG}', '.']
+    args: ['build', '-f', 'Dockerfile.production', '--build-arg', 'NEXT_PUBLIC_BASE_PATH=${_BASE_PATH}', '-t', '${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO_NAME}/p2p-gear-rental:${_IMAGE_TAG}', '.']
     timeout: 1200s
 
   # Push the container image to Artifact Registry
@@ -52,6 +52,7 @@ substitutions:
   _LOCATION: 'europe-west2'
   _ARTIFACT_REPO_NAME: 'p2pgear-stage-repo'
   _IMAGE_TAG: 'latest'
+  _BASE_PATH: '/gear-staging'
 
 options:
   machineType: 'E2_HIGHCPU_8'

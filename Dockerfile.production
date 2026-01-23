@@ -25,6 +25,10 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
+# Build argument for base path (set via --build-arg for staging/production)
+ARG NEXT_PUBLIC_BASE_PATH=""
+ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
+
 # Set build-time environment variables
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production

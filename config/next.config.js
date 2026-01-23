@@ -2,6 +2,10 @@
 const nextConfig = {
   output: 'standalone',
 
+  // Base path for staging deployment via load balancer
+  // Set NEXT_PUBLIC_BASE_PATH=/gear-staging in environment for staging builds
+  ...(process.env.NEXT_PUBLIC_BASE_PATH && { basePath: process.env.NEXT_PUBLIC_BASE_PATH }),
+
   // Empty Turbopack config (Next.js 16 default)
   turbopack: {},
 
