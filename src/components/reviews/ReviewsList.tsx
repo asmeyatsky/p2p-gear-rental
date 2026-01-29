@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/useApi';
 import ReviewCard, { type ReviewData } from './ReviewCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { ReviewQuery } from '@/lib/validations/review';
+import { apiUrl } from '@/lib/api';
 
 interface ReviewsListProps {
   userId?: string;
@@ -47,7 +48,7 @@ export default function ReviewsList({
         }
       });
 
-      const response = await fetch(`/api/reviews?${params.toString()}`);
+      const response = await fetch(apiUrl(`/api/reviews?${params.toString()}`));
       if (!response.ok) {
         const err = await response.json();
         throw new Error(err.error || 'Failed to fetch reviews');

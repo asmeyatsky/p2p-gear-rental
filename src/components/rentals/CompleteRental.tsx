@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiUrl } from '@/lib/api';
 
 interface CompleteRentalProps {
   rentalId: string;
@@ -18,7 +19,7 @@ export default function CompleteRental({ rentalId, onRentalCompleted }: Complete
     setLoading(true);
     setMessage(null);
     try {
-      const response = await fetch(`/api/rentals/${rentalId}/complete`, {
+      const response = await fetch(apiUrl(`/api/rentals/${rentalId}/complete`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

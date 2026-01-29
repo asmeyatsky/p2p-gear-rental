@@ -9,6 +9,7 @@ import PaymentForm from '@/components/payments/PaymentForm';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import Header from '@/components/Header';
+import { apiUrl } from '@/lib/api';
 
 interface RentalDetails {
   id: string;
@@ -50,7 +51,7 @@ export default function ConfirmPaymentPage() {
       const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
       const amount = Math.round(days * rentalData.gear.dailyRate * 100); // Convert to cents
 
-      const res = await fetch('/api/create-payment-intent', {
+      const res = await fetch(apiUrl('/api/create-payment-intent'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +86,7 @@ export default function ConfirmPaymentPage() {
     const fetchRentalDetails = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/rentals/${id}`);
+        const res = await fetch(apiUrl(`/api/rentals/${id}`));
         
         if (!res.ok) {
           throw new Error('Failed to fetch rental details');

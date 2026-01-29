@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import AvailabilityCalendar from '@/components/gear/AvailabilityCalendar';
+import { apiUrl } from '@/lib/api';
 
 interface GearDetailsClientProps {
   gear: {
@@ -106,7 +107,7 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
     setError(null);
 
     try {
-      const response = await fetch('/api/rentals', {
+      const response = await fetch(apiUrl('/api/rentals'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
+import { apiUrl } from '@/lib/api';
 
 export default function BulkUploadPage() {
   const { user, loading: authLoading } = useAuth();
@@ -51,7 +52,7 @@ export default function BulkUploadPage() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('/api/gear/bulk', {
+      const res = await fetch(apiUrl('/api/gear/bulk'), {
         method: 'POST',
         body: formData,
       });

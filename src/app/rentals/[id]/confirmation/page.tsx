@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import { apiUrl } from '@/lib/api';
 
 interface RentalDetails {
   id: string;
@@ -75,7 +76,7 @@ export default function PaymentConfirmationPage() {
         }
 
         // Fetch rental details
-        const res = await fetch(`/api/rentals/${id}`);
+        const res = await fetch(apiUrl(`/api/rentals/${id}`));
         if (!res.ok) {
           throw new Error('Failed to fetch rental details');
         }

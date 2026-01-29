@@ -6,6 +6,7 @@ import { toast } from '@/lib/toast';
 import StarRating from './StarRating';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { createReviewSchema, type CreateReviewInput } from '@/lib/validations/review';
+import { apiUrl } from '@/lib/api';
 
 interface ReviewFormProps {
   rentalId: string;
@@ -27,7 +28,7 @@ export default function ReviewForm({
 
   const { submitForm, loading } = useFormApi(
     async (data: CreateReviewInput) => {
-      const response = await fetch('/api/reviews', {
+      const response = await fetch(apiUrl('/api/reviews'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

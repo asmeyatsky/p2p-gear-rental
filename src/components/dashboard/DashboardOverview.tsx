@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { toast } from '@/lib/toast';
+import { apiUrl } from '@/lib/api';
 
 interface DashboardStats {
   totalRentals: number;
@@ -97,7 +98,7 @@ export default function DashboardOverview() {
     const fetchDashboardData = async () => {
       try {
         const [statsResponse] = await Promise.all([
-          fetch('/api/dashboard/stats'),
+          fetch(apiUrl('/api/dashboard/stats')),
           // In the future, add more endpoints for recent activity
         ]);
 

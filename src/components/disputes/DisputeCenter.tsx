@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { toast } from '@/lib/toast';
+import { apiUrl } from '@/lib/api';
 
 interface Dispute {
   id: string;
@@ -123,7 +124,7 @@ const CreateDisputeModal = ({ isOpen, onClose, rentalId, onSuccess }: CreateDisp
     setLoading(true);
 
     try {
-      const response = await fetch('/api/disputes', {
+      const response = await fetch(apiUrl('/api/disputes'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -265,7 +266,7 @@ export default function DisputeCenter() {
   const fetchDisputes = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/disputes');
+      const response = await fetch(apiUrl('/api/disputes'));
       if (!response.ok) {
         throw new Error('Failed to fetch disputes');
       }

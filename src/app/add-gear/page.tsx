@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { event } from '../../lib/gtag';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { apiUrl } from '../../lib/api';
 
 export default function AddGearPage() {
   const { user, loading: authLoading } = useAuth();
@@ -84,7 +85,7 @@ export default function AddGearPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/gear', {
+      const res = await fetch(apiUrl('/api/gear'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { apiUrl } from '@/lib/api';
 
 interface UnavailablePeriod {
   start: string;
@@ -31,7 +32,7 @@ export default function AvailabilityCalendar({
   useEffect(() => {
     async function fetchAvailability() {
       try {
-        const response = await fetch(`/api/gear/${gearId}/availability`);
+        const response = await fetch(apiUrl(`/api/gear/${gearId}/availability`));
         if (response.ok) {
           const data = await response.json();
           setUnavailableDates(data.unavailableDates || []);

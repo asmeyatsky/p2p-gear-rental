@@ -12,6 +12,7 @@ import {
   CameraIcon,
 } from '@heroicons/react/24/outline';
 import Header from '@/components/Header';
+import { apiUrl } from '@/lib/api';
 
 interface GearItem {
   id: string;
@@ -124,7 +125,7 @@ function BrowsePageContent() {
         }
       });
 
-      const response = await fetch(`/api/gear?${params.toString()}`);
+      const response = await fetch(apiUrl(`/api/gear?${params.toString()}`));
 
       if (!response.ok) {
         throw new Error('Failed to fetch gear');

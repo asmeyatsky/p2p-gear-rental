@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { compressImage, validateImageFile } from '@/lib/image-utils';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import { apiUrl } from '@/lib/api';
 
 // Use local storage in development, Supabase in production
 const USE_LOCAL_STORAGE = process.env.NODE_ENV === 'development';
@@ -73,7 +74,7 @@ export default function ImageUpload({
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/upload', {
+    const response = await fetch(apiUrl('/api/upload'), {
       method: 'POST',
       body: formData,
     });
@@ -211,7 +212,7 @@ export default function ImageUpload({
     const urlParts = imageUrl.split('/');
     const fileName = urlParts[urlParts.length - 1];
 
-    const response = await fetch(`/api/upload?fileName=${encodeURIComponent(fileName)}`, {
+    const response = await fetch(apiUrl(`/api/upload?fileName=${encodeURIComponent(fileName)}`), {
       method: 'DELETE',
     });
 

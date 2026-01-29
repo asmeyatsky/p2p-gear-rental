@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { GearItem } from '@/types';
 import ImageUpload from '@/components/ImageUpload';
 import toast from 'react-hot-toast';
+import { apiUrl } from '@/lib/api';
 
 import Header from '@/components/Header';
 
@@ -35,7 +36,7 @@ export default function EditGearPage() {
       const fetchGear = async () => {
         setLoadingGear(true);
         try {
-          const res = await fetch(`/api/gear/${id}`);
+          const res = await fetch(apiUrl(`/api/gear/${id}`));
           if (!res.ok) {
             throw new Error('Failed to fetch gear');
           }
@@ -85,7 +86,7 @@ export default function EditGearPage() {
     }
 
     try {
-      const res = await fetch(`/api/gear/${gear.id}`, {
+      const res = await fetch(apiUrl(`/api/gear/${gear.id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

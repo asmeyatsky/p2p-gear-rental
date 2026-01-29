@@ -5,6 +5,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import Header from '@/components/Header';
+import { apiUrl } from '@/lib/api';
 
 interface RentalStats {
   totalRentals: number;
@@ -75,8 +76,8 @@ export default function RentalDashboard() {
     try {
       setLoading(true);
       const [rentalsRes, statsRes] = await Promise.all([
-        fetch('/api/rentals'),
-        fetch('/api/dashboard/stats')
+        fetch(apiUrl('/api/rentals')),
+        fetch(apiUrl('/api/dashboard/stats'))
       ]);
 
       if (rentalsRes.ok) {
@@ -127,7 +128,7 @@ export default function RentalDashboard() {
 
   const handleApprove = async (rentalId: string) => {
     try {
-      const res = await fetch(`/api/rentals/${rentalId}/approve`, {
+      const res = await fetch(apiUrl(`/api/rentals/${rentalId}/approve`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -145,7 +146,7 @@ export default function RentalDashboard() {
 
   const handleReject = async (rentalId: string) => {
     try {
-      const res = await fetch(`/api/rentals/${rentalId}/reject`, {
+      const res = await fetch(apiUrl(`/api/rentals/${rentalId}/reject`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
       });
