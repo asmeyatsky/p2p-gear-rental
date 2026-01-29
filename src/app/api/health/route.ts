@@ -149,13 +149,20 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     const monitoringHealth = monitoring.getHealthStatus();
     
     // Determine overall status
-    const hasUnhealthy = allChecks.some(check => check.status === 'unhealthy');
+    // Only database is considered critical - cache failures are treated as degraded
+    const criticalServices = ['database'];
+    const hasCriticalUnhealthy = allChecks.some(
+      check => criticalServices.includes(check.service) && check.status === 'unhealthy'
+    );
+    const hasNonCriticalUnhealthy = allChecks.some(
+      check => !criticalServices.includes(check.service) && check.status === 'unhealthy'
+    );
     const hasDegraded = allChecks.some(check => check.status === 'degraded');
-    
+
     let overallStatus: 'healthy' | 'degraded' | 'unhealthy';
-    if (hasUnhealthy || monitoringHealth.status === 'unhealthy') {
+    if (hasCriticalUnhealthy || monitoringHealth.status === 'unhealthy') {
       overallStatus = 'unhealthy';
-    } else if (hasDegraded || monitoringHealth.status === 'degraded') {
+    } else if (hasNonCriticalUnhealthy || hasDegraded || monitoringHealth.status === 'degraded') {
       overallStatus = 'degraded';
     } else {
       overallStatus = 'healthy';
