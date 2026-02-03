@@ -12,10 +12,10 @@ export default defineConfig({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Retry failed tests — staging Cloud Run may return transient 503s */
+  retries: process.env.CI ? 2 : 1,
+  /* Cap workers at 2 — staging Cloud Run (single instance) saturates above this */
+  workers: process.env.CI ? 1 : 2,
   /* Reporter to use */
   reporter: 'html',
   /* Shared settings for all the projects below */

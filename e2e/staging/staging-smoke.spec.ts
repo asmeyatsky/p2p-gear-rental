@@ -65,13 +65,14 @@ test.describe('Staging Environment Smoke Tests', () => {
 test.describe('Staging API Tests', () => {
   test('should fetch gear listings', async ({ request }) => {
     const response = await request.get(`${BASE_PATH}/api/gear`);
-    expect([200, 500]).toContain(response.status());
+    expect(response.status()).toBe(200);
 
-    if (response.status() === 200) {
-      const body = await response.json();
-      expect(body).toHaveProperty('gear');
-      expect(Array.isArray(body.gear)).toBeTruthy();
-    }
+    const body = await response.json();
+    expect(body).toHaveProperty('data');
+    expect(Array.isArray(body.data)).toBeTruthy();
+    expect(body.data.length).toBeGreaterThan(0);
+    expect(body).toHaveProperty('pagination');
+    expect(body.pagination).toHaveProperty('hasNext');
   });
 
   test('should handle gear search endpoint', async ({ request }) => {
