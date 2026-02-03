@@ -128,6 +128,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, name?: string): Promise<AuthResponse> => {
+    if (!supabase) {
+      return {
+        data: { user: null, session: null },
+        error: { name: 'Client not initialized', message: 'Supabase client not initialized' } as AuthError
+      };
+    }
+
     setAuthState(prev => ({ ...prev, loading: true }));
     try {
       const result = await supabase.auth.signUp({
@@ -140,6 +147,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
       return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Sign up failed';
+      return {
+        data: { user: null, session: null },
+        error: { name: 'Sign up error', message: errorMessage } as AuthError
+      };
     } finally {
       if (typeof window !== 'undefined') {
         setAuthState(prev => ({ ...prev, loading: false }));

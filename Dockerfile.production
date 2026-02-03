@@ -25,9 +25,14 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build argument for base path (set via --build-arg for staging/production)
+# Build arguments (set via --build-arg for staging/production)
 ARG NEXT_PUBLIC_BASE_PATH=""
+ARG NEXT_PUBLIC_SUPABASE_URL=""
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+
 ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
+ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
 
 # Set build-time environment variables
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -37,10 +42,8 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 # Skip database/service connections during build (prevents static generation timeouts)
 ENV SKIP_DB_DURING_BUILD=true
 
-# Dummy env vars for build (real values come from Cloud Run at runtime)
+# Dummy env vars for build (server-side only - real values come from Cloud Run at runtime)
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-ENV NEXT_PUBLIC_SUPABASE_URL="https://placeholder.supabase.co"
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY="placeholder_key"
 ENV SUPABASE_SERVICE_ROLE_KEY="placeholder_service_role"
 ENV STRIPE_SECRET_KEY="sk_test_placeholder"
 ENV REDIS_URL=""

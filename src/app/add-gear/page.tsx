@@ -158,11 +158,19 @@ export default function AddGearPage() {
 
       <div className="relative z-10 px-4 py-8">
         <div className="max-w-3xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">List Your Gear</h1>
-            <p className="mt-2 text-gray-600">
-              Share your photography and videography equipment with the community
-            </p>
+          <div className="mb-6 flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">List Your Gear</h1>
+              <p className="mt-2 text-gray-600">
+                Share your photography and videography equipment with the community
+              </p>
+            </div>
+            <Link
+              href="/add-gear/bulk"
+              className="text-sm text-purple-600 hover:text-purple-700 font-medium whitespace-nowrap ml-4"
+            >
+              Bulk Upload (CSV) →
+            </Link>
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">

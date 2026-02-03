@@ -10,36 +10,47 @@ export const GET = withErrorHandler(
   withMonitoring(
     async (req: NextRequest) => {
       try {
-        const { user } = await authenticateRequest(req);
-        
-        if (!user) {
-          return NextResponse.json(
-            { error: 'Authentication required' },
-            { status: 401 }
-          );
-        }
-
         const url = new URL(req.url);
-        const limit = parseInt(url.searchParams.get('limit') || '20');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
-        const category = url.searchParams.get('category');
-        const city = url.searchParams.get('city');
+        const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
+        const page = parseInt(url.searchParams.get('page') || '1');
+        const offset = (page - 1) * limit;
+
+        const category  = url.searchParams.get('category');
+        const city      = url.searchParams.get('city');
+        const state     = url.searchParams.get('state');
         const condition = url.searchParams.get('condition');
+        const minPrice  = url.searchParams.get('minPrice');
+        const maxPrice  = url.searchParams.get('maxPrice');
+        const sortBy    = url.searchParams.get('sortBy') || 'newest';
 
         const where: any = { isAvailable: true };
         if (category && category !== 'All') where.category = category;
-        if (city) where.city = city;
+        if (city)      where.city = city;
+        if (state)     where.state = state;
         if (condition) where.condition = condition;
+        if (minPrice || maxPrice) {
+          where.dailyRate = {};
+          if (minPrice) where.dailyRate.gte = parseFloat(minPrice);
+          if (maxPrice) where.dailyRate.lte = parseFloat(maxPrice);
+        }
 
-        const [gear, total] = await Promise.all([
+        const orderByMap: Record<string, any> = {
+          'newest':     { createdAt: 'desc' },
+          'price-low':  { dailyRate: 'asc' },
+          'price-high': { dailyRate: 'desc' },
+          'rating':     { averageRating: 'desc' },
+        };
+        const orderBy = orderByMap[sortBy] || { createdAt: 'desc' };
+
+        const [data, total] = await Promise.all([
           prisma.gear.findMany({
             where,
             include: {
               user: {
-                select: { id: true, email: true, full_name: true }
+                select: { id: true, email: true, full_name: true, averageRating: true, totalReviews: true }
               }
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy,
             take: limit,
             skip: offset
           }),
@@ -47,12 +58,12 @@ export const GET = withErrorHandler(
         ]);
 
         return NextResponse.json({
-          gear,
+          data,
           total,
           pagination: {
+            page,
             limit,
-            offset,
-            hasMore: offset + limit < total
+            hasNext: offset + limit < total
           }
         });
       } catch (error) {
