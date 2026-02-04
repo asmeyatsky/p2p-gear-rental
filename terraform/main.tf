@@ -506,6 +506,8 @@ resource "google_secret_manager_secret_iam_member" "cloud_run_secrets" {
 # =============================================================================
 
 resource "google_cloudbuild_trigger" "build_trigger" {
+  count = var.environment == "prod" ? 1 : 0
+
   name        = local.build_trigger_name
   description = "Build and deploy p2p-gear-rental to Cloud Run (${var.environment})"
 
