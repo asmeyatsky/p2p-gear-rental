@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
-import { withErrorHandler, AuthenticationError, NotFoundError, ForbiddenError, ValidationError } from '@/lib/api-error-handler';
+import { authenticateRequest } from '@/lib/auth-middleware';
+import { withErrorHandler, NotFoundError, ForbiddenError, ValidationError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
 import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
 import { logger } from '@/lib/logger';
@@ -13,12 +13,7 @@ export const PUT = withErrorHandler(
       async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
         const { id } = await params;
         
-        // Check authentication
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session || !session.user) {
-          throw new AuthenticationError();
-        }
+        const { user } = await authenticateRequest(request);
 
         // Parse request body
         const body = await request.json();
@@ -26,7 +21,7 @@ export const PUT = withErrorHandler(
 
         logger.info('Rental rejection request', { 
           rentalId: id,
-          ownerId: session.user.id 
+          ownerId: user.id 
         }, 'API');
 
         // Get rental details
@@ -46,7 +41,7 @@ export const PUT = withErrorHandler(
 
         const rentalData = rental as any;
 
-        if (rentalData.ownerId !== session.user.id) {
+        if (rentalData.ownerId !== user.id) {
           throw new ForbiddenError('You are not the owner of this rental request');
         }
 
@@ -79,7 +74,7 @@ export const PUT = withErrorHandler(
 
         logger.info('Rental rejected successfully', {
           rentalId: id,
-          ownerId: session.user.id,
+          ownerId: user.id,
           renterId: rentalData.renterId,
           gearTitle: rentalData.gear?.title,
           rejectionMessage: message || 'No message provided'

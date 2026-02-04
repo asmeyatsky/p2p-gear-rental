@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
-import { supabase } from '@/lib/supabase';
-import { AuthenticationError, ValidationError, ApiError, RateLimitError, NotFoundError, AuthorizationError } from '@/lib/api-error-handler';
+import { authenticateRequest } from '@/lib/auth-middleware';
+import { ValidationError, ApiError, RateLimitError, NotFoundError, AuthorizationError } from '@/lib/api-error-handler';
 import { rateLimitConfig, getClientIdentifier } from '@/lib/rate-limit';
 import { monitoring } from '@/lib/monitoring';
 import { logger } from '@/lib/logger';
@@ -46,11 +46,7 @@ export async function POST(request: NextRequest) {
       throw err;
     }
 
-    // Check authentication
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session || !session.user) {
-      throw new AuthenticationError();
-    }
+    const { user } = await authenticateRequest(request);
 
     const body = await request.json();
     
@@ -76,7 +72,7 @@ export async function POST(request: NextRequest) {
       throw new NotFoundError('Rental not found');
     }
 
-    if (rental.renterId !== session.user.id) {
+    if (rental.renterId !== user.id) {
       throw new AuthorizationError('You are not authorized to pay for this rental');
     }
 
@@ -106,7 +102,7 @@ export async function POST(request: NextRequest) {
             rentalId,
             gearTitle,
             gearOwnerId: rental.gear.userId,
-            renterId: session.user.id,
+            renterId: user.id,
             startDate: rental.startDate.toString(),
             endDate: rental.endDate.toString(),
           },
@@ -135,7 +131,7 @@ export async function POST(request: NextRequest) {
             rentalId,
             gearTitle,
             gearOwnerId: rental.gear.userId,
-            renterId: session.user.id,
+            renterId: user.id,
             startDate: rental.startDate.toString(),
             endDate: rental.endDate.toString(),
           },
@@ -153,7 +149,7 @@ export async function POST(request: NextRequest) {
           rentalId,
           gearTitle,
           gearOwnerId: rental.gear.userId,
-          renterId: session.user.id,
+          renterId: user.id,
           startDate: rental.startDate.toString(),
           endDate: rental.endDate.toString(),
         },
@@ -180,7 +176,7 @@ export async function POST(request: NextRequest) {
       paymentIntentId: paymentIntent.id,
       rentalId,
       amount: amount / 100,
-      userId: session.user.id
+      userId: user.id
     }, 'STRIPE');
 
     response = NextResponse.json({

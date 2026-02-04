@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
-import { withErrorHandler, AuthenticationError, ValidationError } from '@/lib/api-error-handler';
+import { authenticateRequest } from '@/lib/auth-middleware';
+import { withErrorHandler, ValidationError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
 import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
 import { logger } from '@/lib/logger';
@@ -17,15 +17,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 export const GET = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
-      async () => {
-        // Check authentication
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session || !session.user) {
-          throw new AuthenticationError();
-        }
-
-        const userId = session.user.id;
+      async (req: NextRequest) => {
+        const { user } = await authenticateRequest(req);
+        const userId = user.id;
         
         logger.debug('Fetching rentals for user', { userId }, 'API');
 
@@ -94,12 +88,7 @@ export const POST = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
       async (request: NextRequest) => {
-        // Check authentication
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session || !session.user) {
-          throw new AuthenticationError();
-        }
+        const { user } = await authenticateRequest(request);
 
         // Parse and validate request body
         const body = await request.json();
@@ -107,7 +96,7 @@ export const POST = withErrorHandler(
         const { gearId, startDate, endDate, message } = validatedData;
 
         logger.info('Rental creation request', { 
-          userId: session.user.id,
+          userId: user.id,
           gearId,
           startDate,
           endDate
@@ -127,7 +116,7 @@ export const POST = withErrorHandler(
         const gearData = gear as any;
 
         // Prevent renting own gear
-        if (gearData.userId === session.user.id) {
+        if (gearData.userId === user.id) {
           throw new ValidationError('Cannot rent your own gear');
         }
 
@@ -217,7 +206,7 @@ export const POST = withErrorHandler(
           },
           metadata: {
             gearId: gearData.id,
-            renterId: session.user.id,
+            renterId: user.id,
             ownerId: gearData.userId || '',
             startDate,
             endDate,
@@ -239,7 +228,7 @@ export const POST = withErrorHandler(
           prisma.rental.create({
             data: {
               gearId,
-              renterId: session.user.id,
+              renterId: user.id,
               ownerId: gearData.userId || '',
               startDate,
               endDate,
@@ -262,7 +251,7 @@ export const POST = withErrorHandler(
 
         // Invalidate relevant caches
         await Promise.all([
-          CacheManager.del(CacheManager.keys.rental.user(session.user.id)),
+          CacheManager.del(CacheManager.keys.rental.user(user.id)),
           CacheManager.del(CacheManager.keys.rental.user(gearData.userId || '')),
           CacheManager.del(CacheManager.keys.gear.detail(gearId)),
         ]);
@@ -270,7 +259,7 @@ export const POST = withErrorHandler(
         logger.info('Rental created successfully', {
           rentalId: createdRental.id,
           gearId,
-          renterId: session.user.id,
+          renterId: user.id,
           ownerId: gearData.userId,
           totalPrice: priceBreakdown.totalPrice,
           platformRevenue: priceBreakdown.platformRevenue,

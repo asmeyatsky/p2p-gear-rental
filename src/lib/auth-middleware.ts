@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createSupabaseServerClient } from '@/lib/supabase';
 import { prisma } from '@/lib/prisma';
 import { ApiError, AuthenticationError, AuthorizationError } from '@/lib/api-error-handler';
 
 export async function authenticateRequest(req: NextRequest) {
   try {
+    const supabase = await createSupabaseServerClient();
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user) {

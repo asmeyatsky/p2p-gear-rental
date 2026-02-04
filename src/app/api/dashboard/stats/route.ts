@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 
-import { supabase } from '@/lib/supabase';
-import { withErrorHandler, AuthenticationError } from '@/lib/api-error-handler';
+import { authenticateRequest } from '@/lib/auth-middleware';
+import { withErrorHandler } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
 import { withMonitoring } from '@/lib/monitoring';
 import { CacheManager } from '@/lib/cache';
@@ -13,13 +13,8 @@ export const GET = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
       async (request: NextRequest) => {
-        // Check authentication
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session || !session.user) {
-          throw new AuthenticationError();
-        }
-
-        const userId = session.user.id;
+        const { user } = await authenticateRequest(request);
+        const userId = user.id;
 
         logger.debug('Dashboard stats request', { userId }, 'API');
 

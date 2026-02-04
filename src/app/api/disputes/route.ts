@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
-import { withErrorHandler, AuthenticationError, ValidationError } from '@/lib/api-error-handler';
+import { authenticateRequest } from '@/lib/auth-middleware';
+import { withErrorHandler, ValidationError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
 import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
 import { createDisputeSchema, disputeQuerySchema } from '@/lib/validations/disputes';
@@ -12,15 +12,9 @@ export const GET = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
       async (request: NextRequest) => {
-        // Check authentication
-        const { data: { session } } = await supabase.auth.getSession();
+        const { user } = await authenticateRequest(request);
+        const userId = user.id;
 
-        if (!session || !session.user) {
-          throw new AuthenticationError();
-        }
-
-        const userId = session.user.id;
-        
         // Validate query parameters
         const { searchParams } = new URL(request.url);
         const queryData = Object.fromEntries(searchParams.entries());
@@ -169,14 +163,8 @@ export const POST = withErrorHandler(
   withMonitoring(
     withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
       async (request: NextRequest) => {
-        // Check authentication
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session || !session.user) {
-          throw new AuthenticationError();
-        }
-
-        const userId = session.user.id;
+        const { user } = await authenticateRequest(request);
+        const userId = user.id;
 
         // Parse and validate request body
         const body = await request.json();

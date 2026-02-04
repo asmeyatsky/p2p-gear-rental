@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
-import { withErrorHandler, AuthenticationError, ValidationError, ConflictError } from '@/lib/api-error-handler';
+import { authenticateRequest } from '@/lib/auth-middleware';
+import { withErrorHandler, ValidationError, ConflictError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
 import { createReviewSchema, reviewQuerySchema } from '@/lib/validations/review';
 import { CacheManager } from '@/lib/cache';
@@ -100,11 +100,7 @@ export const GET = withErrorHandler(
 export const POST = withErrorHandler(
   withRateLimit(rateLimitConfig.general.limiter, rateLimitConfig.general.limit)(
     async (request: NextRequest) => {
-      // Check authentication
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        throw new AuthenticationError();
-      }
+      const { user } = await authenticateRequest(request);
 
       const body = await request.json();
       const validatedData = createReviewSchema.parse(body);
@@ -122,7 +118,7 @@ export const POST = withErrorHandler(
         throw new ValidationError('Rental not found');
       }
 
-      if (rental.renterId !== session.user.id) {
+      if (rental.renterId !== user.id) {
         throw new ValidationError('You can only review rentals you were the renter for');
       }
 
@@ -140,7 +136,7 @@ export const POST = withErrorHandler(
           rating,
           comment,
           rentalId,
-          reviewerId: session.user.id,
+          reviewerId: user.id,
           revieweeId: rental.ownerId, // Review the gear owner
         },
         include: {
