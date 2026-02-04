@@ -47,7 +47,7 @@ export const GET = withErrorHandler(
             where,
             include: {
               user: {
-                select: { id: true, email: true, full_name: true, averageRating: true, totalReviews: true }
+                select: { id: true, full_name: true, averageRating: true, totalReviews: true }
               }
             },
             orderBy,

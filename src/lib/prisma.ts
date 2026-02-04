@@ -8,7 +8,7 @@ declare global {
 
 // Validate database URL
 // const databaseUrl = validateEnvVar('DATABASE_URL', process.env.DATABASE_URL); // Commented out
-const databaseUrl = process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db'; // Fallback for build time
+const databaseUrl = process.env.DATABASE_URL || 'postgresql://placeholder:placeholder@localhost:0/placeholder'; // Inert build-time placeholder; never connects
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
