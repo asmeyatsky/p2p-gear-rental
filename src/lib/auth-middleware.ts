@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase';
+import { createClient as createSupabaseServerClient } from '@/lib/supabase-server';
 import { prisma } from '@/lib/prisma';
 import { ApiError, AuthenticationError, AuthorizationError } from '@/lib/api-error-handler';
 

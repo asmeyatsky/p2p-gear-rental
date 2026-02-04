@@ -1,6 +1,4 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 
 // Skip during build time to prevent hanging on static page generation
 const SKIP_DURING_BUILD = process.env.SKIP_DB_DURING_BUILD === 'true';
@@ -47,22 +45,3 @@ export const supabase: SupabaseClient = SKIP_DURING_BUILD
         return getSupabaseClient()[prop as keyof SupabaseClient];
       }
     });
-
-// Server-side client for use in API route handlers and Server Components.
-// Reads the session from request cookies (set by createBrowserClient on the
-// client side) so that getSession() returns the authenticated user.
-export async function createSupabaseServerClient() {
-  const cookieStore = await cookies();
-  return createServerClient(supabaseUrl!, supabaseAnonKey!, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet: { name: string; value: string; options: Record<string, unknown> }[]) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options as Parameters<typeof cookieStore.set>[2]);
-        });
-      },
-    },
-  });
-}
