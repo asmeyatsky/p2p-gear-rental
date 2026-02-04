@@ -125,9 +125,9 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
         throw new Error(data.error || 'Failed to create rental request');
       }
 
-      const rental = await response.json();
+      const { rental: createdRental } = await response.json();
       setShowRentalModal(false);
-      router.push(`/rentals/${rental.id}`);
+      router.push(`/rentals/${createdRental.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
