@@ -324,7 +324,7 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
               <Button
                 onClick={handleSubmitRental}
                 disabled={isSubmitting || !startDate || !endDate}
-                className="w-full text-xs py-1.5"
+                className="w-full text-xs py-1.5 bg-sky-500 hover:bg-sky-600 text-white"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Request'}
               </Button>
