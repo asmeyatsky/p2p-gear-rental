@@ -133,7 +133,7 @@ export default function DashboardOverview() {
             title: 'New review received',
             description: '5-star review from Sarah M.',
             timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-            href: '/dashboard/reviews'
+            href: '/dashboard'
           },
         ]);
 
@@ -330,12 +330,6 @@ export default function DashboardOverview() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-            <Link
-              href="/dashboard/activity"
-              className="text-sm text-blue-600 hover:text-blue-500"
-            >
-              View all
-            </Link>
           </div>
           <div className="space-y-4">
             {recentActivity.map((activity) => (

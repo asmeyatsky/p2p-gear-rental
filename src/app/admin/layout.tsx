@@ -2,13 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  HomeIcon, 
-  UserGroupIcon, 
-  ShoppingBagIcon, 
-  CalendarIcon, 
+import {
+  UserGroupIcon,
+  ShoppingBagIcon,
+  CalendarIcon,
   ChartBarIcon,
-  Cog6ToothIcon,
   ShieldCheckIcon,
   ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
@@ -20,8 +18,6 @@ const adminNavigation = [
   { name: 'Users', href: '/admin/users', icon: UserGroupIcon },
   { name: 'Gear', href: '/admin/gear', icon: ShoppingBagIcon },
   { name: 'Rentals', href: '/admin/rentals', icon: CalendarIcon },
-  { name: 'Content Moderation', href: '/admin/moderation', icon: ShieldCheckIcon },
-  { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon },
 ];
 
 export default function AdminLayout({
@@ -34,7 +30,7 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/login');
+    router.push('/auth/login');
   };
 
   return (
