@@ -114,8 +114,8 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
         },
         body: JSON.stringify({
           gearId: gear.id,
-          startDate: startDate,
-          endDate: endDate,
+          startDate: startDate + 'T00:00:00.000Z',
+          endDate: endDate + 'T00:00:00.000Z',
           totalPrice: calculateTotalPrice(),
         }),
       });

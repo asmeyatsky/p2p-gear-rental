@@ -68,10 +68,24 @@ export function handleApiError(error: unknown): NextResponse {
     );
   }
   
+  if (error instanceof ZodError) {
+    const messages = error.issues.map(i =>
+      i.path.length ? `${i.path.join('.')}: ${i.message}` : i.message
+    );
+    return NextResponse.json(
+      {
+        error: messages.join('; '),
+        code: 'VALIDATION_ERROR',
+        timestamp: new Date().toISOString(),
+      },
+      { status: 400 }
+    );
+  }
+
   if (error instanceof Error) {
     // Don't expose internal error details in production
-    const message = process.env.NODE_ENV === 'production' 
-      ? 'Internal server error' 
+    const message = process.env.NODE_ENV === 'production'
+      ? 'Internal server error'
       : error.message;
     
     return NextResponse.json(
@@ -105,6 +119,7 @@ export function validateEnvVar(name: string, value: string | undefined): string 
 }
 
 import { NextRequest, NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 
 type ApiHandler = (req: NextRequest, ...args: unknown[]) => Promise<NextResponse> | NextResponse;
 

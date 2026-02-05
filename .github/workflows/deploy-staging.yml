@@ -64,6 +64,27 @@ jobs:
           provenance: false
           sbom: false
 
+      - name: Update Stripe secrets in Secret Manager
+        env:
+          STRIPE_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
+          WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
+        run: |
+          # Cloud Run env vars are bound via secret_key_ref (terraform) so they
+          # cannot be overridden with --set-env-vars.  Update the secret versions
+          # directly; the new revision will resolve "latest" at startup.
+          if [ -n "$STRIPE_KEY" ]; then
+            echo -n "$STRIPE_KEY" | gcloud secrets versions add stage-stripe-secret-key --data-from-file=-
+            echo "Updated stage-stripe-secret-key"
+          else
+            echo "WARNING: STRIPE_SECRET_KEY_TEST is empty — skipping"
+          fi
+          if [ -n "$WEBHOOK_SECRET" ]; then
+            echo -n "$WEBHOOK_SECRET" | gcloud secrets versions add stage-stripe-webhook-secret --data-from-file=-
+            echo "Updated stage-stripe-webhook-secret"
+          else
+            echo "WARNING: STRIPE_WEBHOOK_SECRET_TEST is empty — skipping"
+          fi
+
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
@@ -72,17 +93,6 @@ jobs:
           region: ${{ env.REGION }}
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/p2p-gear-rental:${{ github.sha }}
           flags: --allow-unauthenticated
-
-      - name: Inject runtime secrets
-        env:
-          STRIPE_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
-          WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
-        run: |
-          # DATABASE_URL and SUPABASE_SERVICE_ROLE_KEY are already bound to
-          # GCP Secret Manager via terraform — only set Stripe keys here.
-          gcloud run services update ${{ env.SERVICE_NAME }} \
-            --region ${{ env.REGION }} \
-            --set-env-vars="STRIPE_SECRET_KEY=${STRIPE_KEY},STRIPE_WEBHOOK_SECRET=${WEBHOOK_SECRET}" || true
 
       - name: Health check
         run: |
