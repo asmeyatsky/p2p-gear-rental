@@ -73,13 +73,17 @@ jobs:
           # cannot be overridden with --set-env-vars.  Update the secret versions
           # directly; the new revision will resolve "latest" at startup.
           if [ -n "$STRIPE_KEY" ]; then
-            echo -n "$STRIPE_KEY" | gcloud secrets versions add stage-stripe-secret-key --data-from-file=-
+            printf '%s' "$STRIPE_KEY" > /tmp/stripe-key.txt
+            gcloud secrets versions add stage-stripe-secret-key --data-file=/tmp/stripe-key.txt
+            rm -f /tmp/stripe-key.txt
             echo "Updated stage-stripe-secret-key"
           else
             echo "WARNING: STRIPE_SECRET_KEY_TEST is empty — skipping"
           fi
           if [ -n "$WEBHOOK_SECRET" ]; then
-            echo -n "$WEBHOOK_SECRET" | gcloud secrets versions add stage-stripe-webhook-secret --data-from-file=-
+            printf '%s' "$WEBHOOK_SECRET" > /tmp/webhook-secret.txt
+            gcloud secrets versions add stage-stripe-webhook-secret --data-file=/tmp/webhook-secret.txt
+            rm -f /tmp/webhook-secret.txt
             echo "Updated stage-stripe-webhook-secret"
           else
             echo "WARNING: STRIPE_WEBHOOK_SECRET_TEST is empty — skipping"
