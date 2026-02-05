@@ -7,16 +7,34 @@ export async function authenticateRequest(req: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session?.user) {
       throw new AuthenticationError('Authentication required');
     }
+
+    // Ensure user exists in our database (sync from Supabase on first API call)
+    await prisma.user.upsert({
+      where: { id: session.user.id },
+      update: {
+        email: session.user.email || '',
+        full_name: session.user.user_metadata?.full_name || null,
+        updatedAt: new Date(),
+      },
+      create: {
+        id: session.user.id,
+        email: session.user.email || '',
+        full_name: session.user.user_metadata?.full_name || null,
+      },
+    });
 
     return {
       user: session.user,
       session
     };
   } catch (error) {
+    if (error instanceof AuthenticationError) {
+      throw error;
+    }
     console.error('Authentication error:', error);
     throw new AuthenticationError('Invalid authentication session');
   }
