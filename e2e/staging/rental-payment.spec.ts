@@ -71,7 +71,7 @@ test('sign up, request a rental, and complete payment', async ({ page }) => {
   // Supabase signup may take a few seconds; wait for navigation away
   // NOTE: if Supabase email verification is enabled this will hang —
   // disable "Email Confirmations" in the Supabase Auth dashboard for staging.
-  await page.waitForURL((url) => !url.includes('signup'), { timeout: 20_000 });
+  await page.waitForURL((url) => !url.href.includes('signup'), { timeout: 20_000 });
 
   // ── 2. Browse gear and open a detail page ─────────────────────────────
   await page.goto(`${BASE_PATH}/browse`);
