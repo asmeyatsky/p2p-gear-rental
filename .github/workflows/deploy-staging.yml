@@ -73,9 +73,20 @@ jobs:
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/p2p-gear-rental:${{ github.sha }}
           flags: --allow-unauthenticated
 
+      - name: Inject runtime secrets
+        env:
+          STRIPE_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
+          WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
+          DB_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          gcloud run services update ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --set-env-vars="DATABASE_URL=${DB_URL},STRIPE_SECRET_KEY=${STRIPE_KEY},STRIPE_WEBHOOK_SECRET=${WEBHOOK_SECRET},SUPABASE_SERVICE_ROLE_KEY=${SERVICE_KEY}"
+
       - name: Health check
         run: |
           echo "Waiting for service to be ready..."
-          sleep 15
+          sleep 20
           curl -f "${{ steps.deploy.outputs.url }}${{ env.BASE_PATH }}/api/health" || exit 1
           echo "Health check passed! Deployed to: ${{ steps.deploy.outputs.url }}"

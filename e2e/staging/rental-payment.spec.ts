@@ -80,7 +80,7 @@ test('sign in, request a rental, and complete payment', async ({ page }) => {
   // "Request Rental" only shows for gear the current user does NOT own.
   // Seed gear is owned by seed listers, so the button should be visible.
   await page.getByRole('button', { name: 'Request Rental' }).click();
-  await expect(page.getByText('Request Rental')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Request Rental' })).toBeVisible();
 
   // AvailabilityCalendar fetches /api/gear/{id}/availability, then renders
   // day buttons.  Wait until a full month's worth of day buttons exist.
@@ -125,8 +125,8 @@ test('sign in, request a rental, and complete payment', async ({ page }) => {
   await page.waitForTimeout(400);
 
   // Price summary appears once both dates are selected
-  await expect(page.getByText(/\d+ days?/)).toBeVisible();
-  await expect(page.getByText('Total')).toBeVisible();
+  await expect(page.getByText(/\d+ days?/).first()).toBeVisible();
+  await expect(page.getByText('Total').first()).toBeVisible();
 
   // ── 5. Submit the rental request ────────────────────────────────────────
   // Intercept the POST response so we can extract the rental ID reliably,
