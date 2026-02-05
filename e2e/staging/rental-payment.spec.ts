@@ -52,26 +52,21 @@ async function clickCalendarDay(page: Page, day: number) {
 // ─── Main test ────────────────────────────────────────────────────────────────
 test.setTimeout(120_000); // payment flows need generous time
 
-test('sign up, request a rental, and complete payment', async ({ page }) => {
-  const email = `e2e-pay-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`;
+test('sign in, request a rental, and complete payment', async ({ page }) => {
+  // Pre-confirmed user created via Supabase dashboard (email confirmation ON).
+  const email = 'asmeyatsky@hotmail.com';
+  const password = 'password123';
 
-  // ── 1. Sign up as a renter ──────────────────────────────────────────────
-  await page.goto(`${BASE_PATH}/auth/signup`);
-  await page.waitForSelector('h2'); // page has rendered
+  // ── 1. Sign in with pre-confirmed account ──────────────────────────────
+  await page.goto(`${BASE_PATH}/auth/login`);
+  await page.waitForSelector('h1'); // page has rendered
 
-  // Two cards with links: "Sign up as a Renter" / "Sign up as a Lister"
-  await page.getByText('Sign up as a Renter').click();
-  await expect(page).toHaveURL(/signup\/renter/);
-
-  await page.fill('input[name="name"]', 'E2E Renter');
   await page.fill('input[name="email"]', email);
-  await page.fill('input[name="password"]', 'TestPass123!');
-  await page.getByRole('button', { name: /Create account/ }).click();
+  await page.fill('input[name="password"]', password);
+  await page.getByRole('button', { name: /Sign in/ }).click();
 
-  // Supabase signup may take a few seconds; wait for navigation away
-  // NOTE: if Supabase email verification is enabled this will hang —
-  // disable "Email Confirmations" in the Supabase Auth dashboard for staging.
-  await page.waitForURL((url) => !url.href.includes('signup'), { timeout: 20_000 });
+  // Supabase sign-in may take a few seconds; wait for navigation to dashboard
+  await page.waitForURL((url) => url.href.includes('/dashboard'), { timeout: 20_000 });
 
   // ── 2. Browse gear and open a detail page ─────────────────────────────
   await page.goto(`${BASE_PATH}/browse`);
