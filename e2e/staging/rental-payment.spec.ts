@@ -59,8 +59,8 @@ test('sign up, request a rental, and complete payment', async ({ page }) => {
   await page.goto(`${BASE_PATH}/auth/signup`);
   await page.waitForSelector('h2'); // page has rendered
 
-  // Two cards: "I want to rent gear" / "I want to list my gear"
-  await page.getByText('I want to rent gear').click();
+  // Two cards with links: "Sign up as a Renter" / "Sign up as a Lister"
+  await page.getByText('Sign up as a Renter').click();
   await expect(page).toHaveURL(/signup\/renter/);
 
   await page.fill('input[name="name"]', 'E2E Renter');
