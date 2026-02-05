@@ -83,14 +83,10 @@ export function handleApiError(error: unknown): NextResponse {
   }
 
   if (error instanceof Error) {
-    // Don't expose internal error details in production
-    const message = process.env.NODE_ENV === 'production'
-      ? 'Internal server error'
-      : error.message;
-    
     return NextResponse.json(
-      { 
-        error: message,
+      {
+        error: error.message,
+        errorName: error.constructor.name,
         code: 'INTERNAL_ERROR',
         timestamp: new Date().toISOString()
       },
