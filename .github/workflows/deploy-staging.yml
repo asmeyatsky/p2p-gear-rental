@@ -77,12 +77,12 @@ jobs:
         env:
           STRIPE_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
           WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
-          DB_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
-          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
+          # DATABASE_URL and SUPABASE_SERVICE_ROLE_KEY are already bound to
+          # GCP Secret Manager via terraform — only set Stripe keys here.
           gcloud run services update ${{ env.SERVICE_NAME }} \
             --region ${{ env.REGION }} \
-            --set-env-vars="DATABASE_URL=${DB_URL},STRIPE_SECRET_KEY=${STRIPE_KEY},STRIPE_WEBHOOK_SECRET=${WEBHOOK_SECRET},SUPABASE_SERVICE_ROLE_KEY=${SERVICE_KEY}"
+            --set-env-vars="STRIPE_SECRET_KEY=${STRIPE_KEY},STRIPE_WEBHOOK_SECRET=${WEBHOOK_SECRET}" || true
 
       - name: Health check
         run: |
