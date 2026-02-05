@@ -11,69 +11,6 @@ export async function middleware(req: NextRequest) {
   // Add comprehensive security headers
   addSecurityHeaders(res, req);
 
-  // Check if Supabase credentials are configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  let session = null;
-
-  // Only attempt Supabase auth if credentials are properly configured
-  if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseKey,
-      {
-        cookies: {
-          get(name: string) {
-            return req.cookies.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            req.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-            res = NextResponse.next({
-              request: {
-                headers: req.headers,
-              },
-            });
-            res.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-          },
-          remove(name: string, options: any) {
-            req.cookies.set({
-              name,
-              value: '',
-              ...options,
-            });
-            res = NextResponse.next({
-              request: {
-                headers: req.headers,
-              },
-            });
-            res.cookies.set({
-              name,
-              value: '',
-              ...options,
-            });
-          },
-        },
-      }
-    );
-
-    // Refresh session if expired - required for Server Components
-    try {
-      const { data } = await supabase.auth.getSession();
-      session = data.session;
-    } catch (error) {
-      console.warn('Supabase auth check failed:', error);
-    }
-  }
-
   // Protected routes that require authentication
   const protectedRoutes = [
     '/my-rentals',
@@ -83,27 +20,90 @@ export async function middleware(req: NextRequest) {
     '/dashboard'
   ];
 
-  // Check if current path requires authentication
-  const isProtectedRoute = protectedRoutes.some(route => 
-    req.nextUrl.pathname.startsWith(route)
-  );
-
-  // Redirect to login if accessing protected route without authentication
-  if (isProtectedRoute && !session) {
-    const redirectUrl = new URL('/auth/login', req.url);
-    redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  // Redirect authenticated users away from auth pages
+  // Auth pages where we redirect away if already signed in
   const authRoutes = ['/auth/login', '/auth/signup'];
-  const isAuthRoute = authRoutes.some(route => 
+
+  const isProtectedRoute = protectedRoutes.some(route =>
+    req.nextUrl.pathname.startsWith(route)
+  );
+  const isAuthRoute = authRoutes.some(route =>
     req.nextUrl.pathname.startsWith(route)
   );
 
-  if (isAuthRoute && session) {
-    const redirectTo = req.nextUrl.searchParams.get('redirectTo') || '/';
-    return NextResponse.redirect(new URL(redirectTo, req.url));
+  // Only hit Supabase when the route actually needs a session check.
+  // This avoids a token-refresh round-trip (and a 403 for stale tokens)
+  // on every public page load.
+  if (isProtectedRoute || isAuthRoute) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    let session = null;
+
+    if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+      const supabase = createServerClient(
+        supabaseUrl,
+        supabaseKey,
+        {
+          cookies: {
+            get(name: string) {
+              return req.cookies.get(name)?.value;
+            },
+            set(name: string, value: string, options: any) {
+              req.cookies.set({
+                name,
+                value,
+                ...options,
+              });
+              res = NextResponse.next({
+                request: {
+                  headers: req.headers,
+                },
+              });
+              res.cookies.set({
+                name,
+                value,
+                ...options,
+              });
+            },
+            remove(name: string, options: any) {
+              req.cookies.set({
+                name,
+                value: '',
+                ...options,
+              });
+              res = NextResponse.next({
+                request: {
+                  headers: req.headers,
+                },
+              });
+              res.cookies.set({
+                name,
+                value: '',
+                ...options,
+              });
+            },
+          },
+        }
+      );
+
+      try {
+        const { data } = await supabase.auth.getSession();
+        session = data.session;
+      } catch {
+        // Token refresh failed (e.g. expired refresh token) — treat as no session
+      }
+    }
+
+    if (isProtectedRoute && !session) {
+      const redirectUrl = new URL('/auth/login', req.url);
+      redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    if (isAuthRoute && session) {
+      const redirectTo = req.nextUrl.searchParams.get('redirectTo') || '/';
+      return NextResponse.redirect(new URL(redirectTo, req.url));
+    }
   }
 
   return res;
