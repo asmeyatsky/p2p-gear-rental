@@ -58,6 +58,7 @@ jobs:
             NEXT_PUBLIC_BASE_PATH=${{ env.BASE_PATH }}
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY_TEST }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
