@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import AvailabilityCalendar from '@/components/gear/AvailabilityCalendar';
 import { apiUrl } from '@/lib/api';
@@ -145,11 +146,15 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
       {/* Image Gallery */}
       {gear.images.length > 0 && (
         <>
-          <div className="aspect-video rounded overflow-hidden bg-gray-100">
-            <img
+          <div className="aspect-video rounded overflow-hidden bg-gray-100 relative">
+            <Image
               src={gear.images[selectedImageIndex]}
               alt={`${gear.title} - Main Image`}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
+              priority
+              quality={90}
             />
           </div>
           {gear.images.length > 1 && (
@@ -158,16 +163,20 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
-                  className={`aspect-square rounded overflow-hidden border transition-colors ${
+                  className={`aspect-square rounded overflow-hidden border transition-colors relative ${
                     index === selectedImageIndex
                       ? 'border-white'
                       : 'border-white/20 hover:border-white/40'
                   }`}
                 >
-                  <img
+                  <Image
                     src={image}
                     alt={`${gear.title} - Image ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 25vw, 150px"
+                    loading="lazy"
+                    quality={75}
                   />
                 </button>
               ))}
