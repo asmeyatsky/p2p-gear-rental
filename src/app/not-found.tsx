@@ -16,7 +16,7 @@ export default function NotFound() {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={1.5}
-              d="M9.172 16.172a4 4 0 015.656 9.172 4 4 0 00-5.656 0m1.172-8-8a4 4 0 11.314 0l8.485 8.485a2.528 2.528 0 003.353-3.353L13 12l4.172 4.172z"
+              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
             />
           </svg>
         </div>
