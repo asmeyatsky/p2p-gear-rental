@@ -17,8 +17,8 @@ const realisticGear = [
     monthlyRate: 2200,
     replacementValue: 3498,
     images: JSON.stringify([
-      'https://placehold.co/800x600/1e293b/white?text=Sony+A7S+III+Camera',
-      'https://placehold.co/800x600/334155/white?text=Sony+A7S+III+Front'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -35,8 +35,8 @@ const realisticGear = [
     monthlyRate: 2800,
     replacementValue: 3899,
     images: JSON.stringify([
-      'https://placehold.co/800x600/1e293b/white?text=Canon%20EOS%20R5',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -53,8 +53,8 @@ const realisticGear = [
     monthlyRate: 2000,
     replacementValue: 2495,
     images: JSON.stringify([
-      'https://placehold.co/800x600/1e293b/white?text=Blackmagic%20Pocket%20Cinema%20Camera%206K%20Pro',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -71,8 +71,8 @@ const realisticGear = [
     monthlyRate: 1700,
     replacementValue: 2197,
     images: JSON.stringify([
-      'https://placehold.co/800x600/1e293b/white?text=Panasonic%20Lumix%20GH6',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -89,8 +89,8 @@ const realisticGear = [
     monthlyRate: 1350,
     replacementValue: 1699,
     images: JSON.stringify([
-      'https://placehold.co/800x600/1e293b/white?text=Fujifilm%20X-T4',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -109,8 +109,8 @@ const realisticGear = [
     monthlyRate: 1150,
     replacementValue: 2298,
     images: JSON.stringify([
-      'https://placehold.co/800x600/334155/white?text=Sony%20FE%2024-70mm%20f%2F2.8%20GM%20II',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -127,8 +127,8 @@ const realisticGear = [
     monthlyRate: 1450,
     replacementValue: 2699,
     images: JSON.stringify([
-      'https://placehold.co/800x600/334155/white?text=Canon%20RF%2085mm%20f%2F1.2%20L%20USM',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -145,8 +145,8 @@ const realisticGear = [
     monthlyRate: 720,
     replacementValue: 899,
     images: JSON.stringify([
-      'https://placehold.co/800x600/334155/white?text=Sigma%2050mm%20f%2F1.4%20DG%20DN%20Art',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -163,8 +163,8 @@ const realisticGear = [
     monthlyRate: 900,
     replacementValue: 1299,
     images: JSON.stringify([
-      'https://placehold.co/800x600/334155/white?text=Tamron%2070-200mm%20f%2F2.8%20G2',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -181,8 +181,8 @@ const realisticGear = [
     monthlyRate: 450,
     replacementValue: 299,
     images: JSON.stringify([
-      'https://placehold.co/800x600/334155/white?text=Canon%20RF%2016mm%20f%2F2.8%20STM',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -201,8 +201,8 @@ const realisticGear = [
     monthlyRate: 1600,
     replacementValue: 1899,
     images: JSON.stringify([
-      'https://placehold.co/800x600/f59e0b/white?text=Aputure%20600d%20Pro',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -219,8 +219,8 @@ const realisticGear = [
     monthlyRate: 620,
     replacementValue: 389,
     images: JSON.stringify([
-      'https://placehold.co/800x600/f59e0b/white?text=Godox%20SL-200W%20II',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -237,8 +237,8 @@ const realisticGear = [
     monthlyRate: 980,
     replacementValue: 799,
     images: JSON.stringify([
-      'https://placehold.co/800x600/f59e0b/white?text=Nanlite%20Forza%20500',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -255,8 +255,8 @@ const realisticGear = [
     monthlyRate: 800,
     replacementValue: 329,
     images: JSON.stringify([
-      'https://placehold.co/800x600/f59e0b/white?text=Aputure%20Amaran%20200x%20S',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -273,8 +273,8 @@ const realisticGear = [
     monthlyRate: 530,
     replacementValue: 359,
     images: JSON.stringify([
-      'https://placehold.co/800x600/f59e0b/white?text=Aputure%20MC%20RGBWW%204-Light%20Kit',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -293,8 +293,8 @@ const realisticGear = [
     monthlyRate: 620,
     replacementValue: 499,
     images: JSON.stringify([
-      'https://placehold.co/800x600/10b981/white?text=Rode%20NTG5%20Shotgun%20Microphone',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -311,8 +311,8 @@ const realisticGear = [
     monthlyRate: 720,
     replacementValue: 399,
     images: JSON.stringify([
-      'https://placehold.co/800x600/10b981/white?text=Rode%20Wireless%20GO%20II%20Dual%20System',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -329,8 +329,8 @@ const realisticGear = [
     monthlyRate: 900,
     replacementValue: 699,
     images: JSON.stringify([
-      'https://placehold.co/800x600/10b981/white?text=Zoom%20F6%20Field%20Recorder',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -347,8 +347,8 @@ const realisticGear = [
     monthlyRate: 450,
     replacementValue: 329,
     images: JSON.stringify([
-      'https://placehold.co/800x600/10b981/white?text=Sennheiser%20MKE%20600%20Shotgun',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -365,8 +365,8 @@ const realisticGear = [
     monthlyRate: 1080,
     replacementValue: 1099,
     images: JSON.stringify([
-      'https://placehold.co/800x600/10b981/white?text=Sound%20Devices%20MixPre-6%20II',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -385,8 +385,8 @@ const realisticGear = [
     monthlyRate: 2150,
     replacementValue: 4799,
     images: JSON.stringify([
-      'https://placehold.co/800x600/3b82f6/white?text=DJI%20Mavic%203%20Pro%20Cine',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -403,8 +403,8 @@ const realisticGear = [
     monthlyRate: 1330,
     replacementValue: 1549,
     images: JSON.stringify([
-      'https://placehold.co/800x600/3b82f6/white?text=DJI%20Air%203%20Fly%20More%20Combo',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -421,8 +421,8 @@ const realisticGear = [
     monthlyRate: 900,
     replacementValue: 759,
     images: JSON.stringify([
-      'https://placehold.co/800x600/3b82f6/white?text=DJI%20Mini%204%20Pro',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -439,8 +439,8 @@ const realisticGear = [
     monthlyRate: 1150,
     replacementValue: 1299,
     images: JSON.stringify([
-      'https://placehold.co/800x600/3b82f6/white?text=DJI%20FPV%20Combo',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -457,8 +457,8 @@ const realisticGear = [
     monthlyRate: 4500,
     replacementValue: 16499,
     images: JSON.stringify([
-      'https://placehold.co/800x600/3b82f6/white?text=DJI%20Inspire%203',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -477,8 +477,8 @@ const realisticGear = [
     monthlyRate: 450,
     replacementValue: 389,
     images: JSON.stringify([
-      'https://placehold.co/800x600/6b7280/white?text=Manfrotto%20546B%20Pro%20Video%20Tripod',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -495,8 +495,8 @@ const realisticGear = [
     monthlyRate: 980,
     replacementValue: 1995,
     images: JSON.stringify([
-      'https://placehold.co/800x600/6b7280/white?text=Sachtler%20Video%2018%20S2%20Fluid%20Head',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -513,8 +513,8 @@ const realisticGear = [
     monthlyRate: 360,
     replacementValue: 649,
     images: JSON.stringify([
-      'https://placehold.co/800x600/6b7280/white?text=Peak%20Design%20Travel%20Tripod%20Carbon',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -531,8 +531,8 @@ const realisticGear = [
     monthlyRate: 320,
     replacementValue: 259,
     images: JSON.stringify([
-      'https://placehold.co/800x600/6b7280/white?text=Manfrotto%20502AH%20Video%20Head',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -549,8 +549,8 @@ const realisticGear = [
     monthlyRate: 390,
     replacementValue: 349,
     images: JSON.stringify([
-      'https://placehold.co/800x600/6b7280/white?text=Benro%20S8%20Pro%20Video%20Head',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -569,8 +569,8 @@ const realisticGear = [
     monthlyRate: 980,
     replacementValue: 799,
     images: JSON.stringify([
-      'https://placehold.co/800x600/8b5cf6/white?text=Atomos%20Ninja%20V%2B',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -587,8 +587,8 @@ const realisticGear = [
     monthlyRate: 800,
     replacementValue: 649,
     images: JSON.stringify([
-      'https://placehold.co/800x600/8b5cf6/white?text=SmallHD%20Focus%20Pro%205%22',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -605,8 +605,8 @@ const realisticGear = [
     monthlyRate: 450,
     replacementValue: 289,
     images: JSON.stringify([
-      'https://placehold.co/800x600/8b5cf6/white?text=Feelworld%20LUT7S%20Pro%207%22',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -623,8 +623,8 @@ const realisticGear = [
     monthlyRate: 530,
     replacementValue: 359,
     images: JSON.stringify([
-      'https://placehold.co/800x600/8b5cf6/white?text=Portkeys%20PT5%20II%205.5%22',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -641,8 +641,8 @@ const realisticGear = [
     monthlyRate: 1080,
     replacementValue: 995,
     images: JSON.stringify([
-      'https://placehold.co/800x600/8b5cf6/white?text=Blackmagic%20Video%20Assist%207%22%2012G',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -661,8 +661,8 @@ const realisticGear = [
     monthlyRate: 1520,
     replacementValue: 2490,
     images: JSON.stringify([
-      'https://placehold.co/800x600/ec4899/white?text=Teradek%20Bolt%204K%20LT%20750%20TX%2FRX',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -679,8 +679,8 @@ const realisticGear = [
     monthlyRate: 1330,
     replacementValue: 1499,
     images: JSON.stringify([
-      'https://placehold.co/800x600/ec4899/white?text=Tilta%20Nucleus-M%20Wireless%20Follow%20Focus',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -697,8 +697,8 @@ const realisticGear = [
     monthlyRate: 320,
     replacementValue: 249,
     images: JSON.stringify([
-      'https://placehold.co/800x600/ec4899/white?text=Tiffen%20Variable%20ND%20Filter%20(77mm)',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -715,8 +715,8 @@ const realisticGear = [
     monthlyRate: 270,
     replacementValue: 349,
     images: JSON.stringify([
-      'https://placehold.co/800x600/ec4899/white?text=Core%20SWX%20Helix%20V-Mount%20Battery%20(98Wh)',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -733,8 +733,8 @@ const realisticGear = [
     monthlyRate: 220,
     replacementValue: 89,
     images: JSON.stringify([
-      'https://placehold.co/800x600/ec4899/white?text=SmallRig%20Universal%20Camera%20Cage',
-      'https://placehold.co/800x600/334155/white?text=Equipment'
+      'https://picsum.photos/800/600',
+      'https://picsum.photos/800/600'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
