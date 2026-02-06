@@ -31,6 +31,14 @@ export default function GearCard({ gear, priority = false, index = 0 }: GearCard
   const hasMultipleImages = images.length > 1;
   const rating = 4.5;
 
+  const handleMouseEnter = () => {
+    // Prefetch the gear details page on hover
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = `/gear/${gear.id}`;
+    document.head.appendChild(link);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -43,9 +51,10 @@ export default function GearCard({ gear, priority = false, index = 0 }: GearCard
         }
       }}
       whileHover={{ y: -4 }}
+      onMouseEnter={handleMouseEnter}
       className="group"
     >
-      <Link href={`/gear/${gear.id}`} className="block">
+      <Link href={`/gear/${gear.id}`} className="block" prefetch={true}>
         <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100">
           {/* Image Section */}
           <div className="relative h-24 w-full overflow-hidden bg-gray-100">
@@ -56,6 +65,8 @@ export default function GearCard({ gear, priority = false, index = 0 }: GearCard
               className="object-cover transition-transform duration-500 group-hover:scale-110"
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
               priority={priority}
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
             />
 
             {/* Gradient Overlay */}

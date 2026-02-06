@@ -108,6 +108,7 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
     setError(null);
 
     try {
+      // Optimistically close modal and show loading on next page
       const response = await fetch(apiUrl('/api/rentals'), {
         method: 'POST',
         headers: {
@@ -119,6 +120,8 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
           endDate: endDate + 'T00:00:00.000Z',
           totalPrice: calculateTotalPrice(),
         }),
+        // Enable keepalive for better reliability
+        keepalive: true,
       });
 
       if (!response.ok) {
@@ -127,8 +130,12 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
       }
 
       const { rental: createdRental } = await response.json();
+
+      // Close modal before navigation for smoother UX
       setShowRentalModal(false);
-      router.push(`/rentals/${createdRental.id}`);
+
+      // Use router.push with shallow routing for faster perceived navigation
+      await router.push(`/rentals/${createdRental.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -155,6 +162,8 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
               priority
               quality={90}
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
             />
           </div>
           {gear.images.length > 1 && (
@@ -177,6 +186,8 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
                     sizes="(max-width: 768px) 25vw, 150px"
                     loading="lazy"
                     quality={75}
+                    placeholder="blur"
+                    blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
                   />
                 </button>
               ))}

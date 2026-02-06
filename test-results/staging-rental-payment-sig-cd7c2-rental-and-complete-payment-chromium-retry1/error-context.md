@@ -1,0 +1,167 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e6]:
+        - link "GearShare" [ref=e8] [cursor=pointer]:
+          - /url: /gear-staging
+          - img [ref=e10]
+          - generic [ref=e13]: GearShare
+        - navigation [ref=e14]:
+          - link "Browse Gear" [ref=e15] [cursor=pointer]:
+            - /url: /gear-staging/browse
+          - link "List Your Gear" [ref=e16] [cursor=pointer]:
+            - /url: /gear-staging/add-gear
+          - link "How It Works" [ref=e17] [cursor=pointer]:
+            - /url: /gear-staging/about
+          - link "Contact" [ref=e18] [cursor=pointer]:
+            - /url: /gear-staging/contact
+        - button "asmeyatsky" [ref=e21]:
+          - img [ref=e22]
+          - generic [ref=e24]: asmeyatsky
+          - img [ref=e25]
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - img "DJI Windscreen Kit" [ref=e31]
+          - img "DJI Windscreen Kit - View 2" [ref=e34]
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]:
+              - generic [ref=e38]: audio
+              - generic [ref=e39]: like-new
+            - heading "DJI Windscreen Kit" [level=1] [ref=e40]
+            - paragraph [ref=e41]: DJI Windscreen Kit
+            - generic [ref=e42]:
+              - generic [ref=e43]: $153.76/ day
+              - generic [ref=e44]:
+                - generic [ref=e45]:
+                  - text: "Weekly:"
+                  - strong [ref=e46]: $845.68
+                - generic [ref=e47]:
+                  - text: "Monthly:"
+                  - strong [ref=e48]: $3075.20
+          - generic [ref=e49]:
+            - heading "Description" [level=2] [ref=e50]
+            - paragraph [ref=e51]: Professional audi available for rent. The Streamlined systemic service-desk Car offers reliable performance and vain design Great for content creation.
+          - generic [ref=e52]:
+            - img [ref=e53]
+            - text: Houston, TX
+          - generic [ref=e56]:
+            - heading "Listed by" [level=2] [ref=e57]
+            - generic [ref=e58]:
+              - generic [ref=e60]: C
+              - generic [ref=e61]:
+                - paragraph [ref=e62]: Chris Donovan
+                - generic [ref=e63]:
+                  - generic [ref=e64]: ★
+                  - generic [ref=e65]: "4.5"
+                  - generic [ref=e66]: (22 reviews)
+          - generic [ref=e67]:
+            - heading "Reviews" [level=2] [ref=e68]
+            - paragraph [ref=e70]: Reviews will be displayed here after rentals are completed.
+          - generic [ref=e72]:
+            - img "DJI Windscreen Kit - Main Image" [ref=e74]
+            - generic [ref=e75]:
+              - button "DJI Windscreen Kit - Image 1" [ref=e76]:
+                - img "DJI Windscreen Kit - Image 1" [ref=e77]
+              - button "DJI Windscreen Kit - Image 2" [ref=e78]:
+                - img "DJI Windscreen Kit - Image 2" [ref=e79]
+            - generic [ref=e80]:
+              - generic [ref=e81]:
+                - heading "DJI Windscreen Kit" [level=1] [ref=e82]
+                - paragraph [ref=e83]: Professional audi available for rent. The Streamlined systemic service-desk Car offers reliable performance and vain design Great for content creation.
+              - generic [ref=e84]:
+                - generic [ref=e85]: $153.76/day
+                - generic [ref=e86]: $845.68/week
+                - generic [ref=e87]: $3075.2/month
+              - generic [ref=e88]:
+                - generic [ref=e89]:
+                  - text: "Location:"
+                  - generic [ref=e90]: Houston, TX
+                - generic [ref=e91]: "Category: audio"
+                - generic [ref=e92]: "Brand: DJI"
+                - generic [ref=e93]: "Condition: like-new"
+              - generic [ref=e94]:
+                - heading "Owner" [level=3] [ref=e95]
+                - generic [ref=e96]:
+                  - generic [ref=e97]: C
+                  - generic [ref=e98]:
+                    - paragraph [ref=e99]: Chris Donovan
+                    - paragraph [ref=e100]: ★ 4.5 (22 reviews)
+              - generic [ref=e101]:
+                - button "Request Rental" [ref=e102]
+                - button "Message Owner" [ref=e103]
+            - generic [ref=e105]:
+              - generic [ref=e106]:
+                - heading "Request Rental" [level=2] [ref=e107]
+                - button [ref=e108]:
+                  - img [ref=e109]
+              - generic [ref=e111]:
+                - generic [ref=e112]:
+                  - generic [ref=e113]: Select Dates
+                  - generic [ref=e114]:
+                    - generic [ref=e115]:
+                      - button [ref=e116]:
+                        - img [ref=e117]
+                      - heading "February 2026" [level=3] [ref=e119]
+                      - button [ref=e120]:
+                        - img [ref=e121]
+                    - generic [ref=e123]:
+                      - generic [ref=e124]: Sun
+                      - generic [ref=e125]: Mon
+                      - generic [ref=e126]: Tue
+                      - generic [ref=e127]: Wed
+                      - generic [ref=e128]: Thu
+                      - generic [ref=e129]: Fri
+                      - generic [ref=e130]: Sat
+                    - generic [ref=e131]:
+                      - button "1" [disabled] [ref=e132]
+                      - button "2" [disabled] [ref=e133]
+                      - button "3" [disabled] [ref=e134]
+                      - button "4" [disabled] [ref=e135]
+                      - button "5" [disabled] [ref=e136]
+                      - button "6" [ref=e137]
+                      - button "7" [ref=e138]
+                      - button "8" [ref=e139]
+                      - button "9" [ref=e140]
+                      - button "10" [ref=e141]
+                      - button "11" [ref=e142]
+                      - button "12" [ref=e143]
+                      - button "13" [ref=e144]
+                      - button "14" [ref=e145]
+                      - button "15" [ref=e146]
+                      - button "16" [ref=e147]
+                      - button "17" [ref=e148]
+                      - button "18" [ref=e149]
+                      - button "19" [ref=e150]
+                      - button "20" [ref=e151]
+                      - button "21" [ref=e152]
+                      - button "22" [ref=e153]
+                      - button "23" [ref=e154]
+                      - button "24" [ref=e155]
+                      - button "25" [ref=e156]
+                      - button "26" [ref=e157]
+                      - button "27" [ref=e158]
+                      - button "28" [ref=e159]
+                    - generic [ref=e160]:
+                      - generic [ref=e163]: Selected
+                      - generic [ref=e166]: Unavailable
+                      - generic [ref=e169]: Available
+                    - paragraph [ref=e171]:
+                      - text: 2/6/2026 - 2/8/2026
+                      - generic [ref=e172]: (2 days)
+                - generic [ref=e173]:
+                  - generic [ref=e174]:
+                    - generic [ref=e175]: 2 days
+                    - generic [ref=e176]: $153.76/day
+                  - generic [ref=e177]:
+                    - generic [ref=e178]: Total
+                    - generic [ref=e179]: $307.52
+                - generic [ref=e180]: Internal server error
+                - button "Submit Request" [ref=e181]
+                - paragraph [ref=e182]: You won't be charged until the owner accepts your request
+  - region "Notifications alt+T"
+  - alert [ref=e183]
+```

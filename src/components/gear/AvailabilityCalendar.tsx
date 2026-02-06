@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiUrl } from '@/lib/api';
 
 interface UnavailablePeriod {
@@ -59,25 +59,25 @@ export default function AvailabilityCalendar({
     return set;
   }, [unavailableDates]);
 
-  const isDateUnavailable = (dateStr: string) => unavailableDateSet.has(dateStr);
+  const isDateUnavailable = useCallback((dateStr: string) => unavailableDateSet.has(dateStr), [unavailableDateSet]);
 
-  const isDateInPast = (dateStr: string) => {
+  const isDateInPast = useCallback((dateStr: string) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return new Date(dateStr) < today;
-  };
+  }, []);
 
-  const isDateSelected = (dateStr: string) => {
+  const isDateSelected = useCallback((dateStr: string) => {
     if (!tempStart || !tempEnd) return dateStr === tempStart || dateStr === tempEnd;
     return dateStr >= tempStart && dateStr <= tempEnd;
-  };
+  }, [tempStart, tempEnd]);
 
-  const isDateInRange = (dateStr: string) => {
+  const isDateInRange = useCallback((dateStr: string) => {
     if (!tempStart || !tempEnd) return false;
     return dateStr > tempStart && dateStr < tempEnd;
-  };
+  }, [tempStart, tempEnd]);
 
-  const handleDateClick = (dateStr: string) => {
+  const handleDateClick = useCallback((dateStr: string) => {
     if (isDateUnavailable(dateStr) || isDateInPast(dateStr)) return;
 
     if (selectingStart || !tempStart) {
@@ -110,9 +110,9 @@ export default function AvailabilityCalendar({
         }
       }
     }
-  };
+  }, [selectingStart, tempStart, tempEnd, isDateUnavailable, isDateInPast, onDateSelect]);
 
-  const getDaysInMonth = (date: Date) => {
+  const getDaysInMonth = useCallback((date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -133,18 +133,18 @@ export default function AvailabilityCalendar({
     }
 
     return days;
-  };
+  }, []);
 
-  const days = getDaysInMonth(currentMonth);
-  const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const days = useMemo(() => getDaysInMonth(currentMonth), [currentMonth, getDaysInMonth]);
+  const monthName = useMemo(() => currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' }), [currentMonth]);
 
-  const goToPreviousMonth = () => {
+  const goToPreviousMonth = useCallback(() => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-  };
+  }, [currentMonth]);
 
-  const goToNextMonth = () => {
+  const goToNextMonth = useCallback(() => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-  };
+  }, [currentMonth]);
 
   if (loading) {
     return (
