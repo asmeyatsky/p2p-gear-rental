@@ -17,8 +17,8 @@ const realisticGear = [
     monthlyRate: 2200,
     replacementValue: 3498,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?sony,camera,mirrorless',
+      'https://source.unsplash.com/800x600/?sony,a7,professional'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -35,8 +35,8 @@ const realisticGear = [
     monthlyRate: 2800,
     replacementValue: 3899,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?canon,camera,eos',
+      'https://source.unsplash.com/800x600/?canon,mirrorless,professional'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -53,8 +53,8 @@ const realisticGear = [
     monthlyRate: 2000,
     replacementValue: 2495,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?cinema,camera,blackmagic',
+      'https://source.unsplash.com/800x600/?video,camera,professional'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -71,8 +71,8 @@ const realisticGear = [
     monthlyRate: 1700,
     replacementValue: 2197,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?panasonic,camera,lumix',
+      'https://source.unsplash.com/800x600/?micro,four,thirds'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -89,8 +89,8 @@ const realisticGear = [
     monthlyRate: 1350,
     replacementValue: 1699,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?fujifilm,camera,xt',
+      'https://source.unsplash.com/800x600/?fuji,mirrorless,vintage'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -109,8 +109,8 @@ const realisticGear = [
     monthlyRate: 1150,
     replacementValue: 2298,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?camera,lens,zoom',
+      'https://source.unsplash.com/800x600/?sony,lens,professional'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -127,8 +127,8 @@ const realisticGear = [
     monthlyRate: 1450,
     replacementValue: 2699,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?canon,lens,portrait',
+      'https://source.unsplash.com/800x600/?prime,lens,photography'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -145,8 +145,8 @@ const realisticGear = [
     monthlyRate: 720,
     replacementValue: 899,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?sigma,lens,art',
+      'https://source.unsplash.com/800x600/?50mm,lens,prime'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -163,8 +163,8 @@ const realisticGear = [
     monthlyRate: 900,
     replacementValue: 1299,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?tamron,lens,telephoto',
+      'https://source.unsplash.com/800x600/?zoom,lens,70-200'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -181,8 +181,8 @@ const realisticGear = [
     monthlyRate: 450,
     replacementValue: 299,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?wide,angle,lens',
+      'https://source.unsplash.com/800x600/?ultrawide,lens,16mm'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -201,8 +201,8 @@ const realisticGear = [
     monthlyRate: 1600,
     replacementValue: 1899,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?studio,lighting,led',
+      'https://source.unsplash.com/800x600/?aputure,light,professional'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -219,8 +219,8 @@ const realisticGear = [
     monthlyRate: 620,
     replacementValue: 389,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?godox,lighting,studio',
+      'https://source.unsplash.com/800x600/?continuous,lighting,video'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -237,8 +237,8 @@ const realisticGear = [
     monthlyRate: 980,
     replacementValue: 799,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?nanlite,lighting,spotlight',
+      'https://source.unsplash.com/800x600/?led,panel,light'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -255,8 +255,8 @@ const realisticGear = [
     monthlyRate: 800,
     replacementValue: 329,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?bicolor,lighting,portable',
+      'https://source.unsplash.com/800x600/?point,source,light'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -273,8 +273,8 @@ const realisticGear = [
     monthlyRate: 530,
     replacementValue: 359,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?rgb,lighting,portable',
+      'https://source.unsplash.com/800x600/?compact,led,kit'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -293,8 +293,8 @@ const realisticGear = [
     monthlyRate: 620,
     replacementValue: 499,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?rode,microphone,shotgun',
+      'https://source.unsplash.com/800x600/?boom,microphone,audio'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -311,8 +311,8 @@ const realisticGear = [
     monthlyRate: 720,
     replacementValue: 399,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?wireless,microphone,lavalier',
+      'https://source.unsplash.com/800x600/?rode,wireless,audio'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -329,8 +329,8 @@ const realisticGear = [
     monthlyRate: 900,
     replacementValue: 699,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?zoom,recorder,audio',
+      'https://source.unsplash.com/800x600/?field,recorder,professional'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -347,8 +347,8 @@ const realisticGear = [
     monthlyRate: 450,
     replacementValue: 329,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?sennheiser,microphone,professional',
+      'https://source.unsplash.com/800x600/?shotgun,mic,video'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -365,8 +365,8 @@ const realisticGear = [
     monthlyRate: 1080,
     replacementValue: 1099,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?sound,devices,mixer',
+      'https://source.unsplash.com/800x600/?audio,interface,recorder'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -385,8 +385,8 @@ const realisticGear = [
     monthlyRate: 2150,
     replacementValue: 4799,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?dji,mavic,drone',
+      'https://source.unsplash.com/800x600/?professional,drone,cinema'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -403,8 +403,8 @@ const realisticGear = [
     monthlyRate: 1330,
     replacementValue: 1549,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?dji,air,quadcopter',
+      'https://source.unsplash.com/800x600/?compact,drone,travel'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -421,8 +421,8 @@ const realisticGear = [
     monthlyRate: 900,
     replacementValue: 759,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?dji,mini,drone',
+      'https://source.unsplash.com/800x600/?small,drone,portable'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -439,8 +439,8 @@ const realisticGear = [
     monthlyRate: 1150,
     replacementValue: 1299,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?fpv,drone,racing',
+      'https://source.unsplash.com/800x600/?first,person,drone'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -457,8 +457,8 @@ const realisticGear = [
     monthlyRate: 4500,
     replacementValue: 16499,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?dji,inspire,professional',
+      'https://source.unsplash.com/800x600/?cinema,drone,broadcast'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -477,8 +477,8 @@ const realisticGear = [
     monthlyRate: 450,
     replacementValue: 389,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?manfrotto,tripod,video',
+      'https://source.unsplash.com/800x600/?professional,tripod,heavy'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -495,8 +495,8 @@ const realisticGear = [
     monthlyRate: 980,
     replacementValue: 1995,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?sachtler,fluid,head',
+      'https://source.unsplash.com/800x600/?video,head,broadcast'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -513,8 +513,8 @@ const realisticGear = [
     monthlyRate: 360,
     replacementValue: 649,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?peak,design,tripod',
+      'https://source.unsplash.com/800x600/?carbon,tripod,compact'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -531,8 +531,8 @@ const realisticGear = [
     monthlyRate: 320,
     replacementValue: 259,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?video,head,manfrotto',
+      'https://source.unsplash.com/800x600/?fluid,head,photography'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -549,8 +549,8 @@ const realisticGear = [
     monthlyRate: 390,
     replacementValue: 349,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?benro,tripod,head',
+      'https://source.unsplash.com/800x600/?professional,video,support'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -569,8 +569,8 @@ const realisticGear = [
     monthlyRate: 980,
     replacementValue: 799,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?smallhd,monitor,focus',
+      'https://source.unsplash.com/800x600/?on,camera,monitor'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -587,8 +587,8 @@ const realisticGear = [
     monthlyRate: 800,
     replacementValue: 649,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?feelworld,monitor,touchscreen',
+      'https://source.unsplash.com/800x600/?camera,monitor,7inch'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -605,8 +605,8 @@ const realisticGear = [
     monthlyRate: 450,
     replacementValue: 289,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?portkeys,monitor,compact',
+      'https://source.unsplash.com/800x600/?small,monitor,video'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -623,8 +623,8 @@ const realisticGear = [
     monthlyRate: 530,
     replacementValue: 359,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?blackmagic,video,assist',
+      'https://source.unsplash.com/800x600/?monitor,recorder,12g'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -641,8 +641,8 @@ const realisticGear = [
     monthlyRate: 1080,
     replacementValue: 995,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?teradek,wireless,video',
+      'https://source.unsplash.com/800x600/?wireless,transmitter,hdmi'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -661,8 +661,8 @@ const realisticGear = [
     monthlyRate: 1520,
     replacementValue: 2490,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?tilta,follow,focus',
+      'https://source.unsplash.com/800x600/?wireless,focus,cinema'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -679,8 +679,8 @@ const realisticGear = [
     monthlyRate: 1330,
     replacementValue: 1499,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?tiffen,filter,nd',
+      'https://source.unsplash.com/800x600/?variable,nd,filter'
     ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
@@ -697,8 +697,8 @@ const realisticGear = [
     monthlyRate: 320,
     replacementValue: 249,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?vmount,battery,power',
+      'https://source.unsplash.com/800x600/?cinema,battery,professional'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
@@ -715,8 +715,8 @@ const realisticGear = [
     monthlyRate: 270,
     replacementValue: 349,
     images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
+      'https://source.unsplash.com/800x600/?smallrig,cage,rig',
+      'https://source.unsplash.com/800x600/?camera,cage,accessories'
     ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
