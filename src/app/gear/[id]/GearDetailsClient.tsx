@@ -134,8 +134,8 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
       // Close modal before navigation for smoother UX
       setShowRentalModal(false);
 
-      // Use router.push with shallow routing for faster perceived navigation
-      await router.push(`/rentals/${createdRental.id}`);
+      // Navigate to payment confirmation page
+      await router.push(`/rentals/${createdRental.id}/confirm-payment`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
