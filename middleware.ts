@@ -95,14 +95,19 @@ export async function middleware(req: NextRequest) {
     }
 
     if (isProtectedRoute && !session) {
-      const redirectUrl = new URL('/auth/login', req.url);
+      // Use req.nextUrl.clone() to preserve basePath (e.g. /gear-staging)
+      const redirectUrl = req.nextUrl.clone();
+      redirectUrl.pathname = '/auth/login';
       redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
       return NextResponse.redirect(redirectUrl);
     }
 
     if (isAuthRoute && session) {
       const redirectTo = req.nextUrl.searchParams.get('redirectTo') || '/';
-      return NextResponse.redirect(new URL(redirectTo, req.url));
+      const url = req.nextUrl.clone();
+      url.pathname = redirectTo;
+      url.search = '';
+      return NextResponse.redirect(url);
     }
   }
 
@@ -134,13 +139,17 @@ function addSecurityHeaders(response: NextResponse, request: NextRequest): void 
   );
 
   // Content Security Policy
+  const connectSrc = isDevelopment
+    ? "connect-src 'self' *.supabase.co wss://*.supabase.co *.mapbox.com *.stripe.com api.mapbox.com ws://localhost:* wss://localhost:*"
+    : "connect-src 'self' *.supabase.co wss://*.supabase.co *.mapbox.com *.stripe.com api.mapbox.com";
+
   const cspDirectives = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.mapbox.com *.stripe.com js.stripe.com",
     "style-src 'self' 'unsafe-inline' *.mapbox.com fonts.googleapis.com",
     "font-src 'self' data: fonts.gstatic.com",
     "img-src 'self' data: blob: *.supabase.co *.mapbox.com *.stripe.com",
-    "connect-src 'self' *.supabase.co wss://*.supabase.co *.mapbox.com *.stripe.com api.mapbox.com",
+    connectSrc,
     "frame-src 'self' js.stripe.com hooks.stripe.com",
     "media-src 'self' blob: *.supabase.co",
     "object-src 'none'",
@@ -149,10 +158,7 @@ function addSecurityHeaders(response: NextResponse, request: NextRequest): void 
     "frame-ancestors 'none'"
   ];
 
-  // In development, allow additional sources for HMR
-  if (isDevelopment) {
-    cspDirectives.push("connect-src 'self' *.supabase.co wss://*.supabase.co *.mapbox.com *.stripe.com api.mapbox.com ws://localhost:* wss://localhost:*");
-  } else {
+  if (!isDevelopment) {
     cspDirectives.push("upgrade-insecure-requests");
   }
 
