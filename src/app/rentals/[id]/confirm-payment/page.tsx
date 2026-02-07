@@ -305,7 +305,7 @@ export default function ConfirmPaymentPage() {
               {/* Payment Form */}
               <div>
                 {rental.clientSecret ? (
-                  <StripeProvider>
+                  <StripeProvider options={{ clientSecret: rental.clientSecret }}>
                     <PaymentForm
                       clientSecret={rental.clientSecret}
                       rentalId={rental.id}
