@@ -1,8 +1,46 @@
 import { PrismaClient } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
-// Curated realistic gear data with working placeholder images
+const SEED_IMAGES_DIR = path.join(__dirname, 'seed-images');
+const UPLOAD_DIR = path.join(__dirname, '..', 'public', 'uploads', 'gear-images');
+
+/**
+ * Copies a seed image to the uploads directory with a UUID filename,
+ * mimicking how a real user upload works via the /api/upload endpoint.
+ * Returns the public URL path (e.g., /uploads/gear-images/{uuid}.jpg).
+ */
+function uploadSeedImage(category: string, imageIndex: number): string {
+  const sourcePath = path.join(SEED_IMAGES_DIR, category, `${imageIndex}.jpg`);
+
+  if (!fs.existsSync(sourcePath)) {
+    console.warn(`  ⚠ Missing seed image: ${category}/${imageIndex}.jpg — using placeholder`);
+    return `/uploads/gear-images/placeholder.jpg`;
+  }
+
+  const uuid = randomUUID();
+  const destFilename = `${uuid}.jpg`;
+  const destPath = path.join(UPLOAD_DIR, destFilename);
+
+  fs.copyFileSync(sourcePath, destPath);
+
+  return `/uploads/gear-images/${destFilename}`;
+}
+
+/**
+ * Uploads a pair of seed images for a gear item.
+ * Returns JSON-stringified array of two image URLs.
+ */
+function uploadGearImages(category: string, itemIndex: number): string {
+  const img1 = uploadSeedImage(category, itemIndex * 2 + 1);
+  const img2 = uploadSeedImage(category, itemIndex * 2 + 2);
+  return JSON.stringify([img1, img2]);
+}
+
+// Curated realistic gear data (images will be assigned during seeding)
 const realisticGear = [
   // CAMERAS (5 items)
   {
@@ -16,10 +54,6 @@ const realisticGear = [
     weeklyRate: 650,
     monthlyRate: 2200,
     replacementValue: 3498,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?sony,camera,mirrorless',
-      'https://source.unsplash.com/800x600/?sony,a7,professional'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -34,10 +68,6 @@ const realisticGear = [
     weeklyRate: 800,
     monthlyRate: 2800,
     replacementValue: 3899,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?canon,camera,eos',
-      'https://source.unsplash.com/800x600/?canon,mirrorless,professional'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -52,10 +82,6 @@ const realisticGear = [
     weeklyRate: 580,
     monthlyRate: 2000,
     replacementValue: 2495,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?cinema,camera,blackmagic',
-      'https://source.unsplash.com/800x600/?video,camera,professional'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -70,10 +96,6 @@ const realisticGear = [
     weeklyRate: 500,
     monthlyRate: 1700,
     replacementValue: 2197,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?panasonic,camera,lumix',
-      'https://source.unsplash.com/800x600/?micro,four,thirds'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -88,10 +110,6 @@ const realisticGear = [
     weeklyRate: 400,
     monthlyRate: 1350,
     replacementValue: 1699,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?fujifilm,camera,xt',
-      'https://source.unsplash.com/800x600/?fuji,mirrorless,vintage'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -108,10 +126,6 @@ const realisticGear = [
     weeklyRate: 340,
     monthlyRate: 1150,
     replacementValue: 2298,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?camera,lens,zoom',
-      'https://source.unsplash.com/800x600/?sony,lens,professional'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -126,10 +140,6 @@ const realisticGear = [
     weeklyRate: 420,
     monthlyRate: 1450,
     replacementValue: 2699,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?canon,lens,portrait',
-      'https://source.unsplash.com/800x600/?prime,lens,photography'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -144,10 +154,6 @@ const realisticGear = [
     weeklyRate: 210,
     monthlyRate: 720,
     replacementValue: 899,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?sigma,lens,art',
-      'https://source.unsplash.com/800x600/?50mm,lens,prime'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -162,10 +168,6 @@ const realisticGear = [
     weeklyRate: 260,
     monthlyRate: 900,
     replacementValue: 1299,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?tamron,lens,telephoto',
-      'https://source.unsplash.com/800x600/?zoom,lens,70-200'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -180,10 +182,6 @@ const realisticGear = [
     weeklyRate: 130,
     monthlyRate: 450,
     replacementValue: 299,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?wide,angle,lens',
-      'https://source.unsplash.com/800x600/?ultrawide,lens,16mm'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -200,10 +198,6 @@ const realisticGear = [
     weeklyRate: 470,
     monthlyRate: 1600,
     replacementValue: 1899,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?studio,lighting,led',
-      'https://source.unsplash.com/800x600/?aputure,light,professional'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -218,10 +212,6 @@ const realisticGear = [
     weeklyRate: 180,
     monthlyRate: 620,
     replacementValue: 389,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?godox,lighting,studio',
-      'https://source.unsplash.com/800x600/?continuous,lighting,video'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -236,10 +226,6 @@ const realisticGear = [
     weeklyRate: 290,
     monthlyRate: 980,
     replacementValue: 799,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?nanlite,lighting,spotlight',
-      'https://source.unsplash.com/800x600/?led,panel,light'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -254,10 +240,6 @@ const realisticGear = [
     weeklyRate: 235,
     monthlyRate: 800,
     replacementValue: 329,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?bicolor,lighting,portable',
-      'https://source.unsplash.com/800x600/?point,source,light'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -272,10 +254,6 @@ const realisticGear = [
     weeklyRate: 155,
     monthlyRate: 530,
     replacementValue: 359,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?rgb,lighting,portable',
-      'https://source.unsplash.com/800x600/?compact,led,kit'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -292,10 +270,6 @@ const realisticGear = [
     weeklyRate: 180,
     monthlyRate: 620,
     replacementValue: 499,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?rode,microphone,shotgun',
-      'https://source.unsplash.com/800x600/?boom,microphone,audio'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -310,10 +284,6 @@ const realisticGear = [
     weeklyRate: 210,
     monthlyRate: 720,
     replacementValue: 399,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?wireless,microphone,lavalier',
-      'https://source.unsplash.com/800x600/?rode,wireless,audio'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -328,10 +298,6 @@ const realisticGear = [
     weeklyRate: 260,
     monthlyRate: 900,
     replacementValue: 699,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?zoom,recorder,audio',
-      'https://source.unsplash.com/800x600/?field,recorder,professional'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -346,10 +312,6 @@ const realisticGear = [
     weeklyRate: 130,
     monthlyRate: 450,
     replacementValue: 329,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?sennheiser,microphone,professional',
-      'https://source.unsplash.com/800x600/?shotgun,mic,video'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -364,10 +326,6 @@ const realisticGear = [
     weeklyRate: 315,
     monthlyRate: 1080,
     replacementValue: 1099,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?sound,devices,mixer',
-      'https://source.unsplash.com/800x600/?audio,interface,recorder'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -384,10 +342,6 @@ const realisticGear = [
     weeklyRate: 630,
     monthlyRate: 2150,
     replacementValue: 4799,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?dji,mavic,drone',
-      'https://source.unsplash.com/800x600/?professional,drone,cinema'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -402,10 +356,6 @@ const realisticGear = [
     weeklyRate: 390,
     monthlyRate: 1330,
     replacementValue: 1549,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?dji,air,quadcopter',
-      'https://source.unsplash.com/800x600/?compact,drone,travel'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -415,15 +365,11 @@ const realisticGear = [
     model: 'Mini 4 Pro',
     category: 'drones',
     condition: 'like-new',
-    description: 'Under 249g drone with 4K/60fps HDR video. Omnidirectional obstacle avoidance, ActiveTrack 360°, 34-minute flight time. No FAA registration required (US). Perfect for content creators.',
+    description: 'Under 249g drone with 4K/60fps HDR video. Omnidirectional obstacle avoidance, ActiveTrack 360, 34-minute flight time. No FAA registration required (US). Perfect for content creators.',
     dailyRate: 50,
     weeklyRate: 260,
     monthlyRate: 900,
     replacementValue: 759,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?dji,mini,drone',
-      'https://source.unsplash.com/800x600/?small,drone,portable'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -438,10 +384,6 @@ const realisticGear = [
     weeklyRate: 340,
     monthlyRate: 1150,
     replacementValue: 1299,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?fpv,drone,racing',
-      'https://source.unsplash.com/800x600/?first,person,drone'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -451,15 +393,11 @@ const realisticGear = [
     model: 'Inspire 3',
     category: 'drones',
     condition: 'new',
-    description: 'Professional cinema drone with full-frame 8K camera. Centimeter-level RTK positioning, 360° obstacle avoidance, dual operator mode. Includes Zenmuse X9-8K Air gimbal and CineSSD. For Hollywood-grade aerial production.',
+    description: 'Professional cinema drone with full-frame 8K camera. Centimeter-level RTK positioning, 360 obstacle avoidance, dual operator mode. Includes Zenmuse X9-8K Air gimbal and CineSSD. For Hollywood-grade aerial production.',
     dailyRate: 250,
     weeklyRate: 1300,
     monthlyRate: 4500,
     replacementValue: 16499,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?dji,inspire,professional',
-      'https://source.unsplash.com/800x600/?cinema,drone,broadcast'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -476,10 +414,6 @@ const realisticGear = [
     weeklyRate: 130,
     monthlyRate: 450,
     replacementValue: 389,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?manfrotto,tripod,video',
-      'https://source.unsplash.com/800x600/?professional,tripod,heavy'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -494,10 +428,6 @@ const realisticGear = [
     weeklyRate: 290,
     monthlyRate: 980,
     replacementValue: 1995,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?sachtler,fluid,head',
-      'https://source.unsplash.com/800x600/?video,head,broadcast'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -512,10 +442,6 @@ const realisticGear = [
     weeklyRate: 105,
     monthlyRate: 360,
     replacementValue: 649,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?peak,design,tripod',
-      'https://source.unsplash.com/800x600/?carbon,tripod,compact'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -530,10 +456,6 @@ const realisticGear = [
     weeklyRate: 95,
     monthlyRate: 320,
     replacementValue: 259,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?video,head,manfrotto',
-      'https://source.unsplash.com/800x600/?fluid,head,photography'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -548,10 +470,6 @@ const realisticGear = [
     weeklyRate: 115,
     monthlyRate: 390,
     replacementValue: 349,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?benro,tripod,head',
-      'https://source.unsplash.com/800x600/?professional,video,support'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -568,10 +486,6 @@ const realisticGear = [
     weeklyRate: 290,
     monthlyRate: 980,
     replacementValue: 799,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?smallhd,monitor,focus',
-      'https://source.unsplash.com/800x600/?on,camera,monitor'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -586,10 +500,6 @@ const realisticGear = [
     weeklyRate: 235,
     monthlyRate: 800,
     replacementValue: 649,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?feelworld,monitor,touchscreen',
-      'https://source.unsplash.com/800x600/?camera,monitor,7inch'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -604,10 +514,6 @@ const realisticGear = [
     weeklyRate: 130,
     monthlyRate: 450,
     replacementValue: 289,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?portkeys,monitor,compact',
-      'https://source.unsplash.com/800x600/?small,monitor,video'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -622,10 +528,6 @@ const realisticGear = [
     weeklyRate: 155,
     monthlyRate: 530,
     replacementValue: 359,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?blackmagic,video,assist',
-      'https://source.unsplash.com/800x600/?monitor,recorder,12g'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -640,10 +542,6 @@ const realisticGear = [
     weeklyRate: 315,
     monthlyRate: 1080,
     replacementValue: 995,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?teradek,wireless,video',
-      'https://source.unsplash.com/800x600/?wireless,transmitter,hdmi'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -660,10 +558,6 @@ const realisticGear = [
     weeklyRate: 445,
     monthlyRate: 1520,
     replacementValue: 2490,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?tilta,follow,focus',
-      'https://source.unsplash.com/800x600/?wireless,focus,cinema'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -678,10 +572,6 @@ const realisticGear = [
     weeklyRate: 390,
     monthlyRate: 1330,
     replacementValue: 1499,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?tiffen,filter,nd',
-      'https://source.unsplash.com/800x600/?variable,nd,filter'
-    ]),
     insuranceRequired: true,
     insuranceRate: 0.10,
   },
@@ -696,10 +586,6 @@ const realisticGear = [
     weeklyRate: 95,
     monthlyRate: 320,
     replacementValue: 249,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?vmount,battery,power',
-      'https://source.unsplash.com/800x600/?cinema,battery,professional'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -714,10 +600,6 @@ const realisticGear = [
     weeklyRate: 80,
     monthlyRate: 270,
     replacementValue: 349,
-    images: JSON.stringify([
-      'https://source.unsplash.com/800x600/?smallrig,cage,rig',
-      'https://source.unsplash.com/800x600/?camera,cage,accessories'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -732,10 +614,6 @@ const realisticGear = [
     weeklyRate: 65,
     monthlyRate: 220,
     replacementValue: 89,
-    images: JSON.stringify([
-      'https://picsum.photos/800/600',
-      'https://picsum.photos/800/600'
-    ]),
     insuranceRequired: false,
     insuranceRate: 0.10,
   },
@@ -761,12 +639,37 @@ const ownerProfiles = [
 async function main() {
   console.log('Starting realistic seed data import...\n');
 
+  // Ensure upload directory exists
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    console.log(`Created upload directory: ${UPLOAD_DIR}`);
+  }
+
+  // Verify seed images exist
+  const seedImagesExist = fs.existsSync(SEED_IMAGES_DIR);
+  if (!seedImagesExist) {
+    console.error('ERROR: Seed images not found at', SEED_IMAGES_DIR);
+    console.error('Run "bash prisma/download-seed-images.sh" first to download images.');
+    process.exit(1);
+  }
+
   // Clean up all existing seed data
   console.log('Cleaning up all previous seed data...');
   await prisma.rental.deleteMany({});
   await prisma.gear.deleteMany({});
   await prisma.user.deleteMany({});
-  console.log('✓ Cleanup complete.\n');
+  console.log('Cleanup complete.\n');
+
+  // Clean up old seed-uploaded images (those with UUID filenames)
+  const existingUploads = fs.readdirSync(UPLOAD_DIR).filter(f => f.endsWith('.jpg') || f.endsWith('.jpeg'));
+  if (existingUploads.length > 0) {
+    console.log(`Cleaning ${existingUploads.length} old uploaded images...`);
+    for (const file of existingUploads) {
+      if (file !== '.gitkeep') {
+        fs.unlinkSync(path.join(UPLOAD_DIR, file));
+      }
+    }
+  }
 
   // Create realistic owner accounts
   console.log('Creating 5 realistic gear owners...');
@@ -789,20 +692,32 @@ async function main() {
       })
     )
   );
-  owners.forEach(u => console.log(`  ✓ ${u.full_name} (${u.email})`));
+  owners.forEach(u => console.log(`  ${u.full_name} (${u.email})`));
 
-  // Create gear items (5 per category, distributed across owners)
-  console.log('\nCreating 45 realistic gear items (5 per category)...');
+  // Create gear items with locally uploaded images
+  console.log('\nCreating 40 realistic gear items with uploaded images...');
   const gearByCategory: Record<string, number> = {};
+  const categoryItemIndex: Record<string, number> = {};
 
   for (let i = 0; i < realisticGear.length; i++) {
     const gearData = realisticGear[i];
     const ownerIndex = i % OWNER_IDS.length;
     const owner = owners[ownerIndex];
 
+    // Track per-category item index for image assignment
+    if (!(gearData.category in categoryItemIndex)) {
+      categoryItemIndex[gearData.category] = 0;
+    }
+    const itemIdx = categoryItemIndex[gearData.category];
+    categoryItemIndex[gearData.category]++;
+
+    // Upload images for this item (copies from seed-images to public/uploads)
+    const images = uploadGearImages(gearData.category, itemIdx);
+
     await prisma.gear.create({
       data: {
         ...gearData,
+        images,
         userId: owner.id,
         city: owner.city!,
         state: owner.state!,
@@ -810,24 +725,28 @@ async function main() {
     });
 
     gearByCategory[gearData.category] = (gearByCategory[gearData.category] || 0) + 1;
-    console.log(`  ✓ ${gearData.title} (${gearData.category}) - owned by ${owner.full_name}`);
+    console.log(`  ${gearData.title} (${gearData.category}) - owned by ${owner.full_name}`);
   }
 
   // Summary
-  console.log('\n✅ Realistic seed data import complete!');
+  console.log('\nRealistic seed data import complete!');
   console.log(`  Owners: ${owners.length}`);
   console.log(`  Gear items: ${realisticGear.length}`);
   console.log('\n  Items by category:');
   Object.entries(gearByCategory)
     .sort(([a], [b]) => a.localeCompare(b))
     .forEach(([cat, count]) => console.log(`    ${cat}: ${count}`));
-  console.log('\n  All items have accurate images, realistic pricing, and proper descriptions.');
-  console.log('  Ready for client demos! 🚀\n');
+
+  // Count uploaded images
+  const uploadedImages = fs.readdirSync(UPLOAD_DIR).filter(f => f.endsWith('.jpg') || f.endsWith('.jpeg'));
+  console.log(`\n  Uploaded images: ${uploadedImages.length} files in public/uploads/gear-images/`);
+  console.log('  All images are local files served directly by Next.js.');
+  console.log('  Ready for development and demos!\n');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seed:', e);
+    console.error('Error during seed:', e);
     process.exit(1);
   })
   .finally(async () => {
