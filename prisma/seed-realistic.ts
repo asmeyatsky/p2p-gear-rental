@@ -1,42 +1,24 @@
 import { PrismaClient } from '@prisma/client';
-import * as fs from 'fs';
-import * as path from 'path';
-import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
-const SEED_IMAGES_DIR = path.join(__dirname, 'seed-images');
-const UPLOAD_DIR = path.join(__dirname, '..', 'public', 'uploads', 'gear-images');
+const GCS_BUCKET = 'p2pgear-seed-images';
+const GCS_BASE_URL = `https://storage.googleapis.com/${GCS_BUCKET}`;
 
 /**
- * Copies a seed image to the uploads directory with a UUID filename,
- * mimicking how a real user upload works via the /api/upload endpoint.
- * Returns the public URL path (e.g., /uploads/gear-images/{uuid}.jpg).
+ * Returns the public GCS URL for a seed image.
+ * Images are stored at gs://p2pgear-seed-images/{category}/{N}.jpg
  */
-function uploadSeedImage(category: string, imageIndex: number): string {
-  const sourcePath = path.join(SEED_IMAGES_DIR, category, `${imageIndex}.jpg`);
-
-  if (!fs.existsSync(sourcePath)) {
-    console.warn(`  ⚠ Missing seed image: ${category}/${imageIndex}.jpg — using placeholder`);
-    return `/uploads/gear-images/placeholder.jpg`;
-  }
-
-  const uuid = randomUUID();
-  const destFilename = `${uuid}.jpg`;
-  const destPath = path.join(UPLOAD_DIR, destFilename);
-
-  fs.copyFileSync(sourcePath, destPath);
-
-  return `/uploads/gear-images/${destFilename}`;
+function seedImageUrl(category: string, imageIndex: number): string {
+  return `${GCS_BASE_URL}/${category}/${imageIndex}.jpg`;
 }
 
 /**
- * Uploads a pair of seed images for a gear item.
- * Returns JSON-stringified array of two image URLs.
+ * Returns JSON-stringified array of two GCS image URLs for a gear item.
  */
-function uploadGearImages(category: string, itemIndex: number): string {
-  const img1 = uploadSeedImage(category, itemIndex * 2 + 1);
-  const img2 = uploadSeedImage(category, itemIndex * 2 + 2);
+function gearImageUrls(category: string, itemIndex: number): string {
+  const img1 = seedImageUrl(category, itemIndex * 2 + 1);
+  const img2 = seedImageUrl(category, itemIndex * 2 + 2);
   return JSON.stringify([img1, img2]);
 }
 
@@ -638,20 +620,8 @@ const ownerProfiles = [
 
 async function main() {
   console.log('Starting realistic seed data import...\n');
-
-  // Ensure upload directory exists
-  if (!fs.existsSync(UPLOAD_DIR)) {
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-    console.log(`Created upload directory: ${UPLOAD_DIR}`);
-  }
-
-  // Verify seed images exist
-  const seedImagesExist = fs.existsSync(SEED_IMAGES_DIR);
-  if (!seedImagesExist) {
-    console.error('ERROR: Seed images not found at', SEED_IMAGES_DIR);
-    console.error('Run "bash prisma/download-seed-images.sh" first to download images.');
-    process.exit(1);
-  }
+  console.log(`Using GCS bucket: ${GCS_BUCKET}`);
+  console.log(`Image base URL: ${GCS_BASE_URL}\n`);
 
   // Clean up all existing seed data
   console.log('Cleaning up all previous seed data...');
@@ -659,17 +629,6 @@ async function main() {
   await prisma.gear.deleteMany({});
   await prisma.user.deleteMany({});
   console.log('Cleanup complete.\n');
-
-  // Clean up old seed-uploaded images (those with UUID filenames)
-  const existingUploads = fs.readdirSync(UPLOAD_DIR).filter(f => f.endsWith('.jpg') || f.endsWith('.jpeg'));
-  if (existingUploads.length > 0) {
-    console.log(`Cleaning ${existingUploads.length} old uploaded images...`);
-    for (const file of existingUploads) {
-      if (file !== '.gitkeep') {
-        fs.unlinkSync(path.join(UPLOAD_DIR, file));
-      }
-    }
-  }
 
   // Create realistic owner accounts
   console.log('Creating 5 realistic gear owners...');
@@ -711,8 +670,8 @@ async function main() {
     const itemIdx = categoryItemIndex[gearData.category];
     categoryItemIndex[gearData.category]++;
 
-    // Upload images for this item (copies from seed-images to public/uploads)
-    const images = uploadGearImages(gearData.category, itemIdx);
+    // Generate GCS image URLs for this item
+    const images = gearImageUrls(gearData.category, itemIdx);
 
     await prisma.gear.create({
       data: {
@@ -737,10 +696,7 @@ async function main() {
     .sort(([a], [b]) => a.localeCompare(b))
     .forEach(([cat, count]) => console.log(`    ${cat}: ${count}`));
 
-  // Count uploaded images
-  const uploadedImages = fs.readdirSync(UPLOAD_DIR).filter(f => f.endsWith('.jpg') || f.endsWith('.jpeg'));
-  console.log(`\n  Uploaded images: ${uploadedImages.length} files in public/uploads/gear-images/`);
-  console.log('  All images are local files served directly by Next.js.');
+  console.log(`\n  Images served from: ${GCS_BASE_URL}`);
   console.log('  Ready for development and demos!\n');
 }
 

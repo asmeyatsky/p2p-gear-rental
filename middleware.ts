@@ -148,7 +148,7 @@ function addSecurityHeaders(response: NextResponse, request: NextRequest): void 
     "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.mapbox.com *.stripe.com js.stripe.com",
     "style-src 'self' 'unsafe-inline' *.mapbox.com fonts.googleapis.com",
     "font-src 'self' data: fonts.gstatic.com",
-    "img-src 'self' data: blob: *.supabase.co *.mapbox.com *.stripe.com",
+    "img-src 'self' data: blob: *.supabase.co *.mapbox.com *.stripe.com storage.googleapis.com",
     connectSrc,
     "frame-src 'self' js.stripe.com hooks.stripe.com",
     "media-src 'self' blob: *.supabase.co",
