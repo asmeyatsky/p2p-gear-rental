@@ -67,7 +67,7 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
 
   const handleRequestRental = useCallback(() => {
     if (!currentUserId) {
-      router.push('/auth/login?redirect=' + encodeURIComponent(`/gear/${gear.id}`));
+      router.push('/auth/login?redirectTo=' + encodeURIComponent(`/gear/${gear.id}`));
       return;
     }
     setShowRentalModal(true);
@@ -75,7 +75,7 @@ export default function GearDetailsClient({ gear, currentUserId }: GearDetailsCl
 
   const handleMessageOwner = useCallback(() => {
     if (!currentUserId) {
-      router.push('/auth/login?redirect=' + encodeURIComponent(`/gear/${gear.id}`));
+      router.push('/auth/login?redirectTo=' + encodeURIComponent(`/gear/${gear.id}`));
       return;
     }
     if (gear.user?.id) {

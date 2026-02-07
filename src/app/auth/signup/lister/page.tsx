@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { event } from '@/lib/gtag';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +19,7 @@ export default function SignupListerPage() {
   const [userType, setUserType] = useState('lister');
   const { signUp } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +37,8 @@ export default function SignupListerPage() {
           label: 'new_lister_signup',
           value: 1,
         });
-        router.push('/add-gear/bulk');
+        const redirectTo = searchParams.get('redirectTo') || '/add-gear/bulk';
+        router.push(redirectTo);
       }
     } finally {
       setIsLoading(false);

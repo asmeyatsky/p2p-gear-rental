@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import path from 'path';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 
 const UPLOAD_DIR = '/tmp/uploads';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB

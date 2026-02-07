@@ -3,6 +3,7 @@ import { writeFile, unlink, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { authenticateRequest } from '@/lib/auth-middleware';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'gear-images');
 
@@ -15,6 +16,9 @@ async function ensureUploadDir() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Require authentication for uploads
+    await authenticateRequest(request);
+
     await ensureUploadDir();
 
     const formData = await request.formData();
@@ -62,7 +66,13 @@ export async function POST(request: NextRequest) {
       url: publicUrl,
       fileName,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.statusCode === 401) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
     console.error('Upload error:', error);
     return NextResponse.json(
       { error: 'Failed to upload file' },
@@ -73,6 +83,9 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Require authentication for deletions
+    await authenticateRequest(request);
+
     const { searchParams } = new URL(request.url);
     const fileName = searchParams.get('fileName');
 
@@ -93,7 +106,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.statusCode === 401) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
     console.error('Delete error:', error);
     return NextResponse.json(
       { error: 'Failed to delete file' },

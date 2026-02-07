@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { monitoring } from '@/lib/monitoring';
 import { logger } from '@/lib/logger';
 import { CacheManager } from '@/lib/cache';
@@ -235,7 +236,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const authHeader = request.headers.get('authorization');
   const validToken = process.env.METRICS_API_TOKEN;
   
-  if (!validToken || authHeader !== `Bearer ${validToken}`) {
+  const expectedHeader = `Bearer ${validToken || ''}`;
+  const isValidToken = validToken && authHeader &&
+    authHeader.length === expectedHeader.length &&
+    timingSafeEqual(Buffer.from(authHeader), Buffer.from(expectedHeader));
+
+  if (!isValidToken) {
     logger.warn('Unauthorized metrics access attempt', {
       ip: request.headers.get('x-forwarded-for') || 'unknown',
       userAgent: request.headers.get('user-agent'),

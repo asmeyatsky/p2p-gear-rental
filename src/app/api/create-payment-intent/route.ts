@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { authenticateRequest } from '@/lib/auth-middleware';
 import { ValidationError, ApiError, RateLimitError, NotFoundError, AuthorizationError } from '@/lib/api-error-handler';
 import { rateLimitConfig, getClientIdentifier } from '@/lib/rate-limit';
@@ -9,7 +9,10 @@ import { logger } from '@/lib/logger';
 import { createPaymentIntentSchema } from '@/lib/validations/payment';
 import { ZodError } from 'zod';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-08-27.basil',
 });
 

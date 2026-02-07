@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase-server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { ApiError, AuthenticationError, AuthorizationError } from '@/lib/api-error-handler';
 
 export async function authenticateRequest(req: NextRequest) {

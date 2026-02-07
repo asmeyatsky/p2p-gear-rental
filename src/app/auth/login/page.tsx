@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { event } from '@/lib/gtag';
 import { Button } from '@/components/ui/Button';
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +35,8 @@ export default function LoginPage() {
           label: 'user_login',
           value: 1,
         });
-        router.push('/dashboard');
+        const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+        router.push(redirectTo);
       }
     } catch (error) {
       toast.error((error as Error)?.message || 'An unexpected error occurred');

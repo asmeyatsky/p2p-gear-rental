@@ -2,8 +2,8 @@ import { NextResponse, NextRequest } from 'next/server';
 import { authenticateRequest } from '@/lib/auth-middleware';
 import { withErrorHandler } from '@/lib/api-error-handler';
 import { withMonitoring } from '@/lib/monitoring';
-import { rateLimitConfig } from '@/lib/enhanced-rate-limit';
-import { prisma } from '@/lib/prisma';
+import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
+import { prisma } from '@/lib/db';
 import { createGearSchema } from '@/lib/validations/gear';
 
 export const GET = withErrorHandler(

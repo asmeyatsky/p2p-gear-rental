@@ -46,10 +46,15 @@ export default function ConfirmPaymentPage() {
 
   const createPaymentIntent = useCallback(async (rentalData: RentalDetails) => {
     try {
-      const startDate = new Date(rentalData.startDate);
-      const endDate = new Date(rentalData.endDate);
-      const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      const amount = Math.round(days * rentalData.gear.dailyRate * 100); // Convert to cents
+      // Use server-calculated totalPrice if available, otherwise fall back to simple calc
+      const amount = rentalData.totalPrice
+        ? Math.round(rentalData.totalPrice * 100)
+        : (() => {
+            const startDate = new Date(rentalData.startDate);
+            const endDate = new Date(rentalData.endDate);
+            const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+            return Math.round(days * rentalData.gear.dailyRate * 100);
+          })();
 
       const res = await fetch(apiUrl('/api/create-payment-intent'), {
         method: 'POST',
@@ -64,7 +69,8 @@ export default function ConfirmPaymentPage() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to create payment intent');
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to create payment intent');
       }
 
       const { clientSecret } = await res.json();

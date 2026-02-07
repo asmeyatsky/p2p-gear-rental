@@ -8,6 +8,7 @@ import {
   AddressElement,
 } from '@stripe/react-stripe-js';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { getApiBasePath } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface PaymentFormProps {
@@ -73,7 +74,7 @@ export default function PaymentForm({
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/rentals/${rentalId}/confirmation`,
+        return_url: `${window.location.origin}${getApiBasePath()}/rentals/${rentalId}/confirmation`,
         receipt_email: user?.email,
       },
     });
