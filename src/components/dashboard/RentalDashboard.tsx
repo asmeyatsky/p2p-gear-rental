@@ -241,8 +241,8 @@ export default function RentalDashboard() {
         <nav className="-mb-px flex space-x-8">
           {[
             { id: 'overview', name: 'Overview', icon: '📊' },
-            { id: 'incoming', name: 'My Gear Rentals', icon: '📥' },
-            { id: 'outgoing', name: 'My Bookings', icon: '📤' },
+            { id: 'incoming', name: 'Items I\'m Renting Out', icon: '📥' },
+            { id: 'outgoing', name: 'Items I\'m Renting', icon: '📤' },
             { id: 'analytics', name: 'Analytics', icon: '📈' }
           ].map((tab) => (
             <button
@@ -309,6 +309,15 @@ export default function RentalDashboard() {
       {/* Rental Management Tabs */}
       {(activeTab === 'incoming' || activeTab === 'outgoing') && (
         <div className="space-y-6">
+          {/* Contextual hint */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              {activeTab === 'incoming' 
+                ? 'These are items you are renting out to others.' 
+                : 'These are items you have rented from others.'}
+            </p>
+          </div>
+          
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
@@ -353,7 +362,7 @@ export default function RentalDashboard() {
                       <span className="font-medium">
                         {activeTab === 'incoming' ? 'Renter' : 'Owner'}:
                       </span>{' '}
-                      {activeTab === 'incoming' 
+                      {activeTab === 'incoming'
                         ? rental.renter.full_name || rental.renter.email
                         : rental.owner.full_name || rental.owner.email
                       }
@@ -397,6 +406,13 @@ export default function RentalDashboard() {
                       </button>
                     </div>
                   )}
+                  
+                  {/* Info for outgoing rentals */}
+                  {activeTab === 'outgoing' && rental.status === 'pending' && (
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                      Waiting for owner approval
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -404,7 +420,21 @@ export default function RentalDashboard() {
 
           {filteredRentals.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">No rentals found matching your criteria.</p>
+              <p className="text-gray-500">
+                {activeTab === 'incoming' 
+                  ? 'You don\'t have any items currently being rented out.' 
+                  : 'You don\'t have any active rentals.'}
+              </p>
+              {activeTab === 'outgoing' && (
+                <p className="text-gray-500 mt-2">
+                  Browse gear to rent from other users <a href="/browse" className="text-blue-600 hover:underline">here</a>.
+                </p>
+              )}
+              {activeTab === 'incoming' && (
+                <p className="text-gray-500 mt-2">
+                  Add gear to rent out <a href="/add-gear" className="text-blue-600 hover:underline">here</a>.
+                </p>
+              )}
             </div>
           )}
         </div>
