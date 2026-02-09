@@ -25,7 +25,7 @@ export const GET = withErrorHandler(
 
         const where: any = { isAvailable: true };
         if (category && category !== 'All') where.category = category;
-        if (city)      where.city = city;
+        if (city)      where.city = { equals: city, mode: 'insensitive' };  // Case-insensitive exact match
         if (state)     where.state = state;
         if (condition) where.condition = condition;
         if (minPrice || maxPrice) {
@@ -57,13 +57,20 @@ export const GET = withErrorHandler(
           prisma.gear.count({ where })
         ]);
 
+        // Calculate actual page based on total and limit to handle cases where requested page is beyond total
+        const totalPages = Math.ceil(total / limit);
+        const actualPage = Math.min(page, totalPages > 0 ? totalPages : 1);
+
+        // Determine if there are more pages: true if total items exceed what we've already fetched AND skipped
+        const hasNext = offset + limit < total;
+
         return NextResponse.json({
           data,
           total,
           pagination: {
-            page,
+            page: actualPage,
             limit,
-            hasNext: offset + limit < total
+            hasNext
           }
         });
       } catch (error) {

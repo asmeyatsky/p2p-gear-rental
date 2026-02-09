@@ -231,8 +231,8 @@ test.describe('Browse Page — Pagination', () => {
 
     const cardsBefore = await page.locator(`a[href*="/gear/"]`).count();
 
-    // Click "More" to load next page
-    await page.getByText('More').click();
+    // Click "More" button to load next page - use role to distinguish from product names
+    await page.getByRole('button', { name: 'More' }).click();
     // Wait for new cards to appear (count should increase)
     await page.waitForFunction(
       (prevCount) => document.querySelectorAll('a[href*="/gear/"]').length > prevCount,
