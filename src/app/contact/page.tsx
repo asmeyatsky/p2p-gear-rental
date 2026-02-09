@@ -1,6 +1,20 @@
+'use client';
+
+import { useState, FormEvent } from 'react';
 import Header from '@/components/Header';
 
 export default function ContactPage() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const body = `From: ${name} (${email})\n\n${message}`;
+    window.location.href = `mailto:allan@smeyatsky.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -43,13 +57,16 @@ export default function ContactPage() {
 
         <div className="bg-white rounded-xl border border-gray-200 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Send us a message</h2>
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                 <input
                   id="name"
                   type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                   placeholder="Your name"
                 />
@@ -59,6 +76,9 @@ export default function ContactPage() {
                 <input
                   id="email"
                   type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                   placeholder="you@example.com"
                 />
@@ -69,6 +89,9 @@ export default function ContactPage() {
               <input
                 id="subject"
                 type="text"
+                required
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                 placeholder="How can we help?"
               />
@@ -78,13 +101,19 @@ export default function ContactPage() {
               <textarea
                 id="message"
                 rows={5}
+                required
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none resize-none"
                 placeholder="Tell us more..."
               />
             </div>
-            <p className="text-xs text-gray-500">
-              This form is currently for display purposes. Please email <a href="mailto:allan@smeyatsky.com" className="text-purple-600 hover:underline">allan@smeyatsky.com</a> directly.
-            </p>
+            <button
+              type="submit"
+              className="w-full px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Send Message
+            </button>
           </form>
         </div>
       </div>
