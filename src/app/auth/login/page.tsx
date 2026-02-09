@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
-import toast from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import { event } from '@/lib/gtag';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -26,6 +26,7 @@ export default function LoginPage() {
     try {
       const { error } = await signIn(email, password);
       if (error) {
+        console.error('[Login] Auth error:', error.message);
         toast.error(error.message);
       } else {
         toast.success('Logged in successfully!');

@@ -7,7 +7,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/Button';
-import toast from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import { apiUrl } from '@/lib/api';
 
 export default function BulkUploadPage() {

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import Image from 'next/image';
 import { apiUrl } from '@/lib/api';
 

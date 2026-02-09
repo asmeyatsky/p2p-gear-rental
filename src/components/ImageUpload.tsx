@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { v4 as uuidv4 } from 'uuid';
 import { compressImage, validateImageFile } from '@/lib/image-utils';
-import toast from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import Image from 'next/image';
 import { apiUrl } from '@/lib/api';
 

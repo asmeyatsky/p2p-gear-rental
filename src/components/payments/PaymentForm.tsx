@@ -9,7 +9,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getApiBasePath } from '@/lib/api';
-import toast from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 
 interface PaymentFormProps {
   clientSecret: string;

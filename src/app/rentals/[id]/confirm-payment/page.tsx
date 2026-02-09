@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import StripeProvider from '@/components/payments/StripeProvider';
 import PaymentForm from '@/components/payments/PaymentForm';
-import toast from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import Image from 'next/image';
 import Header from '@/components/Header';
 import { apiUrl } from '@/lib/api';

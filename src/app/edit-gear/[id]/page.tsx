@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { GearItem } from '@/types';
 import ImageUpload from '@/components/ImageUpload';
-import toast from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import { apiUrl } from '@/lib/api';
 
 import Header from '@/components/Header';

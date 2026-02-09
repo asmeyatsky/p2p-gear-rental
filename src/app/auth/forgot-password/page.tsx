@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
-import toast from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import Header from '@/components/Header';

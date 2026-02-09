@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../components/auth/AuthProvider';
 import ImageUpload from '../../components/ImageUpload';
 import Header from '../../components/Header';
-import toast from 'react-hot-toast';
+import { toast } from '../../lib/toast';
 import { event } from '../../lib/gtag';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
