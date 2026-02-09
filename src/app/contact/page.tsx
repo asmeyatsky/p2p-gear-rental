@@ -16,7 +16,7 @@ export default function ContactPage() {
               </svg>
             </div>
             <h3 className="font-semibold text-gray-900 mb-1">Email</h3>
-            <p className="text-sm text-gray-600">support@gearshare.io</p>
+            <p className="text-sm text-gray-600">allan@smeyatsky.com</p>
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -26,7 +26,7 @@ export default function ContactPage() {
               </svg>
             </div>
             <h3 className="font-semibold text-gray-900 mb-1">Support Hours</h3>
-            <p className="text-sm text-gray-600">Mon–Fri, 9am–6pm UTC</p>
+            <p className="text-sm text-gray-600">Mon–Fri, 08:00–18:00 SAST</p>
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -83,7 +83,7 @@ export default function ContactPage() {
               />
             </div>
             <p className="text-xs text-gray-500">
-              This form is currently for display purposes. Please email <a href="mailto:support@gearshare.io" className="text-purple-600 hover:underline">support@gearshare.io</a> directly.
+              This form is currently for display purposes. Please email <a href="mailto:allan@smeyatsky.com" className="text-purple-600 hover:underline">allan@smeyatsky.com</a> directly.
             </p>
           </form>
         </div>

@@ -24,7 +24,7 @@ interface RentalItem {
   gear: {
     id: string;
     title: string;
-    images: string[];
+    images: string;
     dailyRate: number;
   };
   renterId: string;
@@ -466,10 +466,12 @@ export default function RentalDashboard() {
 
           {/* Rental Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredRentals.map((rental) => (
+            {filteredRentals.map((rental) => {
+              const rentalImages = parseImages(rental.gear.images);
+              return (
               <div key={rental.id} className="bg-white rounded-lg shadow overflow-hidden">
                 <Image
-                  src={rental.gear.images[0] || '/placeholder-gear.jpg'}
+                  src={rentalImages[0] || '/placeholder-gear.jpg'}
                   alt={rental.gear.title}
                   width={300}
                   height={192}
@@ -512,7 +514,8 @@ export default function RentalDashboard() {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           {filteredRentals.length === 0 && (
@@ -601,13 +604,15 @@ export default function RentalDashboard() {
             <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
             {rentals.length > 0 ? (
               <div className="space-y-3">
-                {rentals.slice(0, 5).map(rental => (
+                {rentals.slice(0, 5).map(rental => {
+                  const activityImages = parseImages(rental.gear.images);
+                  return (
                   <div key={rental.id} className="flex items-center justify-between py-3 border-b last:border-0">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden">
-                        {rental.gear.images[0] && (
+                        {activityImages[0] && (
                           <Image
-                            src={rental.gear.images[0]}
+                            src={activityImages[0]}
                             alt={rental.gear.title}
                             width={40}
                             height={40}
@@ -633,7 +638,8 @@ export default function RentalDashboard() {
                       <p className="text-xs text-gray-500 mt-1">{formatDate(rental.createdAt)}</p>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-gray-500 text-center py-4">No recent activity</p>
