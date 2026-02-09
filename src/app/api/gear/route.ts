@@ -22,8 +22,9 @@ export const GET = withErrorHandler(
         const minPrice  = url.searchParams.get('minPrice');
         const maxPrice  = url.searchParams.get('maxPrice');
         const sortBy    = url.searchParams.get('sortBy') || 'newest';
+        const userId    = url.searchParams.get('userId');
 
-        const where: any = { isAvailable: true };
+        const where: any = userId ? { userId } : { isAvailable: true };
         if (category && category !== 'All') where.category = category;
         if (city)      where.city = { equals: city, mode: 'insensitive' };  // Case-insensitive exact match
         if (state)     where.state = state;
@@ -48,7 +49,8 @@ export const GET = withErrorHandler(
             include: {
               user: {
                 select: { id: true, full_name: true, averageRating: true, totalReviews: true }
-              }
+              },
+              ...(userId ? { rentals: { where: { status: 'ACTIVE' }, select: { id: true, status: true } } } : {}),
             },
             orderBy,
             take: limit,

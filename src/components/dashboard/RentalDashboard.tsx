@@ -50,7 +50,26 @@ interface RentalItem {
   amount?: number;
 }
 
-type TabType = 'overview' | 'incoming' | 'outgoing' | 'analytics';
+interface GearListing {
+  id: string;
+  title: string;
+  description: string;
+  images: string;
+  dailyRate: number;
+  weeklyRate?: number;
+  monthlyRate?: number;
+  city: string;
+  state: string;
+  category?: string;
+  brand?: string;
+  model?: string;
+  condition?: string;
+  isAvailable: boolean;
+  createdAt: string;
+  rentals?: { id: string; status: string }[];
+}
+
+type TabType = 'overview' | 'my-listings' | 'outgoing' | 'analytics';
 type FilterType = 'all' | 'pending' | 'approved' | 'active' | 'completed' | 'cancelled';
 
 export default function RentalDashboard() {
@@ -59,6 +78,8 @@ export default function RentalDashboard() {
   const [stats, setStats] = useState<RentalStats | null>(null);
   const [rentals, setRentals] = useState<RentalItem[]>([]);
   const [filteredRentals, setFilteredRentals] = useState<RentalItem[]>([]);
+  const [listings, setListings] = useState<GearListing[]>([]);
+  const [listingsLoading, setListingsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,6 +87,7 @@ export default function RentalDashboard() {
   useEffect(() => {
     if (user) {
       fetchDashboardData();
+      fetchListings();
     }
   }, [user]);
 
@@ -96,14 +118,28 @@ export default function RentalDashboard() {
     }
   };
 
+  const fetchListings = async () => {
+    if (!user) return;
+    try {
+      setListingsLoading(true);
+      const res = await fetch(apiUrl(`/api/gear?userId=${user.id}&limit=50`));
+      if (res.ok) {
+        const data = await res.json();
+        setListings(data.data || []);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch your listings');
+    } finally {
+      setListingsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const applyFilters = () => {
       let filtered = rentals;
 
-      // Filter by tab (incoming vs outgoing)
-      if (activeTab === 'incoming') {
-        filtered = filtered.filter(rental => rental.ownerId === user?.id);
-      } else if (activeTab === 'outgoing') {
+      // Filter by tab — outgoing shows items rented from others
+      if (activeTab === 'outgoing') {
         filtered = filtered.filter(rental => rental.renterId === user?.id);
       }
 
@@ -177,6 +213,17 @@ export default function RentalDashboard() {
     });
   };
 
+  const getListingStatus = (listing: GearListing): { label: string; color: string } => {
+    const activeRental = listing.rentals?.find(r => r.status === 'ACTIVE');
+    if (activeRental) return { label: 'Rented', color: 'bg-blue-100 text-blue-800' };
+    if (!listing.isAvailable) return { label: 'Unavailable', color: 'bg-gray-100 text-gray-800' };
+    return { label: 'Available', color: 'bg-green-100 text-green-800' };
+  };
+
+  const parseImages = (images: string): string[] => {
+    try { return JSON.parse(images); } catch { return []; }
+  };
+
   const getStatusColor = (status: string) => {
     const colors = {
       pending: 'bg-yellow-100 text-yellow-800',
@@ -241,7 +288,7 @@ export default function RentalDashboard() {
         <nav className="-mb-px flex space-x-8">
           {[
             { id: 'overview', name: 'Overview', icon: '📊' },
-            { id: 'incoming', name: 'Items I\'m Renting Out', icon: '📥' },
+            { id: 'my-listings', name: 'My Listings', icon: '📦' },
             { id: 'outgoing', name: 'Items I\'m Renting', icon: '📤' },
             { id: 'analytics', name: 'Analytics', icon: '📈' }
           ].map((tab) => (
@@ -306,18 +353,92 @@ export default function RentalDashboard() {
         </div>
       )}
 
-      {/* Rental Management Tabs */}
-      {(activeTab === 'incoming' || activeTab === 'outgoing') && (
+      {/* My Listings Tab */}
+      {activeTab === 'my-listings' && (
         <div className="space-y-6">
-          {/* Contextual hint */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+            <p className="text-sm text-blue-800">
+              Gear you have listed for rent.
+            </p>
+            <a
+              href="/add-gear"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
+            >
+              + Add Gear
+            </a>
+          </div>
+
+          {listingsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            </div>
+          ) : listings.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {listings.map((listing) => {
+                const images = parseImages(listing.images);
+                const status = getListingStatus(listing);
+                return (
+                  <a key={listing.id} href={`/gear/${listing.id}`} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="relative">
+                      <Image
+                        src={images[0] || '/placeholder-gear.jpg'}
+                        alt={listing.title}
+                        width={300}
+                        height={192}
+                        className="w-full h-48 object-cover"
+                      />
+                      <span className={`absolute top-2 right-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${status.color}`}>
+                        {status.label}
+                      </span>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-lg mb-1 text-gray-900">{listing.title}</h3>
+                      {(listing.brand || listing.model) && (
+                        <p className="text-sm text-gray-500 mb-2">
+                          {[listing.brand, listing.model].filter(Boolean).join(' ')}
+                        </p>
+                      )}
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <p>{listing.city}, {listing.state}</p>
+                        <p className="font-medium text-gray-900">{formatCurrency(listing.dailyRate)}/day</p>
+                      </div>
+                      <div className="mt-3 flex items-center gap-2">
+                        {listing.category && (
+                          <span className="inline-flex px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
+                            {listing.category}
+                          </span>
+                        )}
+                        {listing.condition && (
+                          <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
+                            {listing.condition}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500">You haven&apos;t listed any gear yet.</p>
+              <p className="text-gray-500 mt-2">
+                <a href="/add-gear" className="text-blue-600 hover:underline">Add your first listing</a> to start renting out your gear.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Outgoing Rentals Tab */}
+      {activeTab === 'outgoing' && (
+        <div className="space-y-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
-              {activeTab === 'incoming' 
-                ? 'These are items you are renting out to others.' 
-                : 'These are items you have rented from others.'}
+              Items you have rented from others.
             </p>
           </div>
-          
+
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
@@ -356,16 +477,11 @@ export default function RentalDashboard() {
                 />
                 <div className="p-4">
                   <h3 className="font-semibold text-lg mb-2">{rental.gear.title}</h3>
-                  
+
                   <div className="space-y-2 text-sm text-gray-600">
                     <p>
-                      <span className="font-medium">
-                        {activeTab === 'incoming' ? 'Renter' : 'Owner'}:
-                      </span>{' '}
-                      {activeTab === 'incoming'
-                        ? rental.renter.full_name || rental.renter.email
-                        : rental.owner.full_name || rental.owner.email
-                      }
+                      <span className="font-medium">Owner:</span>{' '}
+                      {rental.owner.full_name || rental.owner.email}
                     </p>
                     <p>
                       <span className="font-medium">Dates:</span>{' '}
@@ -389,26 +505,7 @@ export default function RentalDashboard() {
                     </div>
                   )}
 
-                  {/* Action buttons for incoming rentals */}
-                  {activeTab === 'incoming' && rental.status === 'pending' && (
-                    <div className="mt-4 flex space-x-2">
-                      <button
-                        onClick={() => handleApprove(rental.id)}
-                        className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleReject(rental.id)}
-                        className="flex-1 bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  )}
-                  
-                  {/* Info for outgoing rentals */}
-                  {activeTab === 'outgoing' && rental.status === 'pending' && (
+                  {rental.status === 'pending' && (
                     <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
                       Waiting for owner approval
                     </div>
@@ -420,21 +517,10 @@ export default function RentalDashboard() {
 
           {filteredRentals.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">
-                {activeTab === 'incoming' 
-                  ? 'You don\'t have any items currently being rented out.' 
-                  : 'You don\'t have any active rentals.'}
+              <p className="text-gray-500">You don&apos;t have any rentals yet.</p>
+              <p className="text-gray-500 mt-2">
+                Browse gear to rent from other users <a href="/browse" className="text-blue-600 hover:underline">here</a>.
               </p>
-              {activeTab === 'outgoing' && (
-                <p className="text-gray-500 mt-2">
-                  Browse gear to rent from other users <a href="/browse" className="text-blue-600 hover:underline">here</a>.
-                </p>
-              )}
-              {activeTab === 'incoming' && (
-                <p className="text-gray-500 mt-2">
-                  Add gear to rent out <a href="/add-gear" className="text-blue-600 hover:underline">here</a>.
-                </p>
-              )}
             </div>
           )}
         </div>
