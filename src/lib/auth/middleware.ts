@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { prisma } from '@/lib/db';
 import { AuthenticationError, AuthorizationError } from '@/lib/api-error-handler';
@@ -244,43 +244,6 @@ export async function checkUserStatus(authContext: AuthContext): Promise<void> {
     
     throw new AuthorizationError('Unable to verify user status');
   }
-}
-
-/**
- * Comprehensive security headers
- */
-export function addSecurityHeaders(response: NextResponse): NextResponse {
-  // Prevent clickjacking
-  response.headers.set('X-Frame-Options', 'DENY');
-  
-  // Prevent MIME type sniffing
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  
-  // XSS Protection
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  
-  // Referrer Policy
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  // Content Security Policy (basic)
-  response.headers.set('Content-Security-Policy', 
-    "default-src 'self'; " +
-    (process.env.NODE_ENV === 'production'
-      ? "script-src 'self' 'unsafe-inline' *.mapbox.com *.stripe.com; "
-      : "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.mapbox.com *.stripe.com; ") +
-    "style-src 'self' 'unsafe-inline' *.mapbox.com; " +
-    "img-src 'self' data: blob: *.supabase.co *.mapbox.com; " +
-    "connect-src 'self' *.supabase.co *.mapbox.com *.stripe.com; " +
-    "font-src 'self' data:; " +
-    "worker-src 'self' blob:;"
-  );
-
-  // Strict Transport Security (HTTPS only)
-  if (process.env.NODE_ENV === 'production') {
-    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  }
-
-  return response;
 }
 
 /**

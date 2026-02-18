@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { withErrorHandler, ValidationError, NotFoundError } from '@/lib/api-error-handler';
 import { withRateLimit, rateLimitConfig } from '@/lib/rate-limit';
 import { withMonitoring, trackDatabaseQuery } from '@/lib/monitoring';
-import { requireAuth, requireOwnership, addSecurityHeaders } from '@/lib/auth/middleware';
+import { requireAuth, requireOwnership } from '@/lib/auth/middleware';
 import { updateGearSchema } from '@/lib/validations/gear';
 import { CacheManager } from '@/lib/cache';
 import { logger } from '@/lib/logger';
@@ -27,7 +27,7 @@ export const GET = withErrorHandler(
         const cached = await CacheManager.get(cacheKey);
         if (cached) {
           const response = NextResponse.json(cached);
-          return addSecurityHeaders(response);
+          return response;
         }
 
         // Get gear with all related data using optimized query
@@ -52,7 +52,7 @@ export const GET = withErrorHandler(
         }, 'API');
 
         const response = NextResponse.json(gear);
-        return addSecurityHeaders(response);
+        return response;
       }
     )
   )
@@ -130,7 +130,7 @@ export const PUT = withErrorHandler(
         };
 
         const response = NextResponse.json(transformedGear);
-        return addSecurityHeaders(response);
+        return response;
       }
     )
   )
@@ -203,7 +203,7 @@ export const DELETE = withErrorHandler(
         }, 'API');
 
         const response = NextResponse.json({ message: 'Gear deleted successfully' });
-        return addSecurityHeaders(response);
+        return response;
       }
     )
   )

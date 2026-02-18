@@ -2,14 +2,21 @@ import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(req: NextRequest) {
+  // Generate a nonce for CSP
+  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64');
+
+  // Clone request headers and add nonce
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-nonce', nonce);
+
   let res = NextResponse.next({
     request: {
-      headers: req.headers,
+      headers: requestHeaders,
     },
   });
 
   // Add comprehensive security headers
-  addSecurityHeaders(res, req);
+  addSecurityHeaders(res, req, nonce);
 
   // Protected routes that require authentication
   const protectedRoutes = [
@@ -57,9 +64,11 @@ export async function middleware(req: NextRequest) {
               });
               res = NextResponse.next({
                 request: {
-                  headers: req.headers,
+                  headers: requestHeaders,
                 },
               });
+              // Re-apply security headers after recreating response
+              addSecurityHeaders(res, req, nonce);
               res.cookies.set({
                 name,
                 value,
@@ -74,9 +83,11 @@ export async function middleware(req: NextRequest) {
               });
               res = NextResponse.next({
                 request: {
-                  headers: req.headers,
+                  headers: requestHeaders,
                 },
               });
+              // Re-apply security headers after recreating response
+              addSecurityHeaders(res, req, nonce);
               res.cookies.set({
                 name,
                 value: '',
@@ -118,24 +129,24 @@ export async function middleware(req: NextRequest) {
 /**
  * Add comprehensive security headers to the response
  */
-function addSecurityHeaders(response: NextResponse, request: NextRequest): void {
+function addSecurityHeaders(response: NextResponse, request: NextRequest, nonce: string): void {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   // Security Headers
   // Prevent clickjacking attacks
   response.headers.set('X-Frame-Options', 'DENY');
-  
+
   // Prevent MIME type sniffing
   response.headers.set('X-Content-Type-Options', 'nosniff');
-  
+
   // XSS Protection
   response.headers.set('X-XSS-Protection', '1; mode=block');
-  
+
   // Referrer Policy
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+
   // Permissions Policy
-  response.headers.set('Permissions-Policy', 
+  response.headers.set('Permissions-Policy',
     'camera=(), microphone=(), geolocation=(self), interest-cohort=()'
   );
 
@@ -144,11 +155,14 @@ function addSecurityHeaders(response: NextResponse, request: NextRequest): void 
     ? "connect-src 'self' *.supabase.co wss://*.supabase.co *.mapbox.com *.stripe.com api.mapbox.com ws://localhost:* wss://localhost:*"
     : "connect-src 'self' *.supabase.co wss://*.supabase.co *.mapbox.com *.stripe.com api.mapbox.com";
 
+  // In dev, keep 'unsafe-eval' for Next.js HMR. In prod, use nonce + strict-dynamic.
+  const scriptSrc = isDevelopment
+    ? `script-src 'self' 'unsafe-eval' 'unsafe-inline' *.mapbox.com *.stripe.com js.stripe.com`
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' *.stripe.com js.stripe.com`;
+
   const cspDirectives = [
     "default-src 'self'",
-    isDevelopment
-      ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.mapbox.com *.stripe.com js.stripe.com"
-      : "script-src 'self' 'unsafe-inline' *.mapbox.com *.stripe.com js.stripe.com",
+    scriptSrc,
     "style-src 'self' 'unsafe-inline' *.mapbox.com fonts.googleapis.com",
     "font-src 'self' data: fonts.gstatic.com",
     "img-src 'self' data: blob: *.supabase.co *.mapbox.com *.stripe.com storage.googleapis.com",
@@ -170,7 +184,7 @@ function addSecurityHeaders(response: NextResponse, request: NextRequest): void 
   // Strict Transport Security (HTTPS only in production)
   if (!isDevelopment && request.nextUrl.protocol === 'https:') {
     response.headers.set(
-      'Strict-Transport-Security', 
+      'Strict-Transport-Security',
       'max-age=31536000; includeSubDomains; preload'
     );
   }
@@ -181,7 +195,7 @@ function addSecurityHeaders(response: NextResponse, request: NextRequest): void 
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');
-    
+
     // CORS headers
     const origin = request.headers.get('origin');
     const allowedOrigins = [
@@ -210,7 +224,7 @@ function addSecurityHeaders(response: NextResponse, request: NextRequest): void 
   const url = request.nextUrl.pathname + request.nextUrl.search;
   const userAgent = request.headers.get('user-agent') || '';
 
-  if (suspiciousPatterns.some(pattern => 
+  if (suspiciousPatterns.some(pattern =>
     url.toLowerCase().includes(pattern.toLowerCase()) ||
     userAgent.toLowerCase().includes(pattern.toLowerCase())
   )) {

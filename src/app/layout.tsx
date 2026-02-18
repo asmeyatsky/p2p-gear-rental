@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
@@ -19,14 +20,20 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const nonce = headersList.get('x-nonce') || '';
+
   return (
     <html lang="en" className={inter.variable}>
-      <body className="antialiased flex flex-col min-h-screen font-sans">
+      <head>
+        <meta property="csp-nonce" content={nonce} />
+      </head>
+      <body className="antialiased flex flex-col min-h-screen font-sans" nonce={nonce}>
         <AuthProvider>
           <main className="flex-grow">
             {children}
