@@ -66,9 +66,8 @@ export async function requireAuth(): Promise<AuthContext> {
       isVerified: session.user.email_confirmed_at !== null,
     };
 
-    logger.debug('User authenticated', { 
+    logger.debug('User authenticated', {
       userId: authContext.userId,
-      email: authContext.userEmail,
       role: authContext.userRole,
       verified: authContext.isVerified
     }, 'AUTH');
@@ -266,7 +265,9 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   // Content Security Policy (basic)
   response.headers.set('Content-Security-Policy', 
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.mapbox.com *.stripe.com; " +
+    (process.env.NODE_ENV === 'production'
+      ? "script-src 'self' 'unsafe-inline' *.mapbox.com *.stripe.com; "
+      : "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.mapbox.com *.stripe.com; ") +
     "style-src 'self' 'unsafe-inline' *.mapbox.com; " +
     "img-src 'self' data: blob: *.supabase.co *.mapbox.com; " +
     "connect-src 'self' *.supabase.co *.mapbox.com *.stripe.com; " +
