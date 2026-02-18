@@ -1,8 +1,23 @@
 import { NextRequest } from 'next/server';
 import Stripe from 'stripe'; // Import Stripe for type hinting in mock
 
+// Mock session controller
+const mockGetSession = jest.fn();
+
 // Mock all dependencies BEFORE any imports that use them
 jest.mock('@/lib/supabase');
+jest.mock('@/lib/auth-middleware', () => ({
+  authenticateRequest: jest.fn(async () => {
+    const { data, error } = await mockGetSession();
+    if (error || !data.session) {
+      const err = new Error('Unauthorized');
+      (err as any).statusCode = 401;
+      (err as any).name = 'AuthenticationError';
+      throw err;
+    }
+    return { user: data.session.user, session: data.session };
+  }),
+}));
 jest.mock('@/lib/cache', () => ({
   CacheManager: {
     del: jest.fn().mockResolvedValue(true),
@@ -215,7 +230,7 @@ describe('Rentals API', () => {
     // Reset mocks for each test
     mockPaymentIntents.create.mockReset();
     mockWebhooks.constructEvent.mockReset();
-    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+    mockGetSession.mockResolvedValue({ data: { session: mockSession } });
     (prisma.gear.findUnique as jest.Mock).mockResolvedValue(mockGear);
     (prisma.rental.create as jest.Mock).mockResolvedValue(mockRental);
     (prisma.rental.findMany as jest.Mock).mockResolvedValue([]); // Changed to empty array for a more neutral default
@@ -229,7 +244,7 @@ describe('Rentals API', () => {
 
   describe('POST /api/rentals', () => {
     it('should return 401 if not authenticated', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+      mockGetSession.mockResolvedValue({ data: { session: null } });
 
       const request = new NextRequest('http://localhost/api/rentals', {
         method: 'POST',
@@ -243,7 +258,7 @@ describe('Rentals API', () => {
     });
 
     it('should return 400 if required fields are missing', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockSession } });
 
       const request = new NextRequest('http://localhost/api/rentals', {
         method: 'POST',
@@ -258,7 +273,7 @@ describe('Rentals API', () => {
     });
 
     it('should return 400 if dates are invalid', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockSession } });
 
       const request = new NextRequest('http://localhost/api/rentals', {
         method: 'POST',
@@ -277,7 +292,7 @@ describe('Rentals API', () => {
     });
 
     it('should reject requests for non-existent gear', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockSession } });
       (prisma.gear.findUnique as jest.Mock).mockResolvedValue(null);
 
       // Use future dates to pass Zod validation
@@ -303,7 +318,7 @@ describe('Rentals API', () => {
     });
 
     it('should reject requests to rent own gear', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockSession } });
       (prisma.gear.findUnique as jest.Mock).mockResolvedValue({ ...mockGear, userId: mockSession.user.id });
 
       // Use future dates to pass Zod validation
@@ -338,7 +353,7 @@ describe('Rentals API', () => {
 
   describe('GET /api/rentals', () => {
     it('should return 401 if not authenticated', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+      mockGetSession.mockResolvedValue({ data: { session: null } });
 
       const request = new NextRequest('http://localhost/api/rentals');
       const response = await GET(request);
@@ -347,7 +362,7 @@ describe('Rentals API', () => {
     });
 
     it('should return rentals for the authenticated user (renter or owner)', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockSession } });
       (prisma.rental.findMany as jest.Mock).mockResolvedValue([mockRental]);
 
       const request = new NextRequest('http://localhost/api/rentals');
@@ -375,7 +390,7 @@ describe('Rentals API', () => {
 
   describe('PUT /api/rentals/[id]/approve', () => {
     it('should return 401 if not authenticated', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+      mockGetSession.mockResolvedValue({ data: { session: null } });
 
       const request = new NextRequest(`http://localhost/api/rentals/${mockRental.id}/approve`, {
         method: 'PUT',
@@ -389,7 +404,7 @@ describe('Rentals API', () => {
     });
 
     it('should return 404 if rental not found', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockOwnerSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockOwnerSession } });
       (prisma.rental.findUnique as jest.Mock).mockResolvedValue(null);
 
       const request = new NextRequest(`http://localhost/api/rentals/non-existent-id/approve`, {
@@ -404,7 +419,7 @@ describe('Rentals API', () => {
     });
 
     it('should return 403 if user is not the owner', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } }); // Renter session
+      mockGetSession.mockResolvedValue({ data: { session: mockSession } }); // Renter session
       (prisma.rental.findUnique as jest.Mock).mockResolvedValue(mockRental);
 
       const request = new NextRequest(`http://localhost/api/rentals/${mockRental.id}/approve`, {
@@ -420,7 +435,7 @@ describe('Rentals API', () => {
     });
 
     it('should return 400 if rental is not pending', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockOwnerSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockOwnerSession } });
       (prisma.rental.findUnique as jest.Mock).mockResolvedValue(mockApprovedRental); // Already approved
 
       const request = new NextRequest(`http://localhost/api/rentals/${mockRental.id}/approve`, {
@@ -435,7 +450,7 @@ describe('Rentals API', () => {
     });
 
     it('should approve rental and update status', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockOwnerSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockOwnerSession } });
       (prisma.rental.findUnique as jest.Mock).mockResolvedValue(mockRental);
       (prisma.rental.update as jest.Mock).mockResolvedValue(mockApprovedRental);
 
@@ -466,7 +481,7 @@ describe('Rentals API', () => {
 
   describe('PUT /api/rentals/[id]/reject', () => {
     it('should return 401 if not authenticated', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+      mockGetSession.mockResolvedValue({ data: { session: null } });
 
       const request = new NextRequest(`http://localhost/api/rentals/${mockRental.id}/reject`, {
         method: 'PUT',
@@ -480,7 +495,7 @@ describe('Rentals API', () => {
     });
 
     it('should return 404 if rental not found', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockOwnerSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockOwnerSession } });
       (prisma.rental.findUnique as jest.Mock).mockResolvedValue(null);
 
       const request = new NextRequest(`http://localhost/api/rentals/non-existent-id/reject`, {
@@ -495,7 +510,7 @@ describe('Rentals API', () => {
     });
 
     it('should return 403 if user is not the owner', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockSession } }); // Renter session
+      mockGetSession.mockResolvedValue({ data: { session: mockSession } }); // Renter session
       (prisma.rental.findUnique as jest.Mock).mockResolvedValue(mockRental);
 
       const request = new NextRequest(`http://localhost/api/rentals/${mockRental.id}/reject`, {
@@ -511,7 +526,7 @@ describe('Rentals API', () => {
     });
 
     it('should return 400 if rental is not pending', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockOwnerSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockOwnerSession } });
       (prisma.rental.findUnique as jest.Mock).mockResolvedValue(mockApprovedRental); // Already approved
 
       const request = new NextRequest(`http://localhost/api/rentals/${mockRental.id}/reject`, {
@@ -526,7 +541,7 @@ describe('Rentals API', () => {
     });
 
     it('should reject rental and update status', async () => {
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: mockOwnerSession } });
+      mockGetSession.mockResolvedValue({ data: { session: mockOwnerSession } });
       (prisma.rental.findUnique as jest.Mock).mockResolvedValue(mockRental);
       (prisma.rental.update as jest.Mock).mockResolvedValue(mockRejectedRental);
 

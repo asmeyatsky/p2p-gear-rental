@@ -4,7 +4,7 @@ import { useParams, useRouter, redirect } from 'next/navigation';
 import EditGearPage from '../edit-gear/[id]/page';
 import GearDetailsClient from './[id]/GearDetailsClient';
 import { useAuth } from '@/components/auth/AuthProvider';
-import toast from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
@@ -21,10 +21,14 @@ jest.mock('@/components/auth/AuthProvider', () => ({
   useAuth: jest.fn(),
 }));
 
-// Mock react-hot-toast
-jest.mock('react-hot-toast', () => ({
-  success: jest.fn(),
-  error: jest.fn(),
+// Mock toast (app uses @/lib/toast which wraps sonner)
+jest.mock('@/lib/toast', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn(),
+  },
 }));
 
 // Mock next/image

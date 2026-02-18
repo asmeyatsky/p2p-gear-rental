@@ -2,15 +2,21 @@
  * @jest-environment node
  */
 
+// Set environment variables before importing modules
+process.env.STRIPE_SECRET_KEY = 'sk_test_12345';
+
 import { NextRequest } from 'next/server';
 
-import { supabase } from '@/lib/supabase';
-import type { User, Rental, Gear } from '@prisma/client';
+import { User, Rental, Gear } from '@prisma/client';
 import { Session } from '@supabase/supabase-js';
 
+// Mock session controller
+const mockGetSession = jest.fn();
+
 // Mock dependencies - route imports from @/lib/db
-jest.mock('@/lib/db', () => ({
-  prisma: {
+// $transaction passes the prisma object itself as the tx argument
+jest.mock('@/lib/db', () => {
+  const prisma = {
     user: {
       upsert: jest.fn(),
       findUnique: jest.fn(),
@@ -29,16 +35,31 @@ jest.mock('@/lib/db', () => ({
       findMany: jest.fn(),
       create: jest.fn(),
     },
-  },
-}));
+    $transaction: jest.fn(async (cb) => cb(prisma)),
+  };
+  return { prisma };
+});
+
+jest.mock('@/lib/auth-middleware', () => {
+  const { AuthenticationError } = jest.requireActual('@/lib/api-error-handler');
+  return {
+    authenticateRequest: jest.fn(async () => {
+      const { data, error } = await mockGetSession();
+      if (error || !data.session) {
+        throw new AuthenticationError('Authentication required');
+      }
+      return { user: data.session.user, session: data.session };
+    }),
+  };
+});
 
 const mockPrisma = require('@/lib/db').prisma;
 jest.mock('@/lib/supabase');
 jest.mock('@/lib/cache');
 jest.mock('@/lib/logger');
 jest.mock('@/lib/monitoring', () => ({
-  trackDatabaseQuery: jest.fn((name, query) => query()),
-  withMonitoring: jest.fn((handler) => handler),
+  trackDatabaseQuery: jest.fn((name: string, query: () => any) => query()),
+  withMonitoring: jest.fn((handler: any) => handler),
   monitoring: {
     logRequest: jest.fn(),
   },
@@ -68,9 +89,6 @@ jest.mock('stripe', () => {
     },
   }));
 });
-
-
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
 // Dynamically import the handlers after all mocks are set up
 const { GET, POST } = require('../route');
@@ -110,7 +128,7 @@ describe('API /rentals', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Default mocks for all Prisma methods used in the route
-    mockSupabase.auth.getSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       data: { session: mockSession as Session },
       error: null
     });
@@ -123,13 +141,6 @@ describe('API /rentals', () => {
   });
 
   describe('GET /api/rentals', () => {
-    beforeEach(() => {
-      // Mock authenticated user
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: mockSession as Session },
-        error: null
-      });
-    });
 
     it('should return user rentals', async () => {
       const mockRentals: (Rental & { gear: Gear & { user: User }, renter: User, payments: unknown[] })[] = [
@@ -235,7 +246,7 @@ describe('API /rentals', () => {
     });
 
     it('should require authentication', async () => {
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: null },
         error: null
       });
@@ -263,7 +274,7 @@ describe('API /rentals', () => {
 
     beforeEach(() => {
       // Mock authenticated user
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession as Session },
         error: null
       });
@@ -529,7 +540,7 @@ describe('API /rentals', () => {
     });
 
     it('should require authentication', async () => {
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: null },
         error: null
       });

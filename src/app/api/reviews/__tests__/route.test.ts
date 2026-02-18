@@ -5,6 +5,9 @@
 import { NextRequest } from 'next/server';
 import { Session } from '@supabase/supabase-js';
 
+// Mock session controller
+const mockGetSession = jest.fn();
+
 // Mock dependencies BEFORE importing the route
 jest.mock('@/lib/db', () => ({
   prisma: {
@@ -18,20 +21,31 @@ jest.mock('@/lib/db', () => ({
       findUnique: jest.fn(),
     },
     user: {
+      upsert: jest.fn(),
       update: jest.fn(),
     },
   },
 }));
+
+jest.mock('@/lib/auth-middleware', () => ({
+  authenticateRequest: jest.fn(async () => {
+    const { data, error } = await mockGetSession();
+    if (error || !data.session) {
+      const err = new Error('Authentication required');
+      (err as any).statusCode = 401;
+      (err as any).name = 'AuthenticationError';
+      throw err;
+    }
+    return { user: data.session.user, session: data.session };
+  }),
+}));
+
 jest.mock('@/lib/supabase');
 jest.mock('@/lib/logger');
 jest.mock('@/lib/cache');
 jest.mock('@/lib/rate-limit');
 
-// Import mocked modules after mocking
-import { supabase } from '@/lib/supabase';
-
 const mockPrisma = require('@/lib/db').prisma;
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
 // Dynamically import route after mocks are set up
 const { GET, POST } = require('../route');
@@ -90,7 +104,7 @@ describe('API /reviews', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSupabase.auth.getSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       data: { session: mockSession as Session },
       error: null
     });
@@ -209,22 +223,14 @@ describe('API /reviews', () => {
       comment: 'Excellent gear and owner!'
     };
 
-    beforeEach(() => {
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: mockSession as Session },
-        error: null
-      });
-    });
-
     it('should create review for completed rental when user is renter', async () => {
-      // Current user (user-1) is the RENTER
       const mockRental = {
         id: 'rental-1',
-        renterId: 'user-1', // Current user is renter
+        renterId: 'user-1',
         ownerId: 'user-2',
         status: 'COMPLETED',
         endDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        review: null // No existing review
+        review: null
       };
 
       const mockCreatedReview = {
@@ -274,7 +280,7 @@ describe('API /reviews', () => {
         id: 'rental-1',
         renterId: 'user-1',
         ownerId: 'user-2',
-        status: 'CONFIRMED', // Not completed
+        status: 'CONFIRMED',
         endDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
         review: null
       };
@@ -305,7 +311,7 @@ describe('API /reviews', () => {
         ownerId: 'user-2',
         status: 'COMPLETED',
         endDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        review: existingReview // Review already exists
+        review: existingReview
       };
 
       mockPrisma.rental.findUnique.mockResolvedValue(mockRental);
@@ -318,15 +324,14 @@ describe('API /reviews', () => {
 
       const response = await POST(request);
 
-      expect(response.status).toBe(409); // Conflict
+      expect(response.status).toBe(409);
     });
 
     it('should prevent non-renter from reviewing', async () => {
-      // Current user (user-1) is NOT the renter
       const mockRental = {
         id: 'rental-1',
-        renterId: 'user-2', // Different user is renter
-        ownerId: 'user-3', // And user-1 is not the owner either
+        renterId: 'user-2',
+        ownerId: 'user-3',
         status: 'COMPLETED',
         endDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
         review: null
@@ -342,13 +347,13 @@ describe('API /reviews', () => {
 
       const response = await POST(request);
 
-      expect(response.status).toBe(400); // ValidationError
+      expect(response.status).toBe(400);
     });
 
     it('should reject invalid rating', async () => {
       const invalidData = {
         ...validReviewData,
-        rating: 6 // Invalid rating (1-5 only)
+        rating: 6
       };
 
       const request = new NextRequest('http://localhost:3000/api/reviews', {
@@ -359,8 +364,6 @@ describe('API /reviews', () => {
 
       const response = await POST(request);
 
-      // Zod validation errors are not converted to ValidationError in the handler,
-      // so they result in 500 (internal error). The important thing is the request is rejected.
       expect(response.status).not.toBe(200);
       expect(response.status).not.toBe(201);
     });
@@ -376,11 +379,11 @@ describe('API /reviews', () => {
 
       const response = await POST(request);
 
-      expect(response.status).toBe(400); // ValidationError: Rental not found
+      expect(response.status).toBe(400);
     });
 
     it('should require authentication', async () => {
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: null },
         error: null
       });

@@ -3,17 +3,24 @@
  */
 
 import { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
 import { User, Rental, Gear, Review } from '@prisma/client';
 import { Session } from '@supabase/supabase-js';
 
+// Mock session controller
+const mockGetSession = jest.fn();
+
 // Mock all dependencies before importing anything that uses them
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: {
-      getSession: jest.fn()
+jest.mock('@/lib/auth-middleware', () => ({
+  authenticateRequest: jest.fn(async () => {
+    const { data, error } = await mockGetSession();
+    if (error || !data.session) {
+      const err = new Error('Authentication required');
+      (err as any).statusCode = 401;
+      (err as any).name = 'AuthenticationError';
+      throw err;
     }
-  }
+    return { user: data.session.user, session: data.session };
+  }),
 }));
 
 jest.mock('@/lib/database/query-optimizer', () => ({
@@ -44,12 +51,11 @@ jest.mock('@/lib/cache', () => ({
 }));
 
 jest.mock('@/lib/api-error-handler', () => ({
-  withErrorHandler: (fn) => async (...args) => {
+  withErrorHandler: (fn: any) => async (...args: any[]) => {
     try {
       return await fn(...args);
-    } catch (error) {
-      // Return appropriate response based on error type for testing
-      if (error.constructor.name === 'AuthenticationError') {
+    } catch (error: any) {
+      if (error.name === 'AuthenticationError' || error.statusCode === 401) {
         return new Response(null, { status: 401 });
       } else {
         return new Response(null, { status: 500 });
@@ -60,7 +66,7 @@ jest.mock('@/lib/api-error-handler', () => ({
 }));
 
 jest.mock('@/lib/rate-limit', () => ({
-  withRateLimit: () => (fn) => fn,
+  withRateLimit: () => (fn: any) => fn,
   rateLimitConfig: {
     general: {
       limiter: 'general',
@@ -70,7 +76,7 @@ jest.mock('@/lib/rate-limit', () => ({
 }));
 
 jest.mock('@/lib/monitoring', () => ({
-  withMonitoring: (fn) => fn
+  withMonitoring: (fn: any) => fn
 }));
 
 jest.mock('@/lib/logger', () => ({
@@ -85,36 +91,9 @@ jest.mock('@/lib/logger', () => ({
 // Import after all mocks
 import { GET } from '../route';
 
-// Now we can destructure the mocks
-const mockSupabase = {
-  auth: {
-    getSession: require('@/lib/supabase').supabase.auth.getSession
-  }
-};
-
-const mockQueryOptimizer = {
-  getUserDashboardStats: require('@/lib/database/query-optimizer').queryOptimizer.getUserDashboardStats
-};
-
 const mockExecuteWithRetry = require('@/lib/database').executeWithRetry;
 
 describe('API /dashboard/stats', () => {
-  const mockUser: Partial<User> = {
-    id: 'user-1',
-    email: 'test@example.com',
-    full_name: 'Test User',
-    averageRating: 0,
-    totalReviews: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    stripeAccountId: null,
-    stripeAccountStatus: null,
-    bio: null,
-    city: null,
-    state: null,
-    completedRentals: 0,
-  };
-
   const mockSession: Partial<Session> = {
     user: {
       id: 'user-1',
@@ -129,13 +108,11 @@ describe('API /dashboard/stats', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock authenticated user - this needs to be set for each test
-    mockSupabase.auth.getSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       data: { session: mockSession as Session },
       error: null
     });
 
-    // Mock cache to return null (no cached data) by default
     require('@/lib/cache').CacheManager.get.mockResolvedValue(null);
     require('@/lib/cache').CacheManager.keys.user.dashboard.mockReturnValue('dashboard-stats:user-1');
   });
@@ -284,7 +261,7 @@ describe('API /dashboard/stats', () => {
     });
 
     it('should require authentication', async () => {
-      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: null },
         error: null
       });
@@ -349,8 +326,6 @@ describe('API /dashboard/stats', () => {
     });
 
     it('should limit recent activity to 10 items', async () => {
-      // The query optimizer will internally handle the limit to 10
-      // We can verify that the result contains only 10 items
       const mockStats = {
         gear: {
           total: 0,
