@@ -232,13 +232,24 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
 // Detailed metrics endpoint (protected)
 export const POST = withErrorHandler(async (request: NextRequest) => {
-  // Simple authentication check - in practice you'd use proper auth
   const authHeader = request.headers.get('authorization');
   const validToken = process.env.METRICS_API_TOKEN;
-  
-  const expectedHeader = `Bearer ${validToken || ''}`;
-  const isValidToken = validToken && authHeader &&
-    authHeader.length === expectedHeader.length &&
+
+  // Require the token to be configured — reject if missing
+  if (!validToken || !authHeader) {
+    logger.warn('Unauthorized metrics access attempt', {
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      reason: !validToken ? 'token_not_configured' : 'no_auth_header',
+    }, 'SECURITY');
+
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
+  const expectedHeader = `Bearer ${validToken}`;
+  const isValidToken = authHeader.length === expectedHeader.length &&
     timingSafeEqual(Buffer.from(authHeader), Buffer.from(expectedHeader));
 
   if (!isValidToken) {

@@ -89,8 +89,8 @@ export async function POST(request: NextRequest) {
     const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     const expectedAmount = Math.round(days * rental.gear.dailyRate * 100);
 
-    if (Math.abs(amount - expectedAmount) > 100) { // Allow $1 difference for rounding
-      throw new ValidationError('Payment amount does not really match rental cost');
+    if (Math.abs(amount - expectedAmount) > 10) { // Allow $0.10 difference for rounding
+      throw new ValidationError('Payment amount does not match rental cost');
     }
 
     // Create or update payment intent

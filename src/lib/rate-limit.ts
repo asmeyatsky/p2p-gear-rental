@@ -78,14 +78,22 @@ export const searchRateLimit = new RateLimiter({
 
 // Helper to get client identifier from request
 export function getClientIdentifier(req: NextRequest): string {
-  // Try to get the real IP address
-  const forwarded = req.headers.get('x-forwarded-for');
+  // Use x-real-ip first (set by trusted reverse proxy), then fall back to
+  // the last entry in x-forwarded-for (the IP seen by the outermost proxy).
+  // We avoid trusting the first x-forwarded-for entry since clients can spoof it.
   const realIp = req.headers.get('x-real-ip');
-  const ip = forwarded ? forwarded.split(',')[0] : realIp || 'unknown';
-  
-  // For authenticated requests, we could also use user ID
-  // but for now, we'll just use IP
-  return ip.trim();
+  if (realIp) {
+    return realIp.trim();
+  }
+
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    const parts = forwarded.split(',').map(s => s.trim()).filter(Boolean);
+    // Use the rightmost IP (closest to our infrastructure)
+    return parts[parts.length - 1] || 'unknown';
+  }
+
+  return 'unknown';
 }
 
 // Specific rate limit configurations

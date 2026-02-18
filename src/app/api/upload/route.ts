@@ -7,6 +7,18 @@ import { authenticateRequest } from '@/lib/auth-middleware';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'gear-images');
 
+// Validate file magic bytes to prevent MIME type spoofing
+function isValidImageSignature(header: Uint8Array): boolean {
+  // JPEG: FF D8 FF
+  if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) return true;
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) return true;
+  // WebP: RIFF....WEBP
+  if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46 &&
+      header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50) return true;
+  return false;
+}
+
 // Ensure upload directory exists
 async function ensureUploadDir() {
   if (!existsSync(UPLOAD_DIR)) {
@@ -31,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file type
+    // Validate file MIME type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
@@ -49,14 +61,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename
-    const fileExt = file.name.split('.').pop() || 'jpg';
+    // Read file bytes once for both validation and saving
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Validate file magic bytes to prevent MIME type spoofing
+    const header = new Uint8Array(bytes).slice(0, 12);
+    if (!isValidImageSignature(header)) {
+      return NextResponse.json(
+        { error: 'File content does not match an allowed image format.' },
+        { status: 400 }
+      );
+    }
+
+    // Derive extension from validated MIME type (ignore user-supplied extension)
+    const mimeToExt: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+    const fileExt = mimeToExt[file.type] || 'jpg';
     const fileName = `${uuidv4()}.${fileExt}`;
     const filePath = path.join(UPLOAD_DIR, fileName);
 
-    // Convert file to buffer and save
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
     // Return the public URL
