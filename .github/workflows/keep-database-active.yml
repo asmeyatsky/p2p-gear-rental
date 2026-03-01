@@ -22,9 +22,13 @@ jobs:
         run: |
           echo "Writing keepalive record to database..."
 
-          # Create a temporary keepalive table if it doesn't exist,
-          # insert a row, then clean up old rows (keep last 7 days)
-          psql "$DATABASE_URL" <<'SQL'
+          # Force IPv4 to avoid GitHub Actions IPv6 connectivity issues
+          # Resolve the host to an IPv4 address and connect via that
+          DB_HOST=$(echo "$DATABASE_URL" | sed -n 's|.*@\([^:/]*\).*|\1|p')
+          DB_IPV4=$(getent ahostsv4 "$DB_HOST" | head -1 | awk '{print $1}')
+          PATCHED_URL=$(echo "$DATABASE_URL" | sed "s|$DB_HOST|$DB_IPV4|")
+
+          psql "$PATCHED_URL" <<SQL
             CREATE TABLE IF NOT EXISTS _keepalive (
               id SERIAL PRIMARY KEY,
               pinged_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
