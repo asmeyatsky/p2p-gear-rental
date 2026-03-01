@@ -22,22 +22,22 @@ jobs:
         run: |
           echo "Writing keepalive record to database..."
 
-          # Parse the DATABASE_URL and resolve host to IPv4
-          eval "$(python3 -c "
-          from urllib.parse import urlparse
+          # Parse DATABASE_URL safely via Python (no shell interpolation)
+          eval "$(python3 << 'PYEOF'
           import os
-          u = urlparse(os.environ['DATABASE_URL'])
-          print(f'DB_USER={u.username}')
-          print(f'DB_PASS={u.password}')
-          print(f'DB_HOST={u.hostname}')
-          print(f'DB_PORT={u.port or 5432}')
-          print(f'DB_NAME={u.path.lstrip(\"/\")}')
-          ")"
+          from urllib.parse import urlparse, unquote
+          u = urlparse(os.environ["DATABASE_URL"])
+          print(f'DB_USER="{u.username}"')
+          print(f'DB_PASS="{unquote(u.password)}"')
+          print(f'DB_HOST="{u.hostname}"')
+          print(f'DB_PORT="{u.port or 5432}"')
+          print(f'DB_NAME="{u.path.lstrip("/")}"')
+          PYEOF
+          )"
 
           DB_IPV4=$(dig +short A "$DB_HOST" | head -1)
           echo "Resolved $DB_HOST -> $DB_IPV4"
 
-          # Connect using hostaddr to force IPv4, bypassing DNS resolution
           PGPASSWORD="$DB_PASS" psql \
             "host=$DB_HOST hostaddr=$DB_IPV4 port=$DB_PORT dbname=$DB_NAME user=$DB_USER sslmode=require" \
             <<'SQL'
