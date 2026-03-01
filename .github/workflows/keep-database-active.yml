@@ -22,7 +22,7 @@ jobs:
         run: |
           npm install pg
 
-          node << 'SCRIPT'
+          node --dns-result-order=ipv4first << 'SCRIPT'
           const { Client } = require("pg");
 
           async function keepAlive() {
