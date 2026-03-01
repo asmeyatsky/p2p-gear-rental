@@ -16,19 +16,16 @@ jobs:
           curl -sf "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health" || true
           curl -sf "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health/database" || true
 
+      - name: Disable IPv6 (Supabase requires IPv4)
+        run: sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+
       - name: Write to Supabase database directly
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           echo "Writing keepalive record to database..."
 
-          # Force IPv4 to avoid GitHub Actions IPv6 connectivity issues
-          # Resolve the host to an IPv4 address and connect via that
-          DB_HOST=$(echo "$DATABASE_URL" | sed -n 's|.*@\([^:/]*\).*|\1|p')
-          DB_IPV4=$(getent ahostsv4 "$DB_HOST" | head -1 | awk '{print $1}')
-          PATCHED_URL=$(echo "$DATABASE_URL" | sed "s|$DB_HOST|$DB_IPV4|")
-
-          psql "$PATCHED_URL" <<SQL
+          psql "$DATABASE_URL" <<'SQL'
             CREATE TABLE IF NOT EXISTS _keepalive (
               id SERIAL PRIMARY KEY,
               pinged_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
