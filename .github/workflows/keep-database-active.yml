@@ -16,26 +16,41 @@ jobs:
           curl -sf "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health" || true
           curl -sf "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health/database" || true
 
-      - name: Disable IPv6 (Supabase requires IPv4)
-        run: sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-
       - name: Write to Supabase database directly
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           echo "Writing keepalive record to database..."
 
-          psql "$DATABASE_URL" <<'SQL'
-            CREATE TABLE IF NOT EXISTS _keepalive (
-              id SERIAL PRIMARY KEY,
-              pinged_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            );
+          # Parse the DATABASE_URL and resolve host to IPv4
+          eval "$(python3 -c "
+          from urllib.parse import urlparse
+          import os
+          u = urlparse(os.environ['DATABASE_URL'])
+          print(f'DB_USER={u.username}')
+          print(f'DB_PASS={u.password}')
+          print(f'DB_HOST={u.hostname}')
+          print(f'DB_PORT={u.port or 5432}')
+          print(f'DB_NAME={u.path.lstrip(\"/\")}')
+          ")"
 
-            INSERT INTO _keepalive (pinged_at) VALUES (NOW());
+          DB_IPV4=$(dig +short A "$DB_HOST" | head -1)
+          echo "Resolved $DB_HOST -> $DB_IPV4"
 
-            DELETE FROM _keepalive WHERE pinged_at < NOW() - INTERVAL '7 days';
+          # Connect using hostaddr to force IPv4, bypassing DNS resolution
+          PGPASSWORD="$DB_PASS" psql \
+            "host=$DB_HOST hostaddr=$DB_IPV4 port=$DB_PORT dbname=$DB_NAME user=$DB_USER sslmode=require" \
+            <<'SQL'
+          CREATE TABLE IF NOT EXISTS _keepalive (
+            id SERIAL PRIMARY KEY,
+            pinged_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          );
 
-            SELECT COUNT(*) AS remaining_rows FROM _keepalive;
+          INSERT INTO _keepalive (pinged_at) VALUES (NOW());
+
+          DELETE FROM _keepalive WHERE pinged_at < NOW() - INTERVAL '7 days';
+
+          SELECT COUNT(*) AS remaining_rows FROM _keepalive;
           SQL
 
           echo "Database keepalive write completed!"
