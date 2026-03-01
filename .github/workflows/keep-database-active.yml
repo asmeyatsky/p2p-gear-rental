@@ -7,27 +7,34 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 jobs:
-  ping-database:
+  keep-alive:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping staging health endpoint
+      - name: Ping staging health endpoints
         run: |
-          echo "Pinging staging environment to keep database active..."
+          echo "Pinging staging environment..."
+          curl -sf "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health" || true
+          curl -sf "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health/database" || true
 
-          # Health check
-          curl -s "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health"
-          echo ""
+      - name: Write to Supabase database directly
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Writing keepalive record to database..."
 
-          # Database health check
-          curl -s "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health/database"
-          echo ""
+          # Create a temporary keepalive table if it doesn't exist,
+          # insert a row, then clean up old rows (keep last 7 days)
+          psql "$DATABASE_URL" <<'SQL'
+            CREATE TABLE IF NOT EXISTS _keepalive (
+              id SERIAL PRIMARY KEY,
+              pinged_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
 
-          # Multiple pings to generate activity
-          for i in {1..5}; do
-            echo "Ping $i..."
-            curl -s "https://p2p-gear-rental-staging-737733013547.europe-west2.run.app/api/health/database"
-            echo ""
-            sleep 2
-          done
+            INSERT INTO _keepalive (pinged_at) VALUES (NOW());
 
-          echo "Database activity completed!"
+            DELETE FROM _keepalive WHERE pinged_at < NOW() - INTERVAL '7 days';
+
+            SELECT COUNT(*) AS remaining_rows FROM _keepalive;
+          SQL
+
+          echo "Database keepalive write completed!"
